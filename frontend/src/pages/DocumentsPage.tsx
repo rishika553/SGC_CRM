@@ -69,7 +69,12 @@ export const DocumentsPage: React.FC = () => {
     const fetchVaultData = async () => {
       setIsLoading(true);
       try {
-        const docRes = await api.get<PaginatedResponse<any>>('/documents', { params: { page: 1, page_size: 50 } });
+        const activeClientId = localStorage.getItem('crm_active_client_id');
+        const params: any = { page: 1, page_size: 50 };
+        if (activeClientId) {
+          params.client_id = activeClientId;
+        }
+        const docRes = await api.get<PaginatedResponse<any>>('/documents', { params });
         if (docRes.data.success && docRes.data.data) {
           const liveDocs: VaultDocument[] = docRes.data.data.map((d: any) => ({
             id: d.id,

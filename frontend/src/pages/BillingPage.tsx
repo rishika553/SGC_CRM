@@ -68,7 +68,12 @@ export const BillingPage: React.FC = () => {
     const fetchBillingData = async () => {
       setIsLoading(true);
       try {
-        const invRes = await api.get<PaginatedResponse<any>>('/invoices', { params: { page: 1, page_size: 50 } });
+        const activeClientId = localStorage.getItem('crm_active_client_id');
+        const params: any = { page: 1, page_size: 50 };
+        if (activeClientId) {
+          params.client_id = activeClientId;
+        }
+        const invRes = await api.get<PaginatedResponse<any>>('/invoices', { params });
         if (invRes.data.success && invRes.data.data) {
           const liveInvoices: InvoiceItem[] = invRes.data.data.map((inv: any) => ({
             id: inv.id,

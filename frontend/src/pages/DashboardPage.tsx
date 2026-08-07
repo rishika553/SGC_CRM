@@ -63,12 +63,20 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
+      const activeClientId = localStorage.getItem('crm_active_client_id');
       try {
         // 1. Fetch Client Company Profile
         try {
-          const meRes = await api.get('/clients/me');
-          if (meRes.data.success && meRes.data.data) {
-            setClientProfile(meRes.data.data);
+          if (activeClientId) {
+            const clientRes = await api.get(`/clients/${activeClientId}`);
+            if (clientRes.data.success && clientRes.data.data) {
+              setClientProfile(clientRes.data.data);
+            }
+          } else {
+            const meRes = await api.get('/clients/me');
+            if (meRes.data.success && meRes.data.data) {
+              setClientProfile(meRes.data.data);
+            }
           }
         } catch (e) {
           // Fallback query if superadmin account
@@ -80,7 +88,9 @@ export const DashboardPage: React.FC = () => {
 
         // 2. Fetch Projects
         try {
-          const projRes = await api.get<PaginatedResponse<any>>('/projects', { params: { page: 1, page_size: 10 } });
+          const params: any = { page: 1, page_size: 10 };
+          if (activeClientId) params.client_id = activeClientId;
+          const projRes = await api.get<PaginatedResponse<any>>('/projects', { params });
           if (projRes.data.success && projRes.data.data) {
             const mappedProjs: DashboardProject[] = projRes.data.data.map((p: any) => ({
               id: p.id,
@@ -96,7 +106,9 @@ export const DashboardPage: React.FC = () => {
 
         // 3. Fetch Tasks
         try {
-          const taskRes = await api.get<PaginatedResponse<any>>('/tasks', { params: { page: 1, page_size: 10 } });
+          const params: any = { page: 1, page_size: 10 };
+          if (activeClientId) params.client_id = activeClientId;
+          const taskRes = await api.get<PaginatedResponse<any>>('/tasks', { params });
           if (taskRes.data.success && taskRes.data.data) {
             const mappedTasks: DashboardTask[] = taskRes.data.data.map((t: any) => ({
               id: t.id,
@@ -111,7 +123,9 @@ export const DashboardPage: React.FC = () => {
 
         // 4. Fetch Documents Count
         try {
-          const docRes = await api.get<PaginatedResponse<any>>('/documents', { params: { page: 1, page_size: 1 } });
+          const params: any = { page: 1, page_size: 1 };
+          if (activeClientId) params.client_id = activeClientId;
+          const docRes = await api.get<PaginatedResponse<any>>('/documents', { params });
           if (docRes.data.success && docRes.data.meta) {
             setDocumentsCount(docRes.data.meta.total || docRes.data.data.length || 0);
           }

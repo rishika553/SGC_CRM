@@ -78,7 +78,12 @@ export const ProjectsTasksPage: React.FC = () => {
   const fetchProjectsData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const projRes = await api.get<PaginatedResponse<any>>('/projects', { params: { page: 1, page_size: 50 } });
+      const activeClientId = localStorage.getItem('crm_active_client_id');
+      const params: any = { page: 1, page_size: 50 };
+      if (activeClientId) {
+        params.client_id = activeClientId;
+      }
+      const projRes = await api.get<PaginatedResponse<any>>('/projects', { params });
       
       if (projRes.data.success && projRes.data.data) {
         const rawProjects = projRes.data.data;

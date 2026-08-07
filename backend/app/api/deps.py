@@ -1,0 +1,136 @@
+import uuid
+from typing import List, Callable
+from fastapi import Depends, Header
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
+
+from app.core.database import get_db
+from app.core.security import decode_token
+from app.core.exceptions import UnauthorizedException, ForbiddenException
+from app.models.user import User
+from app.models.role import UserRoleEnum
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+
+SUPER_ADMIN_ROLES = [UserRoleEnum.SUPER_ADMIN]
+ADMIN_ROLES = [UserRoleEnum.SUPER_ADMIN]
+CLIENT_ROLES = [UserRoleEnum.CLIENT, UserRoleEnum.CLIENT_VIEWER]
+ALL_ROLES = [UserRoleEnum.SUPER_ADMIN, UserRoleEnum.CLIENT, UserRoleEnum.CLIENT_VIEWER]
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    if not token:
+        raise UnauthorizedException(detail="Authentication token is missing")
+
+    try:
+        payload = decode_token(token)
+        user_id_str = payload.get("sub")
+        email = payload.get("email")
+        if not user_id_str:
+            raise UnauthorizedException(detail="Invalid token payload")
+        user_id = uuid.UUID(user_id_str)
+    except Exception:
+        raise UnauthorizedException(detail="Could not validate credentials")
+
+    # Try lookup by ID first
+    stmt = select(User).options(
+        selectinload(User.role),
+        selectinload(User.organization)
+    ).where((User.id == user_id) | (User.email == email), User.is_deleted == False)
+    
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if not user and email:
+        # Auto-provision user from Supabase token info if user record is missing in public.users
+        from app.models.role import Role, UserRoleEnum
+        stmt_role = select(Role).where(Role.name == UserRoleEnum.SUPER_ADMIN)
+        role_res = await db.execute(stmt_role)
+        role = role_res.scalar_one_or_none()
+
+        user = User(
+            id=user_id,
+            email=email,
+            first_name=payload.get("user_metadata", {}).get("first_name", "Supabase"),
+            last_name=payload.get("user_metadata", {}).get("last_name", "User"),
+            role_id=role.id if role else None,
+            is_active=True,
+            is_verified=True,
+        )
+        db.add(user)
+        await db.commit()
+        
+        # Re-query to load relationships
+        stmt_reload = select(User).options(
+            selectinload(User.role),
+            selectinload(User.organization)
+        ).where(User.id == user.id)
+        res_reload = await db.execute(stmt_reload)
+        user = res_reload.scalar_one()
+
+    if not user:
+        raise UnauthorizedException(detail="User not found")
+        
+    if not user.is_active:
+        raise ForbiddenException(detail="User account is inactive")
+
+    return user
+
+
+def require_roles(allowed_roles: List[UserRoleEnum]) -> Callable:
+    async def role_checker(current_user: User = Depends(get_current_user)) -> User:
+        if not current_user.role or current_user.role.name not in allowed_roles:
+            raise ForbiddenException(
+                detail=f"Action requires one of the following roles: {[r.value for r in allowed_roles]}"
+            )
+        return current_user
+
+    return role_checker
+
+
+async def get_user_client_id(user: User, db: AsyncSession) -> uuid.UUID | None:
+    """
+    Safely resolves the associated Client ID for a client user.
+    Enforces strict backend-driven client isolation.
+    """
+    if not user or not user.email:
+        return None
+
+    from sqlalchemy import func
+    from app.models.role import Role
+    from app.models.clients import Contact, Client
+
+    # Safely query role name without triggering lazy-load MissingGreenlet exception
+    if user.role_id:
+        stmt_role = select(Role.name).where(Role.id == user.role_id)
+        res_role = await db.execute(stmt_role)
+        role_name_val = res_role.scalar_one_or_none()
+        role_str = role_name_val.value if hasattr(role_name_val, "value") else str(role_name_val or "")
+        if role_str.lower() not in ("client", "client_viewer"):
+            return None
+
+    # 1. Match Contact email
+    stmt_contact = select(Contact.client_id).where(func.lower(Contact.email) == user.email.lower())
+    res_contact = await db.execute(stmt_contact)
+    contact_client_id = res_contact.scalar_one_or_none()
+    if contact_client_id:
+        return contact_client_id
+
+    # 2. Match Client email, name, or created_by_id
+    stmt_client = select(Client.id).where(
+        (func.lower(Client.email) == user.email.lower()) |
+        (func.lower(Client.name) == user.email.lower()) |
+        (Client.created_by_id == user.id)
+    )
+    res_client = await db.execute(stmt_client)
+    client_id = res_client.scalar_one_or_none()
+    if client_id:
+        return client_id
+
+    return None
+

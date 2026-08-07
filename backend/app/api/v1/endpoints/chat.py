@@ -101,7 +101,65 @@ async def chat_websocket_endpoint(
                 event_type = msg_json.get("event")
                 event_data = msg_json.get("data", {})
 
-                if event_type in ("typing_start", "typing_stop"):
+                if event_type == "send_message":
+                    recipient_id_str = event_data.get("recipient_id")
+                    content_str = (event_data.get("content") or "").strip()
+                    if recipient_id_str and content_str:
+                        async with AsyncSessionLocal() as db_session:
+                            try:
+                                sender_uuid = UUID(user_id_str)
+                                recipient_uuid = UUID(recipient_id_str)
+
+                                stmt_rec = select(User).options(selectinload(User.role)).where(User.id == recipient_uuid, User.is_active == True)
+                                res_rec = await db_session.execute(stmt_rec)
+                                recipient_user = res_rec.scalar_one_or_none()
+
+                                stmt_snd = select(User).options(selectinload(User.role)).where(User.id == sender_uuid)
+                                res_snd = await db_session.execute(stmt_snd)
+                                sender_user = res_snd.scalar_one_or_none()
+
+                                if recipient_user and sender_user:
+                                    s_role = (sender_user.role.name if sender_user.role else "").lower()
+                                    r_role = (recipient_user.role.name if recipient_user.role else "").lower()
+
+                                    # Reject unauthorized cross-client messaging
+                                    if s_role in ("client", "client_viewer") and r_role in ("client", "client_viewer"):
+                                        await websocket.send_text(json.dumps({"event": "error", "data": {"message": "Cross-client messaging unauthorized"}}))
+                                    else:
+                                        conv = await get_or_create_conversation(db_session, sender_uuid, recipient_uuid)
+                                        now = datetime.now(timezone.utc)
+                                        conv.last_message_at = now
+
+                                        new_msg = ChatMessage(
+                                            conversation_id=conv.id,
+                                            sender_id=sender_uuid,
+                                            recipient_id=recipient_uuid,
+                                            message_type=MessageTypeEnum.TEXT,
+                                            content=content_str,
+                                            is_read=False,
+                                            created_by_id=sender_uuid,
+                                            updated_by_id=sender_uuid,
+                                        )
+                                        db_session.add(new_msg)
+                                        await db_session.commit()
+
+                                        stmt_fetch = select(ChatMessage).options(
+                                            selectinload(ChatMessage.sender).selectinload(User.role),
+                                            selectinload(ChatMessage.recipient).selectinload(User.role),
+                                        ).where(ChatMessage.id == new_msg.id)
+                                        res_fetch = await db_session.execute(stmt_fetch)
+                                        msg_created = res_fetch.scalar_one()
+
+                                        msg_read = ChatMessageRead.model_validate(msg_created)
+                                        msg_dict = msg_read.model_dump(mode="json")
+
+                                        # Real-time WebSocket delivery to recipient AND sender
+                                        await chat_manager.send_personal_event(str(recipient_uuid), "new_message", msg_dict)
+                                        await chat_manager.send_personal_event(str(sender_uuid), "new_message", msg_dict)
+                            except Exception as ex:
+                                pass
+
+                elif event_type in ("typing_start", "typing_stop"):
                     recipient_id = event_data.get("recipient_id")
                     if recipient_id:
                         await chat_manager.send_personal_event(
@@ -201,6 +259,16 @@ async def get_chat_history(
     """
     Get paginated message history between current user and other_user_id. Automatically marks unread messages as read.
     """
+    cur_role = (current_user.role.name if current_user.role else "").lower()
+    if cur_role in ("client", "client_viewer"):
+        stmt_other = select(User).options(selectinload(User.role)).where(User.id == other_user_id)
+        res_other = await db.execute(stmt_other)
+        other_u = res_other.scalar_one_or_none()
+        if other_u:
+            other_role = (other_u.role.name if other_u.role else "").lower()
+            if other_role in ("client", "client_viewer") and str(other_u.id) != str(current_user.id):
+                raise ForbiddenException(detail="Access Denied: Client accounts cannot access chat history of other client accounts.")
+
     conv = await get_or_create_conversation(db, current_user.id, other_user_id)
 
     # Bulk mark unread messages from other_user_id as read
@@ -278,11 +346,17 @@ async def send_chat_message(
     if payload.recipient_id == current_user.id:
         raise CRMException(status_code=400, detail="Cannot send message to yourself")
 
-    stmt_rec = select(User).where(User.id == payload.recipient_id, User.is_active == True)
+    stmt_rec = select(User).options(selectinload(User.role)).where(User.id == payload.recipient_id, User.is_active == True)
     res_rec = await db.execute(stmt_rec)
     recipient = res_rec.scalar_one_or_none()
     if not recipient:
         raise NotFoundException(detail="Recipient user not found or inactive")
+
+    cur_role = (current_user.role.name if current_user.role else "").lower()
+    if cur_role in ("client", "client_viewer"):
+        rec_role = (recipient.role.name if recipient.role else "").lower()
+        if rec_role in ("client", "client_viewer"):
+            raise ForbiddenException(detail="Access Denied: Client accounts cannot send messages to other client accounts.")
 
     conv = await get_or_create_conversation(db, current_user.id, payload.recipient_id)
 

@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Set, Any
+from typing import Dict, List, Set, Any, Optional
 from uuid import UUID
 from fastapi import WebSocket
 
@@ -11,6 +11,13 @@ class ChatConnectionManager:
     """
     Manages active WebSocket connections per user ID.
     Handles online status, typing indicators, read receipts, and real-time message broadcasts.
+
+    PRODUCTION ARCHITECTURE NOTE (Multi-Worker Scaling):
+    For single-instance / development deployment, local in-memory active_connections dictionary
+    handles real-time WebSocket delivery.
+    In multi-worker production environments (e.g. Uvicorn with workers > 1 or multi-container deployments),
+    a shared pub/sub broker like Redis Pub/Sub or NATS is used to fan out WebSocket events
+    across process boundaries.
     """
 
     def __init__(self):
@@ -23,9 +30,9 @@ class ChatConnectionManager:
             self.active_connections[user_id] = []
 
         self.active_connections[user_id].append(websocket)
-        logger.info(f"User {user_id} connected to Chat WebSocket (tabs: {len(self.active_connections[user_id])})")
+        logger.info(f"User {user_id} connected to Chat WebSocket (open connections: {len(self.active_connections[user_id])})")
 
-        # Broadcast online status
+        # Broadcast online status to active connections
         await self.broadcast_user_status(user_id, is_online=True)
 
     def disconnect(self, user_id: str, websocket: WebSocket):
@@ -49,7 +56,7 @@ class ChatConnectionManager:
         if user_id in self.active_connections:
             message_text = json.dumps({"event": event_type, "data": payload})
             disconnected = []
-            for ws in self.active_connections[user_id]:
+            for ws in list(self.active_connections[user_id]):
                 try:
                     await ws.send_text(message_text)
                 except Exception as e:
@@ -58,6 +65,13 @@ class ChatConnectionManager:
 
             for dead_ws in disconnected:
                 self.disconnect(user_id, dead_ws)
+
+    async def broadcast_to_conversation(self, conversation_id: str, participant_ids: List[str], event_type: str, payload: Dict[str, Any]):
+        """
+        Broadcasts an event to all active participants in a specific conversation room.
+        """
+        for p_id in participant_ids:
+            await self.send_personal_event(str(p_id), event_type, payload)
 
     async def broadcast_user_status(self, user_id: str, is_online: bool):
         """
@@ -69,7 +83,7 @@ class ChatConnectionManager:
 
         for target_id, sockets in list(self.active_connections.items()):
             if target_id != user_id:
-                for ws in sockets:
+                for ws in list(sockets):
                     try:
                         await ws.send_text(message_text)
                     except Exception:

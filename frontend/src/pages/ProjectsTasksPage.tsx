@@ -79,8 +79,9 @@ export const ProjectsTasksPage: React.FC = () => {
     setIsLoading(true);
     try {
       const activeClientId = localStorage.getItem('crm_active_client_id');
+      const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
       const params: any = { page: 1, page_size: 50 };
-      if (activeClientId) {
+      if (isUUID(activeClientId)) {
         params.client_id = activeClientId;
       }
       const projRes = await api.get<PaginatedResponse<any>>('/projects', { params });

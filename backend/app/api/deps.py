@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import func, or_
 
 from app.core.database import get_db
 from app.core.security import decode_token
@@ -37,11 +38,15 @@ async def get_current_user(
     except Exception:
         raise UnauthorizedException(detail="Could not validate credentials")
 
-    # Try lookup by ID first
+    # Try lookup by ID or case-insensitive email
+    conditions = [User.id == user_id]
+    if email:
+        conditions.append(func.lower(User.email) == email.lower())
+
     stmt = select(User).options(
         selectinload(User.role),
         selectinload(User.organization)
-    ).where((User.id == user_id) | (User.email == email), User.is_deleted == False)
+    ).where(or_(*conditions), User.is_deleted == False)
     
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
@@ -56,6 +61,7 @@ async def get_current_user(
         user = User(
             id=user_id,
             email=email,
+            hashed_password="",
             first_name=payload.get("user_metadata", {}).get("first_name", "Supabase"),
             last_name=payload.get("user_metadata", {}).get("last_name", "User"),
             role_id=role.id if role else None,

@@ -24,3 +24,10 @@ backend/uploads/
 # OS
 .DS_Store
 Thumbs.db
+# Project environment files
+*.env
+
+frontend/tsconfig.tsbuildinfo
+whatsapp-service/node_modules/
+whatsapp-service/.wwebjs_auth/
+whatsapp-service/.wwebjs_cache/

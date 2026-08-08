@@ -102,7 +102,11 @@ export const Header: React.FC<HeaderProps> = ({
         {!isClientRole && (
           <button
             type="button"
-            onClick={() => (window.location.href = '/dashboard')}
+            onClick={() => {
+              localStorage.setItem('crm_active_client_id', 'superadmin');
+              localStorage.setItem('crm_active_client_name', 'Superadmin Main View');
+              window.location.href = '/dashboard';
+            }}
             className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 hover:bg-amber-100 transition-all text-xs font-bold shadow-2xs shrink-0"
             title="Return to Superadmin Main Account View"
           >

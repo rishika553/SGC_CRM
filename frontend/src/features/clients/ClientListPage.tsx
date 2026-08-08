@@ -100,20 +100,12 @@ export const ClientListPage: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<KeyRound className="w-4 h-4 text-brand-600" />}
-              onClick={() => setIsProvisionOpen(true)}
-            >
-              Provision Client Account
-            </Button>
-            <Button
               variant="primary"
               size="sm"
               leftIcon={<Plus className="w-4 h-4" />}
-              onClick={() => setIsCreateOpen(true)}
+              onClick={() => setIsProvisionOpen(true)}
             >
-              Add Client Company
+              Create Account
             </Button>
           </div>
         </div>

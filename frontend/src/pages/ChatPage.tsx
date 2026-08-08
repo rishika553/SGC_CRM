@@ -21,6 +21,7 @@ import {
   Wifi,
   WifiOff,
   RefreshCw,
+  QrCode,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -32,6 +33,7 @@ import { api } from '@/lib/axios';
 import { useAuth } from '@/features/auth/AuthContext';
 import { Client } from '@/types/client';
 import { PaginatedResponse, User } from '@/types';
+import { WhatsAppConnectModal } from '@/features/whatsapp/WhatsAppConnectModal';
 
 export interface ChatMessage {
   id: string;
@@ -77,6 +79,7 @@ export const ChatPage: React.FC = () => {
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<boolean>(false);
   const [showMobileChat, setShowMobileChat] = useState<boolean>(false);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState<boolean>(false);
 
   // WebSocket Connection State
   const [wsStatus, setWsStatus] = useState<'connected' | 'connecting' | 'disconnected' | 'error'>('disconnected');
@@ -377,31 +380,79 @@ export const ChatPage: React.FC = () => {
     if (!inputMessage.trim() || !activeConversation) return;
 
     const textToSend = inputMessage.trim();
+    const tempId = `temp-${Date.now()}`;
+    const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      sender: 'user',
+      senderName: currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Super Admin',
+      senderInitials: currentUser ? `${currentUser.first_name[0]}${currentUser.last_name[0]}`.toUpperCase() : 'SA',
+      text: textToSend,
+      timestamp: timestampStr,
+      readStatus: 'sent',
+    };
+
+    // Optimistically update conversation state locally
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === activeConversation.id) {
+          return {
+            ...c,
+            messages: [...c.messages, optimisticMsg],
+            lastMessage: textToSend,
+            lastMessageTime: timestampStr,
+          };
+        }
+        return c;
+      })
+    );
+
     setInputMessage('');
     setIsEmojiPickerOpen(false);
 
     // 1. Send via WebSocket if connected
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          event: 'send_message',
-          data: {
-            recipient_id: activeConversation.id,
-            content: textToSend,
-            message_type: 'text',
-          },
-        })
-      );
-    } else {
-      // 2. Fallback to REST API
       try {
-        await api.post('/chat/messages', {
-          recipient_id: activeConversation.id,
-          content: textToSend,
-          message_type: 'text',
-        });
-      } catch (err: any) {
-        toast('Message Warning', err.response?.data?.error?.message || 'Could not deliver message to server', 'error');
+        wsRef.current.send(
+          JSON.stringify({
+            event: 'send_message',
+            data: {
+              recipient_id: activeConversation.id,
+              content: textToSend,
+              message_type: 'text',
+            },
+          })
+        );
+      } catch (wsErr) {}
+    }
+
+    // 2. Persist to REST API for guaranteed delivery & database sync
+    try {
+      const res = await api.post('/chat/messages', {
+        recipient_id: activeConversation.id,
+        content: textToSend,
+        message_type: 'text',
+      });
+
+      if (res.data?.success && res.data?.data) {
+        const created = res.data.data;
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id === activeConversation.id) {
+              const updatedMsgs = c.messages.map((m) => (m.id === tempId ? { ...m, id: created.id, readStatus: 'delivered' as const } : m));
+              return {
+                ...c,
+                messages: updatedMsgs,
+              };
+            }
+            return c;
+          })
+        );
+      }
+    } catch (err: any) {
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        toast('Message Failed', err.response?.data?.error?.message || 'Could not deliver message to server', 'error');
       }
     }
   };
@@ -594,6 +645,17 @@ export const ChatPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {!isClientRole && (
+                    <button
+                      type="button"
+                      onClick={() => setIsWhatsAppModalOpen(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white transition-all text-xs font-bold shadow-xs cursor-pointer"
+                      title="Manage WhatsApp Web Integration"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>WhatsApp Web</span>
+                    </button>
+                  )}
                   <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#EEF5EF] text-[#2F4F3A] border border-[#D7DDD7]">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Encrypted Portal Channel
@@ -687,6 +749,13 @@ export const ChatPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {!isClientRole && (
+        <WhatsAppConnectModal
+          isOpen={isWhatsAppModalOpen}
+          onClose={() => setIsWhatsAppModalOpen(false)}
+        />
+      )}
     </MainLayout>
   );
 };

@@ -60,29 +60,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [refreshProfile]);
 
-  const login = async (email: string, password: string, portal?: string) => {
+  const login = async (emailInput: string, password: string, portal?: string) => {
     setIsLoading(true);
     try {
-      // Direct backend API login with portal role verification
-      const response = await api.post('/auth/login', { email, password, portal });
-      const { access_token, refresh_token, user: userData } = response.data.data;
+      let email = emailInput.trim();
+      if (!email.includes('@')) {
+        email = `${email}@sgccrm.com`;
+      }
+      // 1. Authenticate directly via Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data?.session) {
+        throw new Error(error?.message || 'Authentication failed. Please check your credentials.');
+      }
 
-      localStorage.setItem('crm_access_token', access_token);
-      localStorage.setItem('crm_refresh_token', refresh_token);
-      setToken(access_token);
+      const accessToken = data.session.access_token;
+      localStorage.setItem('crm_access_token', accessToken);
+      if (data.session.refresh_token) {
+        localStorage.setItem('crm_refresh_token', data.session.refresh_token);
+      }
+      setToken(accessToken);
+
+      // 2. Fetch DB-verified user profile from FastAPI backend
+      const response = await api.get('/users/me');
+      if (!response.data?.success || !response.data?.data) {
+        await supabase.auth.signOut();
+        localStorage.removeItem('crm_access_token');
+        localStorage.removeItem('crm_refresh_token');
+        setToken(null);
+        setUser(null);
+        throw new Error('User profile record not found in database.');
+      }
+
+      const userData: User = response.data.data;
+      const rawRole = userData.role?.name ? String(userData.role.name).toLowerCase() : '';
+      const isClientUser = rawRole === 'client' || rawRole === 'client_viewer';
+      const isAdminUser = rawRole === 'super_admin' || rawRole === 'admin';
+
+      // 3. Enforce Portal Protection based on DB-verified role
+      if (portal === 'superadmin' && !isAdminUser) {
+        await supabase.auth.signOut();
+        localStorage.removeItem('crm_access_token');
+        localStorage.removeItem('crm_refresh_token');
+        setToken(null);
+        setUser(null);
+        throw new Error('Access Denied: Client accounts cannot access the Super Admin Portal. Please use the Client Login page.');
+      }
+
+      if (portal === 'client' && !isClientUser) {
+        await supabase.auth.signOut();
+        localStorage.removeItem('crm_access_token');
+        localStorage.removeItem('crm_refresh_token');
+        setToken(null);
+        setUser(null);
+        throw new Error('Access Denied: Corporate Admin accounts cannot access the Client Portal. Please use the Super Admin Login page.');
+      }
+
       setUser(userData);
     } catch (err) {
-      // Fallback to Supabase auth if backend API throws network error
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error && data?.session) {
-          const accessToken = data.session.access_token;
-          localStorage.setItem('crm_access_token', accessToken);
-          setToken(accessToken);
-          await refreshProfile();
-          return;
-        }
-      } catch (supabaseErr) {}
       throw err;
     } finally {
       setIsLoading(false);
@@ -93,13 +127,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
     } catch {
-      // Ignore if Supabase client offline
+      // Ignore if Supabase offline
     }
     localStorage.removeItem('crm_access_token');
     localStorage.removeItem('crm_refresh_token');
     setToken(null);
     setUser(null);
-    window.location.href = '/login';
+    window.location.href = '/superadmin/login';
   };
 
   return (

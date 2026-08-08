@@ -10,7 +10,7 @@ from app.schemas.user import UserRead
 # Regular expression constants for Indian GSTIN and PAN validation
 GSTIN_REGEX = re.compile(r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")
 PAN_REGEX = re.compile(r"^[A-Z]{5}[0-9]{4}[A-Z]{1}$")
-PHONE_REGEX = re.compile(r"^\+?[0-9\s\-]{7,15}$")
+PHONE_REGEX = re.compile(r"^\+?[0-9\s\-\(\)]{7,25}$")
 POSTAL_CODE_REGEX = re.compile(r"^[0-9A-Za-z\s\-]{3,10}$")
 
 

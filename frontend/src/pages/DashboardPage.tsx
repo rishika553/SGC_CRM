@@ -64,32 +64,37 @@ export const DashboardPage: React.FC = () => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       const activeClientId = localStorage.getItem('crm_active_client_id');
+      const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+      const targetClientId = isUUID(activeClientId) ? activeClientId : null;
+
       try {
-        // 1. Fetch Client Company Profile
-        try {
-          if (activeClientId) {
-            const clientRes = await api.get(`/clients/${activeClientId}`);
+        // 1. Fetch Client Company Profile if a valid client UUID is selected
+        if (targetClientId) {
+          try {
+            const clientRes = await api.get(`/clients/${targetClientId}`);
             if (clientRes.data.success && clientRes.data.data) {
               setClientProfile(clientRes.data.data);
             }
-          } else {
+          } catch (e) {
+            setClientProfile(null);
+          }
+        } else if (isClientRole) {
+          try {
             const meRes = await api.get('/clients/me');
             if (meRes.data.success && meRes.data.data) {
               setClientProfile(meRes.data.data);
             }
+          } catch (e) {
+            setClientProfile(null);
           }
-        } catch (e) {
-          // Fallback query if superadmin account
-          const clientListRes = await api.get<PaginatedResponse<Client>>('/clients', { params: { page: 1, page_size: 1 } });
-          if (clientListRes.data.success && clientListRes.data.data.length > 0) {
-            setClientProfile(clientListRes.data.data[0]);
-          }
+        } else {
+          setClientProfile(null);
         }
 
         // 2. Fetch Projects
         try {
           const params: any = { page: 1, page_size: 10 };
-          if (activeClientId) params.client_id = activeClientId;
+          if (targetClientId) params.client_id = targetClientId;
           const projRes = await api.get<PaginatedResponse<any>>('/projects', { params });
           if (projRes.data.success && projRes.data.data) {
             const mappedProjs: DashboardProject[] = projRes.data.data.map((p: any) => ({
@@ -107,7 +112,7 @@ export const DashboardPage: React.FC = () => {
         // 3. Fetch Tasks
         try {
           const params: any = { page: 1, page_size: 10 };
-          if (activeClientId) params.client_id = activeClientId;
+          if (targetClientId) params.client_id = targetClientId;
           const taskRes = await api.get<PaginatedResponse<any>>('/tasks', { params });
           if (taskRes.data.success && taskRes.data.data) {
             const mappedTasks: DashboardTask[] = taskRes.data.data.map((t: any) => ({
@@ -124,7 +129,7 @@ export const DashboardPage: React.FC = () => {
         // 4. Fetch Documents Count
         try {
           const params: any = { page: 1, page_size: 1 };
-          if (activeClientId) params.client_id = activeClientId;
+          if (targetClientId) params.client_id = targetClientId;
           const docRes = await api.get<PaginatedResponse<any>>('/documents', { params });
           if (docRes.data.success && docRes.data.meta) {
             setDocumentsCount(docRes.data.meta.total || docRes.data.data.length || 0);

@@ -28,7 +28,7 @@ export const ClientLoginPage: React.FC = () => {
       toast('Welcome back', 'Client authentication successful', 'success');
       navigate('/dashboard');
     } catch (err: any) {
-      const errorMsg = err.response?.data?.error?.message || err.response?.data?.detail || 'Invalid Client credentials';
+      const errorMsg = err.message || err.response?.data?.error?.message || err.response?.data?.detail || 'Invalid Client credentials';
       toast('Access Denied', errorMsg, 'error');
     } finally {
       setIsLoading(false);

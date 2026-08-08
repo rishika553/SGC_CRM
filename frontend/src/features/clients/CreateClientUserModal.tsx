@@ -41,8 +41,6 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [provisionedData, setProvisionedData] = useState<ProvisionedDetails | null>(null);
-  const [existingClients, setExistingClients] = useState<{ id: string; name: string; industry?: string }[]>([]);
-  const [selectedDropdownValue, setSelectedDropdownValue] = useState<string>('');
 
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<CreateClientUserForm>();
   const { toast } = useToast();
@@ -51,33 +49,14 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
     if (isOpen) {
       setProvisionedData(null);
       setIsCopied(false);
-      setSelectedDropdownValue('');
       if (clientName) {
         setValue('client_name', clientName);
       }
       if (clientEmail) {
         setValue('username_or_email', clientEmail);
       }
-
-      // Fetch existing client accounts for dropdown selection
-      api.get('/clients', { params: { page_size: 100 } })
-        .then((res) => {
-          if (res.data.success && res.data.data) {
-            setExistingClients(res.data.data);
-          }
-        })
-        .catch(() => {});
     }
   }, [isOpen, clientName, clientEmail, setValue]);
-
-  const handleDropdownSelect = (val: string) => {
-    setSelectedDropdownValue(val);
-    if (val === '__NEW__') {
-      setValue('client_name', '');
-    } else if (val) {
-      setValue('client_name', val, { shouldValidate: true });
-    }
-  };
 
   const onSubmit = async (data: CreateClientUserForm) => {
     setIsLoading(true);
@@ -131,11 +110,11 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={provisionedData ? "Client Credentials Ready" : "Provision Client Account"}
+      title={provisionedData ? "Client Credentials Ready" : "Create Client Account"}
       description={
         provisionedData
           ? "The client account has been created. Copy these credentials and share them with your client."
-          : "Create client login credentials (Client Name, Username & Password) for client access."
+          : "Enter client company details, stakeholder contact info, and login credentials in one place."
       }
       size="lg"
     >
@@ -148,7 +127,7 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
             <div>
               <h4 className="font-bold text-sm text-emerald-900">Account Successfully Created!</h4>
               <p className="text-xs text-emerald-800 mt-0.5">
-                The client stakeholder can now log in at <code className="bg-emerald-100 px-1.5 py-0.5 rounded font-mono font-bold text-emerald-900">{window.location.origin}/login</code> using the credentials below.
+                The client stakeholder can now log in at <code className="bg-emerald-100 px-1.5 py-0.5 rounded font-mono font-bold text-emerald-900">{window.location.origin}/client/login</code> using the credentials below.
               </p>
             </div>
           </div>
@@ -199,33 +178,12 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
           <div className="p-3 bg-brand-50 border border-brand-200 rounded-lg text-brand-900 text-xs flex items-start gap-2.5">
             <KeyRound className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">Super Admin Account Provisioning</p>
+              <p className="font-semibold">Unified Client Account Creation</p>
               <p className="text-brand-700 mt-0.5">
-                Set up a client account with custom Client Name, Username, and Password. Give these credentials to the client to let them sign in at <code className="bg-brand-100 px-1 py-0.5 rounded font-mono text-[11px]">/login</code>.
+                Set up client company details, stakeholder contact info, and login credentials all in one step. Give these credentials to the client for login at <code className="bg-brand-100 px-1 py-0.5 rounded font-mono text-[11px]">/client/login</code>.
               </p>
             </div>
           </div>
-
-          {existingClients.length > 0 && (
-            <div className="w-full flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-surface-700 uppercase tracking-wider">
-                Select Existing Client Account (or Create New)
-              </label>
-              <select
-                className="w-full h-9 bg-white border border-surface-200 rounded-lg px-3 text-sm text-surface-900 focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/15"
-                value={selectedDropdownValue}
-                onChange={(e) => handleDropdownSelect(e.target.value)}
-              >
-                <option value="">-- Choose Existing Client Account (or Create New Below) --</option>
-                {existingClients.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name} {c.industry ? `(${c.industry})` : ''}
-                  </option>
-                ))}
-                <option value="__NEW__">+ Enter New Client Company Account...</option>
-              </select>
-            </div>
-          )}
 
           <Input
             label="Client / Company Name"
@@ -285,7 +243,7 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
               leftIcon={<UserCheck className="w-4 h-4" />}
               isLoading={isLoading}
             >
-              Create & Provision Credentials
+              Create Client Account
             </Button>
           </div>
         </form>

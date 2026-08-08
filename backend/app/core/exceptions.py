@@ -56,6 +56,15 @@ class ConflictException(CRMException):
         )
 
 
+class ServiceUnavailableException(CRMException):
+    def __init__(self, detail: str = "Upstream service is currently unavailable"):
+        super().__init__(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=detail,
+            code="SERVICE_UNAVAILABLE",
+        )
+
+
 async def crm_exception_handler(request: Request, exc: CRMException) -> JSONResponse:
     logger.warning(f"CRMException [{exc.code}] {exc.status_code} at {request.url.path}: {exc.detail}")
     return JSONResponse(

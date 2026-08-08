@@ -17,6 +17,7 @@ import {
   PanelLeftOpen,
   Crown,
   Shield,
+  MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,8 +54,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onAddClient,
 }) => {
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
+  const SUPERADMIN_OPTION: ClientOption = { id: 'superadmin', name: 'Superadmin Main View' };
   const [liveClients, setLiveClients] = useState<ClientOption[]>(initialClients || []);
-  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(initialActiveClient || null);
+  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(initialActiveClient || SUPERADMIN_OPTION);
 
   React.useEffect(() => {
     if (initialActiveClient) {
@@ -74,6 +76,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       } else if (urlClientId) {
         const matched = initialClients.find((c) => c.id === urlClientId);
         if (matched) setSelectedClient(matched);
+        else setSelectedClient(SUPERADMIN_OPTION);
+      } else if (savedClientId && savedClientId !== 'superadmin') {
+        const matched = initialClients.find((c) => c.id === savedClientId);
+        if (matched) setSelectedClient(matched);
+        else setSelectedClient(SUPERADMIN_OPTION);
+      } else {
+        setSelectedClient(SUPERADMIN_OPTION);
       }
       return;
     }
@@ -95,17 +104,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             if (matched) {
               setSelectedClient(matched);
             } else {
-              setSelectedClient(formatted[0]);
+              setSelectedClient(SUPERADMIN_OPTION);
             }
-          } else if (savedClientId) {
+          } else if (savedClientId && savedClientId !== 'superadmin') {
             const matched = formatted.find((c) => c.id === savedClientId);
             if (matched) {
               setSelectedClient(matched);
             } else {
-              setSelectedClient(formatted[0]);
+              setSelectedClient(SUPERADMIN_OPTION);
             }
           } else {
-            setSelectedClient(formatted[0]);
+            setSelectedClient(SUPERADMIN_OPTION);
           }
         }
       } catch (err) {
@@ -129,6 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { label: 'Documents', path: '/documents', icon: <FileText className="w-5 h-5 shrink-0" /> },
     { label: 'User Management', path: '/users', icon: <Shield className="w-5 h-5 shrink-0" /> },
     { label: 'Chat', path: '/chat', icon: <MessageSquare className="w-5 h-5 shrink-0" /> },
+    { label: 'WhatsApp', path: '/whatsapp', icon: <MessageCircle className="w-5 h-5 shrink-0 text-[#25D366]" /> },
   ];
 
   const clientNavItems = [
@@ -144,8 +154,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleClientSelect = (client: ClientOption) => {
     setSelectedClient(client);
     if (client.id === 'superadmin') {
-      localStorage.removeItem('crm_active_client_id');
-      localStorage.removeItem('crm_active_client_name');
+      localStorage.setItem('crm_active_client_id', 'superadmin');
+      localStorage.setItem('crm_active_client_name', 'Superadmin Main View');
     } else {
       localStorage.setItem('crm_active_client_id', client.id);
       localStorage.setItem('crm_active_client_name', client.name);

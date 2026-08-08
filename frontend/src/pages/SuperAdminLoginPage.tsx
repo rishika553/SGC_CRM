@@ -28,7 +28,7 @@ export const SuperAdminLoginPage: React.FC = () => {
       toast('Welcome back', 'Super Admin authentication successful', 'success');
       navigate('/dashboard');
     } catch (err: any) {
-      const errorMsg = err.response?.data?.error?.message || err.response?.data?.detail || 'Invalid Super Admin credentials';
+      const errorMsg = err.message || err.response?.data?.error?.message || err.response?.data?.detail || 'Invalid Super Admin credentials';
       toast('Access Denied', errorMsg, 'error');
     } finally {
       setIsLoading(false);

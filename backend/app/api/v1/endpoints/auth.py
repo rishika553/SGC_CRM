@@ -34,81 +34,10 @@ from app.services.audit_service import log_audit_event
 router = APIRouter()
 
 
-@router.post("/login", response_model=ResponseEnvelope[TokenResponse])
-async def login(
-    payload: LoginRequest,
-    request: Request,
-    db: AsyncSession = Depends(get_db)
-):
-    clean_identifier = payload.email.strip().lower()
-    stmt = select(User).options(
-        selectinload(User.role),
-        selectinload(User.organization)
-    ).where(
-        (func.lower(User.email) == clean_identifier) |
-        (func.lower(User.first_name) == clean_identifier),
-        User.is_deleted == False
-    )
-
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-
-    if not user or not verify_password(payload.password, user.hashed_password):
-        raise UnauthorizedException(detail="Invalid email or password")
-
-    if not user.is_active:
-        raise UnauthorizedException(detail="User account is deactivated")
-
-    # Enforce portal role verification
-    raw_role = user.role.name if user.role else UserRoleEnum.SUPER_ADMIN
-    user_role_str = raw_role.value if hasattr(raw_role, "value") else str(raw_role)
-    is_client_user = raw_role in (UserRoleEnum.CLIENT, UserRoleEnum.CLIENT_VIEWER) or user_role_str.lower() in ('client', 'client_viewer')
-    is_admin_user = raw_role == UserRoleEnum.SUPER_ADMIN or user_role_str.lower() in ('super_admin', 'admin')
-
-    if payload.portal == "superadmin" and not is_admin_user:
-        raise ForbiddenException(detail="Access Denied: Client accounts cannot access the Super Admin Portal. Please use the Client Login page.")
-
-    if payload.portal == "client" and not is_client_user:
-        raise ForbiddenException(detail="Access Denied: Corporate Admin accounts cannot access the Client Portal. Please use the Super Admin Login page.")
-
-    # Update last login timestamp
-    now = datetime.now(timezone.utc)
-    user.last_login_at = now
-
-    try:
-        await log_audit_event(
-            db=db,
-            action="LOGIN",
-            entity_name="User",
-            entity_id=str(user.id),
-            changes={"email": user.email, "last_login_at": now.isoformat(), "portal": payload.portal or "default"},
-            user_id=user.id,
-            ip_address=request.client.host if request.client else None,
-            user_agent=request.headers.get("user-agent"),
-        )
-    except Exception as e:
-        print(f"[AUDIT_LOG_ERROR] Could not log audit event for login: {e}")
-
-    await db.commit()
-
-    access_token = create_access_token(
-        subject=user.id,
-        additional_claims={
-            "role": user_role_str,
-            "organization_id": str(user.organization_id) if user.organization_id else None
-        }
-    )
-    refresh_token = create_refresh_token(subject=user.id)
-
-    return ResponseEnvelope(
-        success=True,
-        message="Authentication successful",
-        data=TokenResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            user=UserRead.model_validate(user)
-        )
+@router.post("/login", response_model=ResponseEnvelope[dict])
+async def login(payload: LoginRequest):
+    raise UnauthorizedException(
+        detail="Custom FastAPI login is disabled. All authentications must use Supabase Auth (supabase.auth.signInWithPassword)."
     )
 
 

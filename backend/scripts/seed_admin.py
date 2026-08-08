@@ -91,6 +91,57 @@ async def seed():
             existing_user2.is_verified = True
             print("ℹ️ Updated account password for: rishikaaa02@gmail.com / Password123!")
 
+        # Seed default demo Client organization & user account
+        from app.models.clients import Client, ClientStatusEnum, ClientTierEnum
+        stmt_client_org = select(Client).where(Client.name == "Acme Advisory Group")
+        res_client_org = await db.execute(stmt_client_org)
+        client_org = res_client_org.scalar_one_or_none()
+
+        if not client_org:
+            client_org = Client(
+                name="Acme Advisory Group",
+                legal_name="Acme Advisory Group Pvt Ltd",
+                industry="Financial Consulting & Advisory",
+                primary_contact_name="Sarah Jenkins",
+                email="client@sgccrm.com",
+                phone="+1 (555) 234-5678",
+                city="San Francisco",
+                state="CA",
+                country="USA",
+                tier=ClientTierEnum.ENTERPRISE,
+                status=ClientStatusEnum.ACTIVE,
+            )
+            db.add(client_org)
+            await db.flush()
+            print("🏢 Created default Client organization: Acme Advisory Group")
+
+        stmt_client_user = select(User).where(User.email == "client@sgccrm.com")
+        res_client_user = await db.execute(stmt_client_user)
+        existing_client_user = res_client_user.scalar_one_or_none()
+
+        if not existing_client_user:
+            client_user = User(
+                email="client@sgccrm.com",
+                hashed_password=get_password_hash("Password123!"),
+                first_name="Sarah",
+                last_name="Jenkins",
+                job_title="VP of Operations",
+                phone_number="+1 (555) 234-5678",
+                organization_id=None,
+                role_id=roles_map[UserRoleEnum.CLIENT].id,
+                is_active=True,
+                is_verified=True,
+            )
+            db.add(client_user)
+            print("💼 Created default Client account: client@sgccrm.com / Password123!")
+        else:
+            existing_client_user.hashed_password = get_password_hash("Password123!")
+            existing_client_user.organization_id = None
+            existing_client_user.role_id = roles_map[UserRoleEnum.CLIENT].id
+            existing_client_user.is_active = True
+            existing_client_user.is_verified = True
+            print("ℹ️ Updated Client account credentials for: client@sgccrm.com / Password123!")
+
         await db.commit()
         print("✅ Database seeding completed successfully!")
 

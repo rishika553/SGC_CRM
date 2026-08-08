@@ -466,13 +466,17 @@ async def provision_client_account(
         db.add(new_contact)
 
     # Create user credentials
+    user_email = payload.username_or_email.strip()
+    if "@" not in user_email:
+        user_email = f"{user_email}@sgccrm.com"
+
     new_user = User(
-        email=payload.username_or_email.strip(),
+        email=user_email,
         hashed_password=get_password_hash(payload.password),
         first_name=payload.first_name.strip(),
         last_name=payload.last_name.strip(),
         job_title=payload.job_title or "Client Stakeholder",
-        organization_id=client_obj.id,
+        organization_id=None,
         role_id=client_role.id,
         is_active=True,
         is_verified=True,
@@ -480,6 +484,10 @@ async def provision_client_account(
     )
     db.add(new_user)
     await db.flush()
+
+    # Sync to Supabase Auth schema (auth.users and auth.identities)
+    from app.core.supabase_auth_sync import sync_user_to_supabase_auth
+    await sync_user_to_supabase_auth(db, new_user.id, user_email, payload.password)
 
     await log_audit_event(
         db=db,

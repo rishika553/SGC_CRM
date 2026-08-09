@@ -217,11 +217,18 @@ function createWhatsAppClient(crmUserId) {
 
   const authPath = getAuthPath(crmUserId);
 
+  // Use a separate Chrome user data dir so system Chrome instances don't conflict
+  const userDataDir = path.join(__dirname, '.wwebjs_chrome_data', `user_${crmUserId}`);
+  fs.mkdirSync(userDataDir, { recursive: true });
+
   const client = new Client({
     authStrategy: new LocalAuth({ clientId: `crm_${crmUserId}`, dataPath: authPath }),
     puppeteer: {
       headless: true,
-      args: PUPPETEER_ARGS,
+      args: [
+        ...PUPPETEER_ARGS,
+        `--user-data-dir=${userDataDir}`,
+      ],
       timeout: 90000,
       ...(CHROME_EXECUTABLE ? { executablePath: CHROME_EXECUTABLE } : {}),
     },
@@ -437,10 +444,14 @@ app.post('/disconnect', requireCrmUser, async (req, res) => {
     session.qrDataUrl = null;
     session.user = null;
 
-    // Remove persisted auth for this user
+    // Remove persisted auth and chrome data for this user
     const authPath = getAuthPath(req.crmUserId);
     if (fs.existsSync(authPath)) {
       try { fs.rmSync(authPath, { recursive: true, force: true }); } catch (_) {}
+    }
+    const chromeDataPath = path.join(__dirname, '.wwebjs_chrome_data', `user_${req.crmUserId}`);
+    if (fs.existsSync(chromeDataPath)) {
+      try { fs.rmSync(chromeDataPath, { recursive: true, force: true }); } catch (_) {}
     }
 
     emitToUser(req.crmUserId, 'status_change', { status: 'disconnected', user: null });

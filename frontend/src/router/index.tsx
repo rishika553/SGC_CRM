@@ -59,7 +59,7 @@ const SuperAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
 export const AppRouter: React.FC = () => {
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <BrowserRouter>
       <AuthProvider>
         <Routes>
           <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />

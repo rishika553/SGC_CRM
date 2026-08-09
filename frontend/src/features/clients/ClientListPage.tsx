@@ -98,10 +98,11 @@ export const ClientListPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
               variant="primary"
               size="sm"
+              className="w-full sm:w-auto"
               leftIcon={<Plus className="w-4 h-4" />}
               onClick={() => setIsProvisionOpen(true)}
             >
@@ -122,9 +123,9 @@ export const ClientListPage: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-3 flex-wrap w-full md:w-auto">
               <select
-                className="h-9 bg-white border border-surface-200 rounded-lg px-3 text-xs font-medium text-surface-800 focus:outline-none focus:border-brand-600"
+                className="h-9 bg-white border border-surface-200 rounded-lg px-3 text-xs font-medium text-surface-800 focus:outline-none focus:border-brand-600 flex-1 sm:flex-none min-w-0"
                 value={tierFilter}
                 onChange={(e) => setTierFilter(e.target.value)}
               >
@@ -135,7 +136,7 @@ export const ClientListPage: React.FC = () => {
               </select>
 
               <select
-                className="h-9 bg-white border border-surface-200 rounded-lg px-3 text-xs font-medium text-surface-800 focus:outline-none focus:border-brand-600"
+                className="h-9 bg-white border border-surface-200 rounded-lg px-3 text-xs font-medium text-surface-800 focus:outline-none focus:border-brand-600 flex-1 sm:flex-none min-w-0"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -216,14 +217,15 @@ export const ClientListPage: React.FC = () => {
             </div>
 
             {/* Pagination */}
-            <div className="px-6 py-3.5 border-t border-surface-100 flex items-center justify-between text-xs text-surface-600">
+            <div className="px-4 sm:px-6 py-3.5 border-t border-surface-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-surface-600">
               <span>
                 Page {meta.page} of {meta.total_pages} ({meta.total} clients)
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   size="sm"
                   variant="outline"
+                  className="flex-1 sm:flex-none"
                   disabled={!meta.has_previous}
                   onClick={() => fetchClients(meta.page - 1)}
                   leftIcon={<ChevronLeft className="w-4 h-4" />}
@@ -233,6 +235,7 @@ export const ClientListPage: React.FC = () => {
                 <Button
                   size="sm"
                   variant="outline"
+                  className="flex-1 sm:flex-none"
                   disabled={!meta.has_next}
                   onClick={() => fetchClients(meta.page + 1)}
                   rightIcon={<ChevronRight className="w-4 h-4" />}

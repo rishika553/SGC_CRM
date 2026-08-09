@@ -12,6 +12,7 @@ import { WhatsAppPage } from '@/pages/WhatsAppPage';
 import { ComponentShowcasePage } from '@/pages/ComponentShowcasePage';
 import { UserManagementPage } from '@/features/users/UserManagementPage';
 import { UserProfilePage } from '@/features/users/UserProfilePage';
+import { ConsentPage } from '@/features/consents/ConsentPage';
 import { ClientListPage } from '@/features/clients/ClientListPage';
 import { ClientDetailPage } from '@/features/clients/ClientDetailPage';
 import { AuthProvider, useAuth } from '@/features/auth/AuthContext';
@@ -78,6 +79,14 @@ export const AppRouter: React.FC = () => {
             element={
               <ProtectedRoute>
                 <AgreementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/consent"
+            element={
+              <ProtectedRoute>
+                <ConsentPage />
               </ProtectedRoute>
             }
           />

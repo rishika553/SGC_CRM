@@ -242,7 +242,7 @@ export const DocumentsPage: React.FC = () => {
         {/* Module Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#27332B] tracking-tight flex items-center gap-2.5">
+            <h1 className="text-3xl font-extrabold text-[#27332B] tracking-tight flex items-center gap-2.5 flex-wrap">
               Secure Document Vault
               <span className="text-xs font-bold text-[#5E8C61] bg-[#DCE9DE] px-3 py-1 rounded-full border border-[#5E8C61]/20 flex items-center gap-1">
                 <Lock className="w-3 h-3" />
@@ -254,13 +254,14 @@ export const DocumentsPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
               type="button"
               variant="primary"
+              size="lg"
               onClick={() => setIsUploadModalOpen(true)}
-              leftIcon={<Upload className="w-4 h-4" />}
-              className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-5 py-2.5 rounded-[16px] shadow-xs text-sm font-semibold"
+              leftIcon={<Upload className="w-5 h-5" />}
+              className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-[16px] shadow-xs text-sm font-bold w-full sm:w-auto"
             >
               Upload Document
             </Button>
@@ -470,7 +471,7 @@ export const DocumentsPage: React.FC = () => {
                 required
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#27332B] mb-1.5">Vault Category</label>
                   <select
@@ -501,12 +502,12 @@ export const DocumentsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#E3E8E3]">
+              <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 border-t border-[#E3E8E3]">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsUploadModalOpen(false)}
-                  className="px-4 py-2 text-xs"
+                  className="px-4 py-2 text-xs sm:w-auto"
                 >
                   Cancel
                 </Button>
@@ -528,7 +529,7 @@ export const DocumentsPage: React.FC = () => {
       {selectedPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setSelectedPreview(null)} />
-          <div className="relative z-10 bg-white rounded-[20px] p-6 md:p-8 max-w-2xl w-full shadow-2xl border border-[#E3E8E3] animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
+          <div className="relative z-10 bg-white rounded-[20px] p-5 md:p-8 max-w-2xl w-full shadow-2xl border border-[#E3E8E3] animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-4 mb-4">
               <div>
                 <span className="inline-block bg-[#DCE9DE] text-[#2F4F3A] font-bold text-xs px-3 py-1 rounded-full border border-[#5E8C61]/20">
@@ -551,7 +552,7 @@ export const DocumentsPage: React.FC = () => {
                 {selectedPreview.contentSnippet}
               </div>
 
-              <div className="border-t border-[#E3E8E3] pt-4 grid grid-cols-2 gap-4 text-xs">
+              <div className="border-t border-[#E3E8E3] pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
                   <span className="text-[#6B7280] font-semibold block">Uploaded By</span>
                   <span className="font-bold text-[#27332B]">{selectedPreview.uploadedBy}</span>
@@ -567,22 +568,22 @@ export const DocumentsPage: React.FC = () => {
             </div>
 
             {/* Modal Actions */}
-            <div className="pt-4 mt-4 flex items-center justify-between border-t border-[#E3E8E3]">
+            <div className="pt-4 mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 border-t border-[#E3E8E3]">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => window.print()}
                 leftIcon={<Printer className="w-4 h-4" />}
-                className="text-xs"
+                className="text-xs w-full sm:w-auto"
               >
                 Print File
               </Button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setSelectedPreview(null)}
-                  className="text-xs"
+                  className="text-xs flex-1 sm:flex-none"
                 >
                   Close
                 </Button>
@@ -594,7 +595,7 @@ export const DocumentsPage: React.FC = () => {
                     setSelectedPreview(null);
                   }}
                   leftIcon={<Download className="w-4 h-4" />}
-                  className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white text-xs"
+                  className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white text-xs flex-1 sm:flex-none"
                 >
                   Download Encrypted File
                 </Button>

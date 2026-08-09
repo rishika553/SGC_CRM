@@ -7,6 +7,7 @@ from app.repositories.invoice_repository import invoice_repository, InvoiceRepos
 from app.repositories.document_repository import document_repository, DocumentRepository
 from app.repositories.chat_repository import chat_repository, ChatRepository
 from app.repositories.audit_repository import audit_repository, AuditRepository
+from app.repositories.consent_repository import consent_repository, ConsentRepository
 
 __all__ = [
     "BaseRepository",
@@ -26,4 +27,6 @@ __all__ = [
     "ChatRepository",
     "audit_repository",
     "AuditRepository",
+    "consent_repository",
+    "ConsentRepository",
 ]

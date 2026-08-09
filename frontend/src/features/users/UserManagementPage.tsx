@@ -80,10 +80,11 @@ export const UserManagementPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
               variant="outline"
               size="sm"
+              className="w-full sm:w-auto"
               leftIcon={<KeyRound className="w-4 h-4 text-brand-600" />}
               onClick={() => setIsCreateClientUserOpen(true)}
             >
@@ -92,6 +93,7 @@ export const UserManagementPage: React.FC = () => {
             <Button
               variant="primary"
               size="sm"
+              className="w-full sm:w-auto"
               leftIcon={<Plus className="w-4 h-4" />}
               onClick={() => setIsCreateOpen(true)}
             >
@@ -102,8 +104,8 @@ export const UserManagementPage: React.FC = () => {
 
         {/* Filter & Search Bar */}
         <Card padding="sm">
-          <div className="flex items-center justify-between gap-4">
-            <div className="w-72">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div className="w-full md:w-72">
               <Input
                 placeholder="Search by name or email..."
                 leftIcon={<Search className="w-4 h-4" />}
@@ -201,14 +203,15 @@ export const UserManagementPage: React.FC = () => {
             </div>
 
             {/* Pagination Controls */}
-            <div className="px-6 py-3.5 border-t border-surface-100 flex items-center justify-between text-xs text-surface-600">
+            <div className="px-4 sm:px-6 py-3.5 border-t border-surface-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-surface-600">
               <span>
                 Page {meta.page} of {meta.total_pages}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   size="sm"
                   variant="outline"
+                  className="flex-1 sm:flex-none"
                   disabled={!meta.has_previous}
                   onClick={() => fetchUsers(meta.page - 1, search)}
                   leftIcon={<ChevronLeft className="w-4 h-4" />}
@@ -218,6 +221,7 @@ export const UserManagementPage: React.FC = () => {
                 <Button
                   size="sm"
                   variant="outline"
+                  className="flex-1 sm:flex-none"
                   disabled={!meta.has_next}
                   onClick={() => fetchUsers(meta.page + 1, search)}
                   rightIcon={<ChevronRight className="w-4 h-4" />}

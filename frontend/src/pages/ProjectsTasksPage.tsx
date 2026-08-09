@@ -517,9 +517,10 @@ export const ProjectsTasksPage: React.FC = () => {
           <Button
             type="button"
             variant="primary"
+            size="lg"
             onClick={handleOpenCreateModal}
-            leftIcon={<Plus className="w-4 h-4" />}
-            className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm shrink-0"
+            leftIcon={<Plus className="w-5 h-5" />}
+            className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-xl text-sm font-bold shadow-sm w-full sm:w-auto"
           >
             Create Project
           </Button>
@@ -846,7 +847,7 @@ export const ProjectsTasksPage: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-bold text-slate-800 mb-1">
                 Target Deadline Date <span className="text-red-500">*</span>

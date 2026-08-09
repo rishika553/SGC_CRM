@@ -488,7 +488,7 @@ export const ChatPage: React.FC = () => {
 
   return (
     <MainLayout clientName={isClientRole ? 'Client Support' : 'All Accounts'} pageTitle="Realtime Chat">
-      <div className="h-[calc(100vh-140px)] bg-white border border-[#E3E8E3] rounded-[24px] shadow-[0_8px_30px_rgba(47,79,58,.06)] overflow-hidden flex flex-col md:flex-row">
+      <div className="h-[calc(100vh-140px)] h-[calc(100dvh-140px)] bg-white border border-[#E3E8E3] rounded-[24px] shadow-[0_8px_30px_rgba(47,79,58,.06)] overflow-hidden flex flex-col md:flex-row">
         {/* Left Sidebar: Conversations Directory */}
         <div
           className={cn(

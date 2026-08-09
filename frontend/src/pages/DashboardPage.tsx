@@ -211,13 +211,13 @@ export const DashboardPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0 relative z-10">
+          <div className="flex items-center gap-3 flex-wrap relative z-10">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate('/chat')}
               leftIcon={<MessageSquare className="w-4 h-4 text-emerald-300" />}
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs px-4 py-2.5 rounded-xl shadow-xs"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs px-4 py-2.5 rounded-xl shadow-xs flex-1 sm:flex-none"
             >
               Support Chat
             </Button>
@@ -226,7 +226,7 @@ export const DashboardPage: React.FC = () => {
               variant="primary"
               onClick={() => navigate('/settings')}
               leftIcon={<User className="w-4 h-4" />}
-              className="bg-[#DCE9DE] hover:bg-white text-[#2F4F3A] font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm"
+              className="bg-[#DCE9DE] hover:bg-white text-[#2F4F3A] font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm flex-1 sm:flex-none"
             >
               My Profile
             </Button>
@@ -353,7 +353,7 @@ export const DashboardPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 font-medium">
+                      <div className="flex items-center justify-between gap-1 flex-wrap text-[10px] text-slate-500 pt-1 font-medium">
                         <span>Started: {formatDate(proj.start_date)}</span>
                         <span>Expected Completion: {formatDate(proj.deadline)}</span>
                       </div>

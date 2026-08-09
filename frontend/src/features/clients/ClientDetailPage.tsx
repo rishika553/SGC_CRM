@@ -124,7 +124,7 @@ export const ClientDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
               variant="outline"
               size="sm"
@@ -162,22 +162,22 @@ export const ClientDetailPage: React.FC = () => {
 
         {/* Account Summary Banner */}
         <Card padding="md">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 divide-y md:divide-y-0 md:divide-x divide-surface-100">
-            <div className="pr-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
               <span className="text-xs font-medium text-surface-500 block">Account Tier</span>
               <Badge variant="primary" className="mt-1 uppercase">
                 {client.tier}
               </Badge>
             </div>
 
-            <div className="px-4">
+            <div>
               <span className="text-xs font-medium text-surface-500 block">Account Status</span>
               <Badge variant={client.status === 'active' ? 'success' : 'warning'} className="mt-1 capitalize">
                 {client.status}
               </Badge>
             </div>
 
-            <div className="px-4">
+            <div>
               <span className="text-xs font-medium text-surface-500 block">Account Manager</span>
               <span className="text-sm font-semibold text-surface-900 mt-1 block">
                 {client.account_manager
@@ -186,7 +186,7 @@ export const ClientDetailPage: React.FC = () => {
               </span>
             </div>
 
-            <div className="pl-4">
+            <div>
               <span className="text-xs font-medium text-surface-500 block">Annual Revenue</span>
               <span className="text-sm font-bold text-surface-900 mt-1 block">
                 {client.annual_revenue ? formatCurrency(client.annual_revenue) : '—'}
@@ -225,7 +225,7 @@ export const ClientDetailPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Button
                     variant="outline"
                     size="sm"
@@ -293,10 +293,10 @@ export const ClientDetailPage: React.FC = () => {
         })()}
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-surface-200 gap-6">
+        <div className="flex border-b border-surface-200 gap-4 sm:gap-6 overflow-x-auto">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`pb-3 text-xs font-semibold border-b-2 transition-colors ${
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'overview'
                 ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-surface-500 hover:text-surface-900'
@@ -306,7 +306,7 @@ export const ClientDetailPage: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('contacts')}
-            className={`pb-3 text-xs font-semibold border-b-2 transition-colors ${
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'contacts'
                 ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-surface-500 hover:text-surface-900'
@@ -316,7 +316,7 @@ export const ClientDetailPage: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('activity')}
-            className={`pb-3 text-xs font-semibold border-b-2 transition-colors ${
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'activity'
                 ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-surface-500 hover:text-surface-900'

@@ -9,8 +9,8 @@ export const Card: React.FC<CardProps> = ({ children, className, padding = 'md',
   const paddings = {
     none: 'p-0',
     sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
+    md: 'p-5 sm:p-6',
+    lg: 'p-6 sm:p-8',
   };
 
   return (
@@ -52,7 +52,7 @@ export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ ch
 );
 
 export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className, ...props }) => (
-  <div className={cn('pt-4 border-t border-surface-100 mt-4 flex items-center justify-end gap-3', className)} {...props}>
+  <div className={cn('pt-4 border-t border-surface-100 mt-4 flex items-center justify-end gap-3 flex-wrap', className)} {...props}>
     {children}
   </div>
 );

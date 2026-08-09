@@ -65,7 +65,7 @@ interface ConnectPanelProps {
 const ConnectPanel: React.FC<ConnectPanelProps> = ({
   status, qrCode, connectedUser, isLoading, error, onConnect, onDisconnect,
 }) => (
-  <div className="flex flex-col items-center justify-center h-full p-8 space-y-6 bg-[#F9FAF9]">
+  <div className="flex flex-col items-center justify-center h-full p-5 sm:p-8 space-y-6 bg-[#F9FAF9]">
     <div className="w-full max-w-sm space-y-5">
       {/* Status badge */}
       <div className="flex items-center justify-between p-3.5 bg-white border border-[#E3E8E3] rounded-2xl shadow-xs">
@@ -131,7 +131,7 @@ const ConnectPanel: React.FC<ConnectPanelProps> = ({
       ) : status === 'qr_ready' && qrCode ? (
         <div className="space-y-4 text-center">
           <div className="p-4 bg-white border border-[#E3E8E3] rounded-2xl shadow-xs inline-block mx-auto">
-            <img src={qrCode} alt="WhatsApp QR Code" className="w-56 h-56 mx-auto rounded-lg" />
+            <img src={qrCode} alt="WhatsApp QR Code" className="w-48 h-48 sm:w-56 sm:h-56 mx-auto rounded-lg" />
           </div>
           <div>
             <p className="text-xs font-bold text-[#27332B]">Scan with WhatsApp on your phone</p>
@@ -474,7 +474,7 @@ export const WhatsAppPage: React.FC = () => {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <MainLayout clientName="All Accounts" pageTitle="WhatsApp">
-      <div className="h-[calc(100vh-140px)] bg-white border border-[#E3E8E3] rounded-[24px] shadow-[0_8px_30px_rgba(47,79,58,.06)] overflow-hidden flex flex-col md:flex-row">
+      <div className="h-[calc(100vh-140px)] h-[calc(100dvh-140px)] bg-white border border-[#E3E8E3] rounded-[24px] shadow-[0_8px_30px_rgba(47,79,58,.06)] overflow-hidden flex flex-col md:flex-row">
 
         {/* ── LEFT: Chat List ─────────────────────────────────────────────── */}
         <div className={cn(

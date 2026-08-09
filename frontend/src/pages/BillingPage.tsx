@@ -200,13 +200,14 @@ export const BillingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
               type="button"
               variant="primary"
+              size="lg"
               onClick={() => setIsCreateModalOpen(true)}
-              leftIcon={<Plus className="w-4 h-4" />}
-              className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-5 py-2.5 rounded-[16px] shadow-xs text-sm font-semibold"
+              leftIcon={<Plus className="w-5 h-5" />}
+              className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-[16px] shadow-xs text-sm font-bold w-full sm:w-auto"
             >
               Create Manual Invoice
             </Button>

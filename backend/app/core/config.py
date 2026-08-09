@@ -34,6 +34,9 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
+        "https://sgc-crm-dba4.vercel.app",
+        "https://sgc-crm-dba4-4kuuizzkx-rishikas-projects-8b0257d5.vercel.app",
+   
     ]
 
     model_config = SettingsConfigDict(

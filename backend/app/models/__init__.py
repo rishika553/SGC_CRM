@@ -45,6 +45,10 @@ from app.models.chat import (
 from app.models.settings import (
     UserSettings,
 )
+from app.models.consents import (
+    Consent,
+    ConsentRequestStatusEnum,
+)
 
 __all__ = [
     "Base",
@@ -80,4 +84,6 @@ __all__ = [
     "ChatMessage",
     "MessageTypeEnum",
     "UserSettings",
+    "Consent",
+    "ConsentRequestStatusEnum",
 ]

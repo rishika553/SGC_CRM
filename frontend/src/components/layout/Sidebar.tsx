@@ -59,6 +59,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [liveClients, setLiveClients] = useState<ClientOption[]>(initialClients || []);
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(initialActiveClient || SUPERADMIN_OPTION);
 
+  const { user: currentUser } = useAuth();
+  const roleName = currentUser?.role?.name ? String(currentUser.role.name).toLowerCase() : '';
+  const isClientRole = roleName === 'client' || roleName === 'client_viewer';
+
   React.useEffect(() => {
     if (initialActiveClient) {
       setSelectedClient(initialActiveClient);
@@ -89,6 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     const fetchLiveClients = async () => {
+      if (isClientRole) return;
       try {
         const response = await api.get<PaginatedResponse<Client>>('/clients', { params: { page: 1, page_size: 50 } });
         if (response.data.success && response.data.data.length > 0) {
@@ -124,11 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
 
     fetchLiveClients();
-  }, [initialClients, initialActiveClient]);
-
-  const { user: currentUser } = useAuth();
-  const roleName = currentUser?.role?.name ? String(currentUser.role.name).toLowerCase() : '';
-  const isClientRole = roleName === 'client' || roleName === 'client_viewer';
+  }, [initialClients, initialActiveClient, isClientRole]);
 
   const adminNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <Building2 className="w-5 h-5 shrink-0" /> },

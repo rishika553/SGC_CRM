@@ -13,7 +13,7 @@ from sqlalchemy import func, or_, desc, asc
 
 from app.core.database import get_db
 from app.core.exceptions import NotFoundException, ConflictException, ForbiddenException, CRMException
-from app.api.deps import get_current_user, require_roles, ADMIN_ROLES, ALL_ROLES
+from app.api.deps import get_current_user, get_user_client_id, require_roles, ADMIN_ROLES, ALL_ROLES
 from app.models.documents import Document, DocumentCategoryEnum
 from app.models.clients import Client
 from app.models.projects import Project

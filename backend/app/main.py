@@ -34,22 +34,36 @@ def create_application() -> FastAPI:
     )
 
     # CORS Middleware Setup
-    if settings.CORS_ORIGINS:
-        application.add_middleware(
-            CORSMiddleware,
-            allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+    
+    print("CORS ORIGINS:", settings.CORS_ORIGINS)
 
-    # Exception Handlers
-    application.add_exception_handler(CRMException, crm_exception_handler)
-    application.add_exception_handler(RequestValidationError, validation_exception_handler)
-    application.add_exception_handler(Exception, global_exception_handler)
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-    # Include API Routers
-    application.include_router(api_router, prefix=settings.API_V1_STR)
+    application.add_exception_handler(
+        CRMException,
+        crm_exception_handler
+    )
+
+    application.add_exception_handler(
+        RequestValidationError,
+        validation_exception_handler
+    )
+
+    application.add_exception_handler(
+        Exception,
+        global_exception_handler
+    )
+
+    application.include_router(
+        api_router,
+        prefix=settings.API_V1_STR
+    )
 
     return application
 

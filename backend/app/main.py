@@ -65,6 +65,20 @@ def create_application() -> FastAPI:
         prefix=settings.API_V1_STR
     )
 
+    # Public (unauthenticated) endpoints for Render health checks / root probes
+    @application.get("/")
+    async def root():
+        return {
+            "status": "ok",
+            "service": settings.PROJECT_NAME
+        }
+
+    @application.get("/health")
+    async def health():
+        return {
+            "status": "healthy"
+        }
+
     return application
 
 

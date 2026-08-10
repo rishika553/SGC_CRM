@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "SGC CRM Platform"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = False
     WHATSAPP_SERVICE_URL: str = "http://localhost:3001"
 
     # JWT Security Config
@@ -36,7 +36,6 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
         "https://sgc-crm-dba4.vercel.app",
         "https://sgc-crm-dba4-4kuuizzkx-rishikas-projects-8b0257d5.vercel.app",
-   
     ]
 
     model_config = SettingsConfigDict(

@@ -2,6 +2,7 @@ import axios from 'axios';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
+  timeout: 60000, // Bound request time so a cold server/hung DB never leaves the UI Pending forever
   headers: {
     'Content-Type': 'application/json',
   },

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { User } from '@/types';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { User, ApiResponse } from '@/types';
 import { api } from '@/lib/axios';
 import { supabase } from '@/lib/supabase';
 
@@ -10,7 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string, portal?: string) => Promise<void>;
   logout: () => void;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,43 +19,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('crm_access_token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const refreshInFlight = useRef<Promise<User | null> | null>(null);
 
-  const refreshProfile = useCallback(async () => {
+  // Single source of truth for the authenticated user profile.
+  // Concurrent callers share the same in-flight request so /users/me is
+  // only ever sent once at a time (e.g. INITIAL_SESSION + TOKEN_REFRESHED racing).
+  const refreshProfile = useCallback((): Promise<User | null> => {
+    if (refreshInFlight.current) {
+      return refreshInFlight.current;
+    }
+
     const currentToken = localStorage.getItem('crm_access_token');
     if (!currentToken) {
       setUser(null);
       setIsLoading(false);
-      return;
+      return Promise.resolve(null);
     }
 
-    try {
-      const response = await api.get('/users/me');
-      if (response.data.success) {
-        setUser(response.data.data);
+    refreshInFlight.current = (async () => {
+      try {
+        const response = await api.get<ApiResponse<User>>('/users/me');
+        if (response.data?.success && response.data.data) {
+          setUser(response.data.data);
+          return response.data.data;
+        }
+        return null;
+      } catch (error) {
+        localStorage.removeItem('crm_access_token');
+        localStorage.removeItem('crm_refresh_token');
+        setUser(null);
+        setToken(null);
+        return null;
+      } finally {
+        setIsLoading(false);
+        refreshInFlight.current = null;
       }
-    } catch (error) {
-      localStorage.removeItem('crm_access_token');
-      localStorage.removeItem('crm_refresh_token');
-      setUser(null);
-      setToken(null);
-    } finally {
-      setIsLoading(false);
-    }
+    })();
+
+    return refreshInFlight.current;
   }, []);
 
   useEffect(() => {
-    // Listen to Supabase auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+    let active = true;
+
+    // Single session listener is the source of truth for auth state.
+    // On mount, supabase-js v2 emits INITIAL_SESSION with the restored session,
+    // which is the ONLY trigger for the initial /users/me request.
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.access_token) {
         localStorage.setItem('crm_access_token', session.access_token);
         setToken(session.access_token);
         await refreshProfile();
+      } else if (active) {
+        localStorage.removeItem('crm_access_token');
+        localStorage.removeItem('crm_refresh_token');
+        setToken(null);
+        setUser(null);
+        setIsLoading(false);
       }
     });
 
-    refreshProfile();
-
     return () => {
+      active = false;
       authListener.subscription.unsubscribe();
     };
   }, [refreshProfile]);
@@ -80,9 +105,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setToken(accessToken);
 
-      // 2. Fetch DB-verified user profile from FastAPI backend
-      const response = await api.get('/users/me');
-      if (!response.data?.success || !response.data?.data) {
+      // 2. Fetch DB-verified user profile from FastAPI backend (single source of truth)
+      const userData = await refreshProfile();
+      if (!userData) {
         await supabase.auth.signOut();
         localStorage.removeItem('crm_access_token');
         localStorage.removeItem('crm_refresh_token');
@@ -91,7 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User profile record not found in database.');
       }
 
-      const userData: User = response.data.data;
       const rawRole = userData.role?.name ? String(userData.role.name).toLowerCase() : '';
       const isClientUser = rawRole === 'client' || rawRole === 'client_viewer';
       const isAdminUser = rawRole === 'super_admin' || rawRole === 'admin';

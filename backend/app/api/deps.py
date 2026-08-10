@@ -1,11 +1,12 @@
+import time
 import uuid
 from typing import List, Callable
-from fastapi import Depends, Header
+from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, text
 
 from app.core.database import get_db
 from app.core.security import decode_token
@@ -22,14 +23,21 @@ ALL_ROLES = [UserRoleEnum.SUPER_ADMIN, UserRoleEnum.CLIENT, UserRoleEnum.CLIENT_
 
 
 async def get_current_user(
+    request: Request,
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
 ) -> User:
+    t_start = time.perf_counter()
+    # Temporary diagnostic: only instrument the /users/me request flow
+    is_me = request.url.path.endswith("/users/me")
+
     if not token:
         raise UnauthorizedException(detail="Authentication token is missing")
 
     try:
+        t_auth0 = time.perf_counter()
         payload = decode_token(token)
+        t_auth1 = time.perf_counter()
         user_id_str = payload.get("sub")
         email = payload.get("email")
         if not user_id_str:
@@ -38,11 +46,23 @@ async def get_current_user(
     except Exception:
         raise UnauthorizedException(detail="Could not validate credentials")
 
+    if is_me:
+        print(f"[ME] START")
+        print(f"[ME] AUTH: {(t_auth1 - t_auth0) * 1000:.1f} ms")
+
+    # Temporary diagnostic: measure DB connection acquisition (SELECT 1)
+    if is_me:
+        t_db0 = time.perf_counter()
+        await db.execute(text("SELECT 1"))
+        t_db1 = time.perf_counter()
+        print(f"[ME] DB CONNECTION: {(t_db1 - t_db0) * 1000:.1f} ms")
+
     # Try lookup by ID or case-insensitive email
     conditions = [User.id == user_id]
     if email:
         conditions.append(func.lower(User.email) == email.lower())
 
+    t_db2 = time.perf_counter()
     stmt = select(User).options(
         selectinload(User.role),
         selectinload(User.organization)
@@ -50,6 +70,11 @@ async def get_current_user(
     
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
+    t_db3 = time.perf_counter()
+
+    if is_me:
+        # User query bucket also includes role + organization eager loads
+        print(f"[ME] USER QUERY (incl ROLE/ORG): {(t_db3 - t_db2) * 1000:.1f} ms")
 
     if not user and email:
         # Auto-provision user from Supabase token info if user record is missing in public.users
@@ -84,6 +109,9 @@ async def get_current_user(
         
     if not user.is_active:
         raise ForbiddenException(detail="User account is inactive")
+
+    if is_me:
+        print(f"[ME] AUTH DEP TOTAL: {(time.perf_counter() - t_start) * 1000:.1f} ms")
 
     return user
 

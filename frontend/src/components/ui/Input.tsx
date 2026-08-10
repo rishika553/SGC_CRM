@@ -7,10 +7,11 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   helperText?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  onRightIconClick?: () => void;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, helperText, leftIcon, rightIcon, id, ...props }, ref) => {
+  ({ className, label, error, helperText, leftIcon, rightIcon, onRightIconClick, id, ...props }, ref) => {
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
     return (
@@ -38,11 +39,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             )}
             {...props}
           />
-          {rightIcon && (
-            <div className="absolute right-3 text-surface-400 pointer-events-none flex items-center justify-center">
-              {rightIcon}
-            </div>
-          )}
+          {rightIcon &&
+            (onRightIconClick ? (
+              <button
+                type="button"
+                aria-label="Toggle field visibility"
+                onClick={onRightIconClick}
+                tabIndex={-1}
+                className="absolute right-3 text-surface-400 hover:text-[#2F4F3A] flex items-center justify-center transition-colors focus:outline-none"
+              >
+                {rightIcon}
+              </button>
+            ) : (
+              <div className="absolute right-3 text-surface-400 pointer-events-none flex items-center justify-center">
+                {rightIcon}
+              </div>
+            ))}
         </div>
         {error && <span className="text-xs font-medium text-red-600">{error}</span>}
         {!error && helperText && <span className="text-xs text-surface-500">{helperText}</span>}

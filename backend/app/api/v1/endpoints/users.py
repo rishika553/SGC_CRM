@@ -47,10 +47,14 @@ async def get_super_admin_profile(
 
 @router.get("/me", response_model=ResponseEnvelope[UserRead])
 async def get_my_profile(current_user: User = Depends(get_current_user)):
-    return ResponseEnvelope(
+    import time
+    t0 = time.perf_counter()
+    response = ResponseEnvelope(
         success=True,
         data=UserRead.model_validate(current_user)
     )
+    print(f"[ME] RESPONSE: {(time.perf_counter() - t0) * 1000:.1f} ms")
+    return response
 
 
 @router.put("/me", response_model=ResponseEnvelope[UserRead])

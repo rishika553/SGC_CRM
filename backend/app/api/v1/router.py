@@ -15,7 +15,6 @@ from app.api.v1.endpoints import (
     chat,
     settings,
     audit,
-    whatsapp,
     consents,
 )
 
@@ -36,5 +35,4 @@ api_router.include_router(documents.router, prefix="/documents", tags=["Document
 api_router.include_router(chat.router, prefix="/chat", tags=["Real-Time Chat"])
 api_router.include_router(settings.router, prefix="/settings", tags=["Settings & Preferences"])
 api_router.include_router(audit.router, prefix="/audit-logs", tags=["Audit Trails & Security Logs"])
-api_router.include_router(whatsapp.router, prefix="/whatsapp", tags=["WhatsApp Web Management"])
 api_router.include_router(consents.router, prefix="/consents", tags=["Consent Management"])

@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.core.exceptions import NotFoundException, ConflictException, ForbiddenException, CRMException
 from app.api.deps import get_current_user, require_roles, ADMIN_ROLES, ALL_ROLES, get_user_client_id
 from app.models.projects import Project, ProjectStatusEnum, ProjectPriorityEnum
+from app.models.tasks import Task
 from app.models.clients import Client, ClientStatusEnum
 from app.models.audit import AuditLog
 from app.models.role import UserRoleEnum
@@ -37,6 +38,7 @@ def project_options_loader():
         selectinload(Project.client).selectinload(Client.account_manager).selectinload(User.role),
         selectinload(Project.client).selectinload(Client.contacts),
         selectinload(Project.assigned_admin).selectinload(User.role),
+        selectinload(Project.tasks.and_(Task.is_deleted == False)),
     ]
 
 

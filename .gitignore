@@ -1,6 +1,10 @@
 # Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/.tsbuild/
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
 
 # Backend
 backend/venv/
@@ -27,7 +31,6 @@ Thumbs.db
 # Project environment files
 *.env
 
-frontend/tsconfig.tsbuildinfo
 whatsapp-service/node_modules/
 whatsapp-service/.wwebjs_auth/
 whatsapp-service/.wwebjs_cache/

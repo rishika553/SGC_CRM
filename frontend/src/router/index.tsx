@@ -8,7 +8,6 @@ import { ProjectsTasksPage } from '@/pages/ProjectsTasksPage';
 import { BillingPage } from '@/pages/BillingPage';
 import { DocumentsPage } from '@/pages/DocumentsPage';
 import { ChatPage } from '@/pages/ChatPage';
-import { WhatsAppPage } from '@/pages/WhatsAppPage';
 import { ComponentShowcasePage } from '@/pages/ComponentShowcasePage';
 import { UserManagementPage } from '@/features/users/UserManagementPage';
 import { UserProfilePage } from '@/features/users/UserProfilePage';
@@ -128,14 +127,6 @@ export const AppRouter: React.FC = () => {
               <ProtectedRoute>
                 <ChatPage />
               </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/whatsapp"
-            element={
-              <SuperAdminRoute>
-                <WhatsAppPage />
-              </SuperAdminRoute>
             }
           />
           <Route

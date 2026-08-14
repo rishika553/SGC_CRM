@@ -74,7 +74,7 @@ class Task(BaseCRMModel):
 
     # Relationships
     assigned_to = relationship("User", foreign_keys=[assigned_to_id])
-    project = relationship("Project", foreign_keys=[project_id])
+    project = relationship("Project", back_populates="tasks", foreign_keys=[project_id])
     client = relationship("Client", foreign_keys=[client_id])
     parent_task = relationship("Task", remote_side="Task.id", backref="subtasks")
     comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")

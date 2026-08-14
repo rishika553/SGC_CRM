@@ -390,14 +390,10 @@ async def send_chat_message(
     msg_read = ChatMessageRead.model_validate(msg_created)
     msg_dict = msg_read.model_dump(mode="json")
 
-    # Real-time WebSocket broadcast to recipient & sender tabs
+    # The sender updates its own UI from this REST response. Broadcast only to
+    # the recipient so the sender does not receive a duplicate of its message.
     await chat_manager.send_personal_event(
         user_id=str(payload.recipient_id),
-        event_type="new_message",
-        payload=msg_dict
-    )
-    await chat_manager.send_personal_event(
-        user_id=str(current_user.id),
         event_type="new_message",
         payload=msg_dict
     )

@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from app.models.projects import ProjectStatusEnum, ProjectPriorityEnum
+from app.models.tasks import TaskPriorityEnum, TaskStatusEnum
 from app.schemas.user import UserRead
 from app.schemas.clients import ClientRead
 
@@ -97,6 +98,18 @@ class ProjectProgressUpdatePayload(BaseModel):
         return v_int
 
 
+class ProjectTaskRead(BaseModel):
+    """Task fields required by the Projects & Tasks screen."""
+
+    id: UUID
+    title: str
+    status: TaskStatusEnum
+    priority: TaskPriorityEnum
+    parent_task_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ProjectRead(ProjectBase):
     id: UUID
     project_code: str
@@ -107,6 +120,7 @@ class ProjectRead(ProjectBase):
 
     client: Optional[ClientRead] = None
     assigned_admin: Optional[UserRead] = None
+    tasks: List[ProjectTaskRead] = Field(default_factory=list)
 
     is_overdue: bool = False
     days_remaining: Optional[int] = None

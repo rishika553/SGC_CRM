@@ -22,7 +22,9 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/lib/axios';
+import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
+import { clientQueryKeys, fetchClientDirectory } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
 
@@ -115,11 +117,14 @@ export const AgreementPage: React.FC = () => {
   // Load clients for Super Admin selection
   const loadClientsList = async () => {
     try {
-      const res = await api.get<PaginatedResponse<Client>>('/clients', { params: { page: 1, page_size: 100 } });
-      if (res.data.success && res.data.data) {
-        setClientsList(res.data.data);
-        if (res.data.data.length > 0 && !formClientId) {
-          setFormClientId(res.data.data[0].id);
+      const clients = await queryClient.fetchQuery({
+        queryKey: clientQueryKeys.directory,
+        queryFn: fetchClientDirectory,
+      });
+      if (clients.length > 0) {
+        setClientsList(clients);
+        if (!formClientId) {
+          setFormClientId(clients[0].id);
         }
       }
     } catch (err) {}

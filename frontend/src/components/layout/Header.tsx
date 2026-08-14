@@ -3,6 +3,7 @@ import { Search, Bell, User as UserIcon, LogOut, Menu, Crown } from 'lucide-reac
 import { Input } from '../ui/Input';
 import { Dropdown } from '../ui/Dropdown';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useMyClient } from '@/features/clients/clientQueries';
 
 export interface HeaderProps {
   user?: {
@@ -31,21 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   const roleName = user?.role?.name ? String(user.role.name).toLowerCase() : '';
   const isClientRole = roleName === 'client' || roleName === 'client_viewer';
-  const [clientProfileName, setClientProfileName] = React.useState<string>(clientName);
-
-  React.useEffect(() => {
-    if (isClientRole) {
-      import('@/lib/axios').then(({ api }) => {
-        api.get('/clients/me')
-          .then((res) => {
-            if (res.data.success && res.data.data?.name) {
-              setClientProfileName(res.data.data.name);
-            }
-          })
-          .catch(() => {});
-      });
-    }
-  }, [isClientRole]);
+  const { data: myClient } = useMyClient(isClientRole);
+  const clientProfileName = myClient?.name || clientName;
 
   const userMenuItems = [
     ...(!isClientRole ? [{

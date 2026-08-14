@@ -71,3 +71,4 @@ class Project(BaseCRMModel):
     # Relationships
     client = relationship("Client", foreign_keys=[client_id])
     assigned_admin = relationship("User", foreign_keys=[assigned_admin_id])
+    tasks = relationship("Task", back_populates="project", foreign_keys="Task.project_id")

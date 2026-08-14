@@ -17,15 +17,12 @@ import {
   PanelLeftOpen,
   Crown,
   Shield,
-  MessageCircle,
   ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { api } from '@/lib/axios';
-import { Client } from '@/types/client';
-import { PaginatedResponse } from '@/types';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useClientDirectory } from '@/features/clients/clientQueries';
 
 export interface ClientOption {
   id: string;
@@ -56,12 +53,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const SUPERADMIN_OPTION: ClientOption = { id: 'superadmin', name: 'Superadmin Main View' };
-  const [liveClients, setLiveClients] = useState<ClientOption[]>(initialClients || []);
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(initialActiveClient || SUPERADMIN_OPTION);
 
   const { user: currentUser } = useAuth();
   const roleName = currentUser?.role?.name ? String(currentUser.role.name).toLowerCase() : '';
   const isClientRole = roleName === 'client' || roleName === 'client_viewer';
+  const hasProvidedClients = Boolean(initialClients?.length);
+  const { data: queriedClients = [] } = useClientDirectory(!isClientRole && !hasProvidedClients);
+  const liveClients = React.useMemo(
+    () => hasProvidedClients
+      ? initialClients!
+      : queriedClients.map((client) => ({ id: client.id, name: client.name })),
+    [hasProvidedClients, initialClients, queriedClients],
+  );
 
   React.useEffect(() => {
     if (initialActiveClient) {
@@ -74,62 +78,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const urlClientId = pathname.includes('/clients/') ? pathname.split('/clients/')[1]?.split('/')[0] : null;
     const savedClientId = localStorage.getItem('crm_active_client_id');
 
-    if (initialClients && initialClients.length > 0) {
-      setLiveClients(initialClients);
+    if (liveClients.length > 0) {
       if (initialActiveClient) {
         setSelectedClient(initialActiveClient);
       } else if (urlClientId) {
-        const matched = initialClients.find((c) => c.id === urlClientId);
+        const matched = liveClients.find((c) => c.id === urlClientId);
         if (matched) setSelectedClient(matched);
         else setSelectedClient(SUPERADMIN_OPTION);
       } else if (savedClientId && savedClientId !== 'superadmin') {
-        const matched = initialClients.find((c) => c.id === savedClientId);
+        const matched = liveClients.find((c) => c.id === savedClientId);
         if (matched) setSelectedClient(matched);
         else setSelectedClient(SUPERADMIN_OPTION);
       } else {
         setSelectedClient(SUPERADMIN_OPTION);
       }
-      return;
     }
-
-    const fetchLiveClients = async () => {
-      if (isClientRole) return;
-      try {
-        const response = await api.get<PaginatedResponse<Client>>('/clients', { params: { page: 1, page_size: 50 } });
-        if (response.data.success && response.data.data.length > 0) {
-          const formatted = response.data.data.map((c) => ({
-            id: c.id,
-            name: c.name,
-          }));
-          setLiveClients(formatted);
-
-          if (initialActiveClient) {
-            setSelectedClient(initialActiveClient);
-          } else if (urlClientId) {
-            const matched = formatted.find((c) => c.id === urlClientId);
-            if (matched) {
-              setSelectedClient(matched);
-            } else {
-              setSelectedClient(SUPERADMIN_OPTION);
-            }
-          } else if (savedClientId && savedClientId !== 'superadmin') {
-            const matched = formatted.find((c) => c.id === savedClientId);
-            if (matched) {
-              setSelectedClient(matched);
-            } else {
-              setSelectedClient(SUPERADMIN_OPTION);
-            }
-          } else {
-            setSelectedClient(SUPERADMIN_OPTION);
-          }
-        }
-      } catch (err) {
-        // Fallback gracefully on network error
-      }
-    };
-
-    fetchLiveClients();
-  }, [initialClients, initialActiveClient, isClientRole]);
+  }, [liveClients, initialActiveClient]);
 
   const adminNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <Building2 className="w-5 h-5 shrink-0" /> },
@@ -141,7 +105,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { label: 'Documents', path: '/documents', icon: <FileText className="w-5 h-5 shrink-0" /> },
     { label: 'User Management', path: '/users', icon: <Shield className="w-5 h-5 shrink-0" /> },
     { label: 'Chat', path: '/chat', icon: <MessageSquare className="w-5 h-5 shrink-0" /> },
-    { label: 'WhatsApp', path: '/whatsapp', icon: <MessageCircle className="w-5 h-5 shrink-0 text-[#25D366]" /> },
   ];
 
   const clientNavItems = [

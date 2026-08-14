@@ -17,7 +17,9 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/lib/axios';
+import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
+import { clientQueryKeys, fetchMyClient } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
 
@@ -71,87 +73,61 @@ export const DashboardPage: React.FC = () => {
       const targetClientId = isUUID(activeClientId) ? activeClientId : null;
 
       try {
-        // 1. Fetch Client Company Profile if a valid client UUID is selected
-        if (targetClientId) {
-          try {
-            const clientRes = await api.get(`/clients/${targetClientId}`);
-            if (clientRes.data.success && clientRes.data.data) {
-              setClientProfile(clientRes.data.data);
-            }
-          } catch (e) {
-            setClientProfile(null);
-          }
-        } else if (isClientRole) {
-          try {
-            const meRes = await api.get('/clients/me');
-            if (meRes.data.success && meRes.data.data) {
-              setClientProfile(meRes.data.data);
-            }
-          } catch (e) {
-            setClientProfile(null);
-          }
-        } else {
-          setClientProfile(null);
+        const scopedParams = { page: 1, page_size: 10, ...(targetClientId ? { client_id: targetClientId } : {}) };
+        const profileRequest = targetClientId
+          ? api.get(`/clients/${targetClientId}`).then((response) => response.data.data || null)
+          : isClientRole
+            ? queryClient.fetchQuery({ queryKey: clientQueryKeys.mine, queryFn: fetchMyClient })
+            : Promise.resolve(null);
+
+        // These resources do not depend on each other, so start every request at once.
+        // Individual failures resolve to null and do not prevent the rest of the dashboard loading.
+        const [profile, projectResponse, taskResponse, documentResponse, invoiceResponse] = await Promise.all([
+          profileRequest.catch(() => null),
+          api.get<PaginatedResponse<any>>('/projects', { params: scopedParams }).catch(() => null),
+          api.get<PaginatedResponse<any>>('/tasks', { params: scopedParams }).catch(() => null),
+          api.get<PaginatedResponse<any>>('/documents', {
+            params: { page: 1, page_size: 1, ...(targetClientId ? { client_id: targetClientId } : {}) },
+          }).catch(() => null),
+          api.get<PaginatedResponse<any>>('/invoices', { params: { page: 1, page_size: 20 } }).catch(() => null),
+        ]);
+
+        setClientProfile(profile);
+
+        if (projectResponse?.data.success && projectResponse.data.data) {
+          setProjects(projectResponse.data.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            progress: p.progress || 0,
+            status: p.status || 'in_progress',
+            start_date: p.start_date || p.created_at,
+            deadline: p.deadline || p.end_date,
+          })));
         }
 
-        // 2. Fetch Projects
-        try {
-          const params: any = { page: 1, page_size: 10 };
-          if (targetClientId) params.client_id = targetClientId;
-          const projRes = await api.get<PaginatedResponse<any>>('/projects', { params });
-          if (projRes.data.success && projRes.data.data) {
-            const mappedProjs: DashboardProject[] = projRes.data.data.map((p: any) => ({
-              id: p.id,
-              name: p.name,
-              progress: p.progress || 0,
-              status: p.status || 'in_progress',
-              start_date: p.start_date || p.created_at,
-              deadline: p.deadline || p.end_date,
-            }));
-            setProjects(mappedProjs);
-          }
-        } catch (e) {}
+        if (taskResponse?.data.success && taskResponse.data.data) {
+          setTasks(taskResponse.data.data.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            status: t.status || 'todo',
+            priority: t.priority || 'medium',
+            due_date: t.due_date,
+          })));
+        }
 
-        // 3. Fetch Tasks
-        try {
-          const params: any = { page: 1, page_size: 10 };
-          if (targetClientId) params.client_id = targetClientId;
-          const taskRes = await api.get<PaginatedResponse<any>>('/tasks', { params });
-          if (taskRes.data.success && taskRes.data.data) {
-            const mappedTasks: DashboardTask[] = taskRes.data.data.map((t: any) => ({
-              id: t.id,
-              title: t.title,
-              status: t.status || 'todo',
-              priority: t.priority || 'medium',
-              due_date: t.due_date,
-            }));
-            setTasks(mappedTasks);
-          }
-        } catch (e) {}
+        if (documentResponse?.data.success && documentResponse.data.meta) {
+          setDocumentsCount(documentResponse.data.meta.total || documentResponse.data.data.length || 0);
+        }
 
-        // 4. Fetch Documents Count
-        try {
-          const params: any = { page: 1, page_size: 1 };
-          if (targetClientId) params.client_id = targetClientId;
-          const docRes = await api.get<PaginatedResponse<any>>('/documents', { params });
-          if (docRes.data.success && docRes.data.meta) {
-            setDocumentsCount(docRes.data.meta.total || docRes.data.data.length || 0);
-          }
-        } catch (e) {}
-
-        // 5. Fetch Invoices / Billing Balance
-        try {
-          const invRes = await api.get<PaginatedResponse<any>>('/invoices', { params: { page: 1, page_size: 20 } });
-          if (invRes.data.success && invRes.data.data) {
-            const totalUnpaid = invRes.data.data.reduce((sum: number, inv: any) => {
-              if (inv.status === 'sent' || inv.status === 'overdue') {
-                return sum + (inv.total_amount || inv.amount || 0);
-              }
-              return sum;
-            }, 0);
-            setOutstandingBilling(totalUnpaid > 0 ? totalUnpaid : 0);
-          }
-        } catch (e) {}
+        if (invoiceResponse?.data.success && invoiceResponse.data.data) {
+          const totalUnpaid = invoiceResponse.data.data.reduce((sum: number, inv: any) => {
+            if (inv.status === 'sent' || inv.status === 'overdue') {
+              return sum + (inv.total_amount || inv.amount || 0);
+            }
+            return sum;
+          }, 0);
+          setOutstandingBilling(totalUnpaid > 0 ? totalUnpaid : 0);
+        }
 
         // 6. Generate Recent Activities from real data
         const recentEvents: DashboardActivity[] = [

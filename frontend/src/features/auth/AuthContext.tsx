@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { User, ApiResponse } from '@/types';
 import { api } from '@/lib/axios';
+import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
@@ -99,6 +100,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const accessToken = data.session.access_token;
+      // Client records are user-scoped. Do not let a previous account's cache
+      // survive an account switch in the same browser session.
+      queryClient.removeQueries({ queryKey: ['clients'] });
       localStorage.setItem('crm_access_token', accessToken);
       if (data.session.refresh_token) {
         localStorage.setItem('crm_refresh_token', data.session.refresh_token);
@@ -155,6 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     localStorage.removeItem('crm_access_token');
     localStorage.removeItem('crm_refresh_token');
+    queryClient.removeQueries({ queryKey: ['clients'] });
     setToken(null);
     setUser(null);
     window.location.href = '/superadmin/login';

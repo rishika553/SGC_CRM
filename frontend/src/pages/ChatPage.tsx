@@ -21,7 +21,6 @@ import {
   Wifi,
   WifiOff,
   RefreshCw,
-  QrCode,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -30,10 +29,11 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/axios';
+import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
+import { clientQueryKeys, fetchMyClient } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
 import { PaginatedResponse, User } from '@/types';
-import { WhatsAppConnectModal } from '@/features/whatsapp/WhatsAppConnectModal';
 
 export interface ChatMessage {
   id: string;
@@ -79,7 +79,6 @@ export const ChatPage: React.FC = () => {
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<boolean>(false);
   const [showMobileChat, setShowMobileChat] = useState<boolean>(false);
-  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState<boolean>(false);
 
   // WebSocket Connection State
   const [wsStatus, setWsStatus] = useState<'connected' | 'connecting' | 'disconnected' | 'error'>('disconnected');
@@ -105,9 +104,11 @@ export const ChatPage: React.FC = () => {
 
     let isMounted = true;
     let attempts = 0;
+    let initialConnectionTimer: ReturnType<typeof setTimeout> | undefined;
 
     const connectWebSocket = () => {
       if (!isMounted) return;
+      if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) return;
       setWsStatus('connecting');
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -118,14 +119,13 @@ export const ChatPage: React.FC = () => {
         const socket = new WebSocket(wsUrl);
 
         socket.onopen = () => {
-          if (!isMounted) return;
+          if (!isMounted || wsRef.current !== socket) return;
           setWsStatus('connected');
           attempts = 0;
-          console.log('Chat WebSocket connected successfully.');
         };
 
         socket.onmessage = (event) => {
-          if (!isMounted) return;
+          if (!isMounted || wsRef.current !== socket) return;
           try {
             const data = JSON.parse(event.data);
             if (data.event === 'new_message' && data.data) {
@@ -169,11 +169,13 @@ export const ChatPage: React.FC = () => {
         };
 
         socket.onerror = () => {
-          if (!isMounted) return;
+          if (!isMounted || wsRef.current !== socket) return;
           setWsStatus('error');
         };
 
         socket.onclose = () => {
+          if (wsRef.current !== socket) return;
+          wsRef.current = null;
           if (!isMounted) return;
           setWsStatus('disconnected');
           attempts++;
@@ -187,12 +189,18 @@ export const ChatPage: React.FC = () => {
       }
     };
 
-    connectWebSocket();
+    // Defer the initial connection by one task. In React Strict Mode, the first
+    // development-only effect is immediately cleaned up; cancelling this timer
+    // prevents a WebSocket from being opened and closed before it can connect.
+    initialConnectionTimer = setTimeout(connectWebSocket, 0);
 
     return () => {
       isMounted = false;
+      if (initialConnectionTimer) clearTimeout(initialConnectionTimer);
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      if (wsRef.current) wsRef.current.close();
+      const socket = wsRef.current;
+      wsRef.current = null;
+      socket?.close();
     };
   }, [currentUser?.id]);
 
@@ -207,10 +215,10 @@ export const ChatPage: React.FC = () => {
           let superAdminUser: User | null = null;
 
           try {
-            const clientRes = await api.get('/clients/me');
-            if (clientRes.data.success) {
-              clientCompany = clientRes.data.data;
-            }
+            clientCompany = await queryClient.fetchQuery({
+              queryKey: clientQueryKeys.mine,
+              queryFn: fetchMyClient,
+            });
           } catch (e) {}
 
           try {
@@ -411,23 +419,7 @@ export const ChatPage: React.FC = () => {
     setInputMessage('');
     setIsEmojiPickerOpen(false);
 
-    // 1. Send via WebSocket if connected
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      try {
-        wsRef.current.send(
-          JSON.stringify({
-            event: 'send_message',
-            data: {
-              recipient_id: activeConversation.id,
-              content: textToSend,
-              message_type: 'text',
-            },
-          })
-        );
-      } catch (wsErr) {}
-    }
-
-    // 2. Persist to REST API for guaranteed delivery & database sync
+    // Persist once through REST. The backend uses WebSocket only to notify the recipient.
     try {
       const res = await api.post('/chat/messages', {
         recipient_id: activeConversation.id,
@@ -451,9 +443,7 @@ export const ChatPage: React.FC = () => {
         );
       }
     } catch (err: any) {
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        toast('Message Failed', err.response?.data?.error?.message || 'Could not deliver message to server', 'error');
-      }
+      toast('Message Failed', err.response?.data?.error?.message || 'Could not deliver message to server', 'error');
     }
   };
 
@@ -645,17 +635,6 @@ export const ChatPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {!isClientRole && (
-                    <button
-                      type="button"
-                      onClick={() => setIsWhatsAppModalOpen(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white transition-all text-xs font-bold shadow-xs cursor-pointer"
-                      title="Manage WhatsApp Web Integration"
-                    >
-                      <QrCode className="w-3.5 h-3.5" />
-                      <span>WhatsApp Web</span>
-                    </button>
-                  )}
                   <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#EEF5EF] text-[#2F4F3A] border border-[#D7DDD7]">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Encrypted Portal Channel
@@ -749,13 +728,6 @@ export const ChatPage: React.FC = () => {
           )}
         </div>
       </div>
-
-      {!isClientRole && (
-        <WhatsAppConnectModal
-          isOpen={isWhatsAppModalOpen}
-          onClose={() => setIsWhatsAppModalOpen(false)}
-        />
-      )}
     </MainLayout>
   );
 };

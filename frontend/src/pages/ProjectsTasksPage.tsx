@@ -22,6 +22,8 @@ import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/lib/axios';
+import { queryClient } from '@/lib/query-client';
+import { clientQueryKeys, fetchClientDirectory, fetchMyClient } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
 
@@ -89,37 +91,28 @@ export const ProjectsTasksPage: React.FC = () => {
       if (projRes.data.success && projRes.data.data) {
         const rawProjects = projRes.data.data;
 
-        const formattedProjects: ProjectModel[] = await Promise.all(
-          rawProjects.map(async (p: any) => {
-            let topTasks: TaskItem[] = [];
-            try {
-              const taskRes = await api.get<PaginatedResponse<any>>('/tasks', { params: { project_id: p.id } });
-              if (taskRes.data.success && taskRes.data.data) {
-                const allRawTasks = taskRes.data.data;
-                const parentTasks = allRawTasks.filter((t: any) => !t.parent_task_id);
-                const subTasks = allRawTasks.filter((t: any) => t.parent_task_id);
+        const formattedProjects: ProjectModel[] = rawProjects.map((p: any) => {
+            const allRawTasks = p.tasks || [];
+            const parentTasks = allRawTasks.filter((t: any) => !t.parent_task_id);
+            const subTasks = allRawTasks.filter((t: any) => t.parent_task_id);
 
-                topTasks = parentTasks.map((t: any) => {
-                  const childSubs: SubTaskItem[] = subTasks
-                    .filter((st: any) => st.parent_task_id === t.id)
-                    .map((st: any) => ({
-                      id: st.id,
-                      title: st.title,
-                      completed: st.status === 'completed',
-                    }));
+            const topTasks: TaskItem[] = parentTasks.map((t: any) => {
+              const childSubs: SubTaskItem[] = subTasks
+                .filter((st: any) => st.parent_task_id === t.id)
+                .map((st: any) => ({
+                  id: st.id,
+                  title: st.title,
+                  completed: st.status === 'completed',
+                }));
 
-                  return {
-                    id: t.id,
-                    title: t.title,
-                    completed: t.status === 'completed',
-                    priority: t.priority ? (t.priority.charAt(0).toUpperCase() + t.priority.slice(1)) as any : 'Medium',
-                    subtasks: childSubs,
-                  };
-                });
-              }
-            } catch (err) {
-              // Ignore task fetch error for single project
-            }
+              return {
+                id: t.id,
+                title: t.title,
+                completed: t.status === 'completed',
+                priority: t.priority ? (t.priority.charAt(0).toUpperCase() + t.priority.slice(1)) as any : 'Medium',
+                subtasks: childSubs,
+              };
+            });
 
             // Calculate overall progress
             let totalItems = 0;
@@ -149,8 +142,7 @@ export const ProjectsTasksPage: React.FC = () => {
               isExpanded: true, // Default expanded for easy access
               tasks: topTasks,
             };
-          })
-        );
+          });
 
         setProjects(formattedProjects);
       } else {
@@ -177,19 +169,25 @@ export const ProjectsTasksPage: React.FC = () => {
   // Load clients list for Create Project dropdown
   const loadClientsList = async () => {
     try {
-      const res = await api.get<PaginatedResponse<Client>>('/clients', { params: { page: 1, page_size: 100 } });
-      if (res.data.success && res.data.data) {
-        setClientsList(res.data.data);
-        if (res.data.data.length > 0 && !formClientId) {
-          setFormClientId(res.data.data[0].id);
+      const clients = await queryClient.fetchQuery({
+        queryKey: clientQueryKeys.directory,
+        queryFn: fetchClientDirectory,
+      });
+      if (clients.length > 0) {
+        setClientsList(clients);
+        if (!formClientId) {
+          setFormClientId(clients[0].id);
         }
       }
     } catch (err) {
       try {
-        const myRes = await api.get('/clients/me');
-        if (myRes.data.success && myRes.data.data) {
-          setClientsList([myRes.data.data]);
-          setFormClientId(myRes.data.data.id);
+        const client = await queryClient.fetchQuery({
+          queryKey: clientQueryKeys.mine,
+          queryFn: fetchMyClient,
+        });
+        if (client) {
+          setClientsList([client]);
+          setFormClientId(client.id);
         }
       } catch (meErr) {
         toast('Error', 'Failed to fetch clients profile', 'error');
@@ -215,9 +213,12 @@ export const ProjectsTasksPage: React.FC = () => {
       let targetClientId = formClientId;
       if (!targetClientId) {
         try {
-          const myRes = await api.get('/clients/me');
-          if (myRes.data.success && myRes.data.data) {
-            targetClientId = myRes.data.data.id;
+          const client = await queryClient.fetchQuery({
+            queryKey: clientQueryKeys.mine,
+            queryFn: fetchMyClient,
+          });
+          if (client) {
+            targetClientId = client.id;
           }
         } catch (e) {}
       }

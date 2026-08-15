@@ -378,7 +378,7 @@ export const DashboardPage: React.FC = () => {
                         )}>
                           {t.priority}
                         </span>
-                        <span className="text-[11px] text-slate-500 font-medium">
+                        <span className="hidden min-[380px]:inline text-[11px] text-slate-500 font-medium">
                           {t.due_date ? formatDate(t.due_date) : 'No due date'}
                         </span>
                       </div>

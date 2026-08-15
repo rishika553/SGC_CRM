@@ -567,7 +567,7 @@ export const ProjectsTasksPage: React.FC = () => {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight truncate">
+                        <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight truncate min-w-0 flex-1">
                           {p.title}
                         </h2>
                         <button

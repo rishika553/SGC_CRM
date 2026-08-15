@@ -301,7 +301,7 @@ export const DocumentsPage: React.FC = () => {
 
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* File Type Filter */}
-            <div className="flex-1 sm:flex-initial flex items-center gap-1.5 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-2.5 sm:px-3 py-2 text-xs">
+            <div className="w-full sm:w-auto flex items-center gap-1.5 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-2.5 sm:px-3 py-2 text-xs">
               <Filter className="w-3.5 h-3.5 text-[#5E8C61] shrink-0" />
               <select
                 value={fileTypeFilter}
@@ -316,7 +316,7 @@ export const DocumentsPage: React.FC = () => {
             </div>
 
             {/* Sort Selector */}
-            <div className="flex-1 sm:flex-initial flex items-center gap-1.5 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-2.5 sm:px-3 py-2 text-xs">
+            <div className="w-full sm:w-auto flex items-center gap-1.5 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-2.5 sm:px-3 py-2 text-xs">
               <ArrowUpDown className="w-3.5 h-3.5 text-[#5E8C61] shrink-0" />
               <select
                 value={sortBy}
@@ -530,12 +530,12 @@ export const DocumentsPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setSelectedPreview(null)} />
           <div className="relative z-10 bg-white rounded-[20px] p-5 md:p-8 max-w-2xl w-full shadow-2xl border border-[#E3E8E3] animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-4 mb-4">
-              <div>
+            <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-4 mb-4 gap-3">
+              <div className="min-w-0">
                 <span className="inline-block bg-[#DCE9DE] text-[#2F4F3A] font-bold text-xs px-3 py-1 rounded-full border border-[#5E8C61]/20">
                   {selectedPreview.category}
                 </span>
-                <h3 className="text-xl font-bold text-[#27332B] mt-1">{selectedPreview.name}</h3>
+                <h3 className="text-xl font-bold text-[#27332B] mt-1 truncate">{selectedPreview.name}</h3>
               </div>
               <button
                 type="button"

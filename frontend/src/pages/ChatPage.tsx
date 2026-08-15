@@ -21,6 +21,10 @@ import {
   Wifi,
   WifiOff,
   RefreshCw,
+  Bell,
+  BellRing,
+  Trash2,
+  Eraser,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -32,11 +36,13 @@ import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
 import { clientQueryKeys, fetchMyClient } from '@/features/clients/clientQueries';
+import { isPushSupported, getSubscription, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
 import { Client } from '@/types/client';
 import { PaginatedResponse, User } from '@/types';
 
 export interface ChatMessage {
   id: string;
+  senderId?: string;
   sender: 'user' | 'partner';
   senderName: string;
   senderInitials: string;
@@ -85,8 +91,12 @@ export const ChatPage: React.FC = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Web Push Notification State
+  const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'granted' | 'denied'>('loading');
+
   const roleNameStr = String(currentUser?.role?.name || '').toLowerCase();
   const isClientRole = roleNameStr === 'client' || roleNameStr === 'client_viewer' || roleNameStr.includes('client');
+  const isSuperAdmin = roleNameStr === 'super_admin';
 
   // Auto-scroll to bottom of messages
   const scrollToBottom = () => {
@@ -96,6 +106,51 @@ export const ChatPage: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [conversations, activeChatId]);
+
+  // Resolve current push notification state on mount
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!isPushSupported() || typeof Notification === 'undefined') {
+        if (mounted) setPushState('unsupported');
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        if (mounted) setPushState('denied');
+        return;
+      }
+      const sub = await getSubscription().catch(() => null);
+      if (!mounted) return;
+      setPushState(sub ? 'granted' : 'default');
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleTogglePush = async () => {
+    if (pushState === 'granted') {
+      await unsubscribeFromPush().catch(() => undefined);
+      setPushState('default');
+      toast('Notifications Off', 'You will no longer receive chat notifications.', 'info');
+      return;
+    }
+    try {
+      const ok = await subscribeToPush();
+      if (ok) {
+        setPushState('granted');
+        toast('Notifications On', 'You will be notified when someone messages you while the CRM is closed.', 'success');
+      } else if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+        setPushState('denied');
+        toast('Notifications Blocked', 'Enable notifications in your browser settings to receive chat alerts.', 'error');
+      } else {
+        setPushState('default');
+        toast('Not Enabled', 'Notifications could not be enabled right now.', 'info');
+      }
+    } catch (err: any) {
+      toast('Setup Failed', err.response?.data?.error?.message || 'Could not enable notifications.', 'error');
+    }
+  };
 
   // Establish WebSocket Connection with Auto-Reconnection & Heartbeat
   useEffect(() => {
@@ -135,6 +190,7 @@ export const ChatPage: React.FC = () => {
 
               const incomingMsg: ChatMessage = {
                 id: m.id,
+                senderId: m.sender_id,
                 sender: isMe ? 'user' : 'partner',
                 senderName: m.sender ? `${m.sender.first_name} ${m.sender.last_name}` : 'User',
                 senderInitials: m.sender ? `${m.sender.first_name[0]}${m.sender.last_name[0]}`.toUpperCase() : 'US',
@@ -164,6 +220,40 @@ export const ChatPage: React.FC = () => {
                   return conv;
                 })
               );
+            } else if (data.event === 'message_deleted' && data.data) {
+              const { message_id } = data.data;
+              setConversations((prev) =>
+                prev.map((conv) => {
+                  const remaining = conv.messages.filter((msg) => msg.id !== message_id);
+                  if (remaining.length === conv.messages.length) return conv;
+                  const last = remaining[remaining.length - 1];
+                  return {
+                    ...conv,
+                    messages: remaining,
+                    lastMessage: last ? last.text : 'No messages yet.',
+                    lastMessageTime: last ? last.timestamp : '',
+                  };
+                })
+              );
+            } else if (data.event === 'conversation_cleared' && data.data) {
+              const { other_user_id } = data.data;
+              setConversations((prev) =>
+                prev.map((conv) =>
+                  conv.id === other_user_id
+                    ? {
+                        ...conv,
+                        messages: [],
+                        lastMessage: 'No messages yet.',
+                        lastMessageTime: '',
+                        unreadCount: 0,
+                      }
+                    : conv
+                )
+              );
+            } else if (data.event === 'user_deleted' && data.data) {
+              const { user_id } = data.data;
+              setConversations((prev) => prev.filter((conv) => conv.id !== user_id));
+              setActiveChatId((current) => (current === user_id ? null : current));
             }
           } catch (e) {}
         };
@@ -334,6 +424,7 @@ export const ChatPage: React.FC = () => {
         if (res.data.success && Array.isArray(res.data.data)) {
           const loadedMsgs: ChatMessage[] = res.data.data.map((m: any) => ({
             id: m.id,
+            senderId: m.sender_id,
             sender: m.sender_id === currentUser?.id ? 'user' : 'partner',
             senderName: m.sender ? `${m.sender.first_name} ${m.sender.last_name}` : 'User',
             senderInitials: m.sender ? `${m.sender.first_name[0]}${m.sender.last_name[0]}`.toUpperCase() : 'US',
@@ -476,9 +567,64 @@ export const ChatPage: React.FC = () => {
     }
   };
 
+  // Delete a single chat message (own messages for everyone; any message for Super Admin)
+  const handleDeleteMessage = async (msg: ChatMessage) => {
+    if (msg.id.startsWith('temp-')) {
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeConversation?.id) return c;
+          const remaining = c.messages.filter((m) => m.id !== msg.id);
+          const last = remaining[remaining.length - 1];
+          return { ...c, messages: remaining, lastMessage: last ? last.text : '', lastMessageTime: last ? last.timestamp : '' };
+        })
+      );
+      return;
+    }
+
+    if (!window.confirm('Delete this message?')) return;
+    try {
+      await api.delete(`/chat/messages/${msg.id}`);
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeConversation?.id) return c;
+          const remaining = c.messages.filter((m) => m.id !== msg.id);
+          const last = remaining[remaining.length - 1];
+          return {
+            ...c,
+            messages: remaining,
+            lastMessage: last ? last.text : 'No messages yet.',
+            lastMessageTime: last ? last.timestamp : '',
+          };
+        })
+      );
+      toast('Message Deleted', 'Message removed from the conversation.', 'success');
+    } catch (err: any) {
+      toast('Delete Failed', err.response?.data?.error?.message || 'Could not delete the message.', 'error');
+    }
+  };
+
+  // Clear the entire conversation history (Super Admin only)
+  const handleClearConversation = async () => {
+    if (!activeConversation || activeConversation.id.startsWith('admin-channel')) return;
+    if (!window.confirm(`Clear the entire chat history with ${activeConversation.name}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/chat/conversations/${activeConversation.id}/messages`);
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeConversation.id
+            ? { ...c, messages: [], lastMessage: 'No messages yet.', lastMessageTime: '', unreadCount: 0 }
+            : c
+        )
+      );
+      toast('History Cleared', `Chat history with ${activeConversation.name} cleared.`, 'success');
+    } catch (err: any) {
+      toast('Clear Failed', err.response?.data?.error?.message || 'Could not clear the chat history.', 'error');
+    }
+  };
+
   return (
     <MainLayout clientName={isClientRole ? 'Client Support' : 'All Accounts'} pageTitle="Realtime Chat">
-      <div className="h-[calc(100vh-140px)] h-[calc(100dvh-140px)] bg-white border border-[#E3E8E3] rounded-[24px] shadow-[0_8px_30px_rgba(47,79,58,.06)] overflow-hidden flex flex-col md:flex-row">
+      <div className="h-[calc(100dvh-140px)] bg-white border border-[#E3E8E3] rounded-[24px] shadow-[0_8px_30px_rgba(47,79,58,.06)] overflow-hidden flex flex-col md:flex-row">
         {/* Left Sidebar: Conversations Directory */}
         <div
           className={cn(
@@ -499,31 +645,54 @@ export const ChatPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* WebSocket Status Indicator */}
-              <div
-                className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold border',
-                  wsStatus === 'connected' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                  wsStatus === 'connecting' && 'bg-amber-50 text-amber-700 border-amber-200',
-                  (wsStatus === 'disconnected' || wsStatus === 'error') && 'bg-slate-100 text-slate-600 border-slate-200'
+              <div className="flex items-center gap-2">
+                {/* Web Push Notification Toggle */}
+                {pushState !== 'unsupported' && pushState !== 'loading' && (
+                  <button
+                    type="button"
+                    onClick={handleTogglePush}
+                    title={pushState === 'granted' ? 'Disable notifications' : 'Enable notifications'}
+                    className={cn(
+                      'p-2 rounded-full border transition-colors',
+                      pushState === 'granted'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-white text-[#6B7280] border-[#E3E8E3] hover:border-[#5E8C61] hover:text-[#2F4F3A]'
+                    )}
+                  >
+                    {pushState === 'granted' ? (
+                      <BellRing className="w-3.5 h-3.5" />
+                    ) : (
+                      <Bell className="w-3.5 h-3.5" />
+                    )}
+                  </button>
                 )}
-              >
-                {wsStatus === 'connected' ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>Realtime</span>
-                  </>
-                ) : wsStatus === 'connecting' ? (
-                  <>
-                    <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
-                    <span>Connecting</span>
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="w-3 h-3 text-slate-500" />
-                    <span>Polling</span>
-                  </>
-                )}
+
+                {/* WebSocket Status Indicator */}
+                <div
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold border',
+                    wsStatus === 'connected' && 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    wsStatus === 'connecting' && 'bg-amber-50 text-amber-700 border-amber-200',
+                    (wsStatus === 'disconnected' || wsStatus === 'error') && 'bg-slate-100 text-slate-600 border-slate-200'
+                  )}
+                >
+                  {wsStatus === 'connected' ? (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Realtime</span>
+                    </>
+                  ) : wsStatus === 'connecting' ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
+                      <span>Connecting</span>
+                    </>
+                  ) : (
+                    <>
+                      <WifiOff className="w-3 h-3 text-slate-500" />
+                      <span>Polling</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -626,9 +795,9 @@ export const ChatPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div>
-                    <h3 className="text-sm font-extrabold text-[#27332B]">{activeConversation.name}</h3>
-                    <p className="text-[11px] font-semibold text-[#5E8C61]">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-extrabold text-[#27332B] truncate">{activeConversation.name}</h3>
+                    <p className="text-[11px] font-semibold text-[#5E8C61] truncate">
                       {activeConversation.role} • {activeConversation.companyName}
                     </p>
                   </div>
@@ -639,6 +808,17 @@ export const ChatPage: React.FC = () => {
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Encrypted Portal Channel
                   </span>
+
+                  {isSuperAdmin && activeConversation.id !== 'admin-channel' && (
+                    <button
+                      type="button"
+                      onClick={handleClearConversation}
+                      title="Clear entire chat history"
+                      className="p-2 text-[#6B7280] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors border border-transparent hover:border-rose-100"
+                    >
+                      <Eraser className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -654,12 +834,23 @@ export const ChatPage: React.FC = () => {
                     return (
                       <div
                         key={msg.id}
-                        className={cn('flex flex-col max-w-[85%] sm:max-w-[70%]', isMe ? 'ml-auto items-end' : 'mr-auto items-start')}
+                        className={cn('group flex flex-col max-w-[85%] sm:max-w-[70%]', isMe ? 'ml-auto items-end' : 'mr-auto items-start')}
                       >
                         <div className="flex items-center gap-1.5 mb-1 text-[10px] text-[#6B7280] font-semibold">
                           <span>{msg.senderName}</span>
                           <span>•</span>
                           <span>{msg.timestamp}</span>
+
+                          {(isMe || isSuperAdmin) && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMessage(msg)}
+                              title="Delete message"
+                              className="p-0.5 text-[#9CA3AF] hover:text-rose-600 transition-colors opacity-60 sm:opacity-0 sm:group-hover:opacity-100"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
                         </div>
 
                         <div
@@ -704,12 +895,14 @@ export const ChatPage: React.FC = () => {
                   <Paperclip className="w-5 h-5" />
                 </button>
 
-                <Input
-                  placeholder="Type your message..."
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  className="bg-[#F7F9F6] border-[#E3E8E3] text-xs h-10 rounded-xl"
-                />
+                <div className="flex-1 min-w-0">
+                  <Input
+                    placeholder="Type your message..."
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    className="bg-[#F7F9F6] border-[#E3E8E3] text-xs h-10 rounded-xl"
+                  />
+                </div>
 
                 <Button
                   type="submit"

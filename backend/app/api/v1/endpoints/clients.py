@@ -304,17 +304,51 @@ async def delete_client(
     for task in res_tasks.scalars().all():
         task.soft_delete(user_id=current_user.id)
 
+    # Cascading soft-delete for client portal user accounts (linked via contact email)
+    from app.models.clients import Contact
+    stmt_contacts = select(Contact).where(Contact.client_id == client_id)
+    res_contacts = await db.execute(stmt_contacts)
+    client_emails = {client.email} | {c.email.lower() for c in res_contacts.scalars().all() if c.email}
+    client_emails.discard(None)
+
+    deleted_user_ids: list[str] = []
+    if client_emails:
+        stmt_users = select(User).where(
+            func.lower(User.email).in_([e.lower() for e in client_emails if e]),
+            User.is_deleted == False,
+        )
+        res_users = await db.execute(stmt_users)
+        for user in res_users.scalars().all():
+            if user.role and user.role.name in (UserRoleEnum.CLIENT, UserRoleEnum.CLIENT_VIEWER):
+                user.soft_delete(user_id=current_user.id)
+                deleted_user_ids.append(str(user.id))
+
     await log_audit_event(
         db=db,
         action="CLIENT_SOFT_DELETED",
         entity_name="Client",
         entity_id=str(client.id),
-        changes={"is_deleted": {"old": False, "new": True}},
+        changes={
+            "is_deleted": {"old": False, "new": True},
+            "deleted_user_accounts": deleted_user_ids,
+        },
         user_id=current_user.id,
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
     )
     await db.commit()
+
+    # Remove the deleted client users from live chat windows in real time
+    if deleted_user_ids:
+        try:
+            from app.services.chat_ws_manager import chat_manager
+            for user_id in deleted_user_ids:
+                await chat_manager.broadcast_event(
+                    "user_deleted",
+                    {"user_id": user_id, "deleted_by": str(current_user.id)},
+                )
+        except Exception:
+            pass
 
     return ResponseEnvelope(
         success=True,

@@ -421,21 +421,21 @@ export const ClientDetailPage: React.FC = () => {
             ) : (
               client.communication_logs.map((log) => (
                 <Card key={log.id} padding="sm" className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="info" className="uppercase text-[10px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Badge variant="info" className="uppercase text-[10px] shrink-0">
                         {log.type}
                       </Badge>
-                      <h4 className="text-sm font-semibold text-surface-900">{log.subject}</h4>
+                      <h4 className="text-sm font-semibold text-surface-900 truncate">{log.subject}</h4>
                     </div>
-                    <span className="text-[11px] text-surface-500">{formatDate(log.interaction_date)}</span>
+                    <span className="text-[11px] text-surface-500 shrink-0">{formatDate(log.interaction_date)}</span>
                   </div>
 
                   <p className="text-xs text-surface-700 whitespace-pre-line bg-surface-50 p-3 rounded-lg border border-surface-100">
                     {log.notes}
                   </p>
 
-                  <div className="flex items-center justify-between text-[11px] text-surface-500 pt-1">
+                  <div className="flex items-center justify-between gap-x-3 gap-y-1 flex-wrap text-[11px] text-surface-500 pt-1">
                     <span>
                       Logged by:{' '}
                       <strong className="text-surface-800">

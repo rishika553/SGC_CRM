@@ -89,5 +89,18 @@ class ChatConnectionManager:
                     except Exception:
                         pass
 
+    async def broadcast_event(self, event_type: str, payload: Dict[str, Any]):
+        """
+        Broadcasts an event to every connected client.
+        """
+        message_text = json.dumps({"event": event_type, "data": payload})
+
+        for sockets in list(self.active_connections.values()):
+            for ws in list(sockets):
+                try:
+                    await ws.send_text(message_text)
+                except Exception:
+                    pass
+
 
 chat_manager = ChatConnectionManager()

@@ -97,10 +97,10 @@ export const UserProfilePage: React.FC = () => {
 
             {/* Tabs toggle */}
             {!isClientRole && (
-              <div className="flex bg-surface-100 p-1 rounded-lg border border-surface-200 shrink-0">
+              <div className="flex flex-wrap bg-surface-100 p-1 rounded-lg border border-surface-200">
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className={`px-4 py-2 text-xs font-semibold rounded-md transition-colors ${
+                  className={`px-3 sm:px-4 py-2 text-xs font-semibold rounded-md transition-colors ${
                     activeTab === 'profile'
                       ? 'bg-white text-surface-900 shadow-subtle'
                       : 'text-surface-600 hover:text-surface-900'
@@ -110,7 +110,7 @@ export const UserProfilePage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab('security')}
-                  className={`px-4 py-2 text-xs font-semibold rounded-md transition-colors ${
+                  className={`px-3 sm:px-4 py-2 text-xs font-semibold rounded-md transition-colors ${
                     activeTab === 'security'
                       ? 'bg-white text-surface-900 shadow-subtle'
                       : 'text-surface-600 hover:text-surface-900'

@@ -39,7 +39,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
       {isOpen && (
         <div
           className={cn(
-            'absolute z-50 mt-1 w-48 bg-white border border-surface-200 rounded-lg shadow-dropdown py-1 transition-all',
+            'absolute z-50 mt-1 w-48 max-w-[calc(100vw-1rem)] bg-white border border-surface-200 rounded-lg shadow-dropdown py-1 transition-all',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >

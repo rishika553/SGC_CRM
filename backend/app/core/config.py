@@ -35,7 +35,14 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
         "https://sgc-crm-dba4.vercel.app",
         "https://sgc-crm-dba4-4kuuizzkx-rishikas-projects-8b0257d5.vercel.app",
+        "https://sgc-crm-eight.vercel.app",
     ]
+
+    # Web Push (VAPID) Notifications
+    # Generate keys with: `python -m py_vapid` or the SGC script
+    VAPID_PUBLIC_KEY: str = ""
+    VAPID_PRIVATE_KEY: str = ""
+    VAPID_SUBJECT: str = "mailto:admin@sgccrm.com"
 
     model_config = SettingsConfigDict(
         env_file=".env",

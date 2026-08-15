@@ -74,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <div className="min-w-0">
-          <div className="text-[10px] sm:text-[11px] font-semibold text-[#6B7280] tracking-wide truncate max-w-[130px] sm:max-w-xs md:max-w-none">
+          <div className="text-[10px] sm:text-[11px] font-semibold text-[#6B7280] tracking-wide truncate max-w-[40vw] sm:max-w-xs md:max-w-none">
             <span>{isClientRole ? clientProfileName : clientName}</span> &nbsp;/&nbsp;{' '}
             <b className="text-[#27332B] font-bold">{pageTitle}</b>
           </div>
@@ -85,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right Section: Return to Superadmin Button, Search, Notification Bell & User Avatar */}
-      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-3 shrink-0">
         {/* Return to Superadmin Account Button for Admins */}
         {!isClientRole && (
           <button

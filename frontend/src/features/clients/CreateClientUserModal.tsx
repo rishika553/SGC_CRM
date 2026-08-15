@@ -143,22 +143,22 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
               <span className="text-sm font-medium text-surface-900">{provisionedData.stakeholderName}</span>
             </div>
 
-            <div className="flex items-center justify-between pb-2 border-b border-surface-200">
-              <span className="text-xs font-semibold text-surface-500 uppercase tracking-wider">Login Username / Email</span>
-              <span className="text-sm font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
+            <div className="flex items-center justify-between gap-2 pb-2 border-b border-surface-200">
+              <span className="text-xs font-semibold text-surface-500 uppercase tracking-wider shrink-0">Login Username / Email</span>
+              <span className="text-sm font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded min-w-0 truncate">
                 {provisionedData.username}
               </span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-surface-500 uppercase tracking-wider">Login Password</span>
-              <span className="text-sm font-mono font-bold text-surface-900 bg-surface-200 px-2 py-0.5 rounded">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-surface-500 uppercase tracking-wider shrink-0">Login Password</span>
+              <span className="text-sm font-mono font-bold text-surface-900 bg-surface-200 px-2 py-0.5 rounded min-w-0 truncate">
                 {provisionedData.password}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2">
             <Button
               variant="outline"
               size="sm"

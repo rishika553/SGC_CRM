@@ -343,7 +343,7 @@ export const AgreementPage: React.FC = () => {
       {/* Super Admin Upload Agreement Modal */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 sm:p-6 shadow-2xl max-w-lg w-full space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 sm:p-6 shadow-2xl max-w-lg w-full space-y-5 animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#2F4F3A] text-white flex items-center justify-center font-bold">
@@ -460,7 +460,7 @@ export const AgreementPage: React.FC = () => {
       {/* SLA Document Preview Modal */}
       {selectedPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 sm:p-6 shadow-2xl max-w-2xl w-full space-y-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 sm:p-6 shadow-2xl max-w-2xl w-full space-y-4 animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#2F4F3A] text-white flex items-center justify-center font-bold">

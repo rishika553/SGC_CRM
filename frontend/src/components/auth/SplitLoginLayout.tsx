@@ -111,7 +111,7 @@ export const SplitLoginLayout: React.FC<SplitLoginLayoutProps> = ({ brandBadge, 
         <div aria-hidden="true" className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#3A5F47]/70 blur-3xl" />
         <div aria-hidden="true" className="absolute -bottom-36 -left-24 w-96 h-96 rounded-full bg-[#1B2F23]/80 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col justify-between px-6 py-8 sm:px-10 lg:px-14 lg:py-12 min-h-[540px] lg:min-h-screen">
+        <div className="relative z-10 flex flex-col justify-between px-6 py-8 sm:px-10 lg:px-14 lg:py-12 min-h-0 sm:min-h-[420px] lg:min-h-screen">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shrink-0">
               <Sparkles className="w-6 h-6 text-[#2F4F3A]" />
@@ -128,10 +128,8 @@ export const SplitLoginLayout: React.FC<SplitLoginLayoutProps> = ({ brandBadge, 
           <div className="mt-10 lg:mt-16 max-w-xl">
             <h1 className="text-3xl lg:text-[40px] leading-tight font-extrabold tracking-tight">
               Smarter Relationships.
-              <br />
-              Better <span className="text-[#DCE9DE]">Collaboration</span>.
-              <br />
-              Stronger Business.
+              <span className="block">Better <span className="text-[#DCE9DE]">Collaboration</span>.</span>
+              <span className="block">Stronger Business.</span>
             </h1>
             <p className="mt-4 text-sm lg:text-base text-white/75 max-w-md leading-relaxed">
               One unified workspace to manage clients, projects, billing and team collaboration — everything your firm
@@ -139,7 +137,7 @@ export const SplitLoginLayout: React.FC<SplitLoginLayoutProps> = ({ brandBadge, 
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-10 lg:mt-12 max-w-2xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-10 lg:mt-12 max-w-2xl">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}

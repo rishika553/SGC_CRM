@@ -300,6 +300,16 @@ async def delete_user(
     user.soft_delete(user_id=current_user.id)
     await db.commit()
 
+    # Remove the deleted user's chat from live clients in real time
+    try:
+        from app.services.chat_ws_manager import chat_manager
+        await chat_manager.broadcast_event(
+            "user_deleted",
+            {"user_id": str(user.id), "deleted_by": str(current_user.id)},
+        )
+    except Exception:
+        pass
+
     return ResponseEnvelope(
         success=True,
         message="User account soft-deleted successfully",

@@ -13,6 +13,7 @@ import {
   Paperclip,
   RefreshCw,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -224,6 +225,18 @@ export const ConsentPage: React.FC = () => {
     }
   };
 
+  const handleDeleteConsent = async (consent: Consent) => {
+    if (!window.confirm(`Are you sure you want to delete consent request "${consent.title}"? This action is permanent.`)) return;
+    try {
+      await consentApi.remove(consent.id);
+      setConsents((prev) => prev.filter((c) => c.id !== consent.id));
+      if (selectedConsent?.id === consent.id) setSelectedConsent(null);
+      toast('Consent Deleted', `"${consent.title}" removed successfully.`, 'success');
+    } catch (err: any) {
+      toast('Delete Failed', err.response?.data?.error?.message || 'Failed to delete consent request.', 'error');
+    }
+  };
+
   const pendingCount = consents.filter((c) => c.status === 'pending').length;
   const allowedCount = consents.filter((c) => c.status === 'allowed').length;
   const deniedCount = consents.filter((c) => c.status === 'denied').length;
@@ -379,7 +392,7 @@ export const ConsentPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                    <div className="flex flex-wrap items-center justify-end gap-2 self-end sm:self-auto shrink-0">
                       {consent.file_name && (
                         <Button
                           type="button"
@@ -402,6 +415,18 @@ export const ConsentPage: React.FC = () => {
                       >
                         {isClientRole ? 'View & Respond' : 'View Details'}
                       </Button>
+                      {!isClientRole && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteConsent(consent)}
+                          leftIcon={<Trash2 className="w-4 h-4 text-rose-600" />}
+                          className="border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-xl"
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -414,7 +439,7 @@ export const ConsentPage: React.FC = () => {
       {/* Super Admin Create Consent Request Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-6 shadow-2xl max-w-lg w-full space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-6 shadow-2xl max-w-lg w-full space-y-5 animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#2F4F3A] text-white flex items-center justify-center font-bold">
@@ -527,7 +552,7 @@ export const ConsentPage: React.FC = () => {
       {/* Detail / Respond Modal */}
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-6 shadow-2xl max-w-2xl w-full space-y-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-6 shadow-2xl max-w-2xl w-full space-y-4 animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-[#2F4F3A] text-white flex items-center justify-center font-bold shrink-0">
@@ -700,10 +725,20 @@ export const ConsentPage: React.FC = () => {
 
             {/* Admin: no response actions available */}
             {!isClientRole && (
-              <div className="pt-3 mt-3 flex items-center justify-end gap-2 border-t border-[#E3E8E3]">
+              <div className="pt-3 mt-3 flex items-center justify-end gap-2 flex-wrap border-t border-[#E3E8E3]">
                 <span className="text-[11px] text-[#6B7280] mr-auto">
                   Created {formatDate(selected.created_at)}
                 </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteConsent(selected)}
+                  leftIcon={<Trash2 className="w-4 h-4 text-rose-600" />}
+                  className="border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-xl"
+                >
+                  Delete
+                </Button>
                 <Button type="button" variant="outline" size="sm" onClick={() => setSelectedConsent(null)} className="text-xs">
                   Close
                 </Button>

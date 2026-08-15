@@ -71,7 +71,7 @@ export const ClientLoginPage: React.FC = () => {
             {...register('password', { required: 'Password is required' })}
           />
 
-          <div className="flex items-center justify-between text-xs pt-1">
+          <div className="flex items-center justify-between gap-2 flex-wrap text-xs pt-1">
             <label className="flex items-center gap-2 cursor-pointer select-none text-[#6B7280] hover:text-[#27332B] transition-colors">
               <input type="checkbox" className="w-4 h-4 rounded border-[#E3E8E3] text-[#5E8C61] focus:ring-[#5E8C61]" />
               <span>Remember me</span>

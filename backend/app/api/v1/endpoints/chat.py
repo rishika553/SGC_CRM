@@ -24,7 +24,7 @@ from sqlalchemy import func, or_, and_, desc, asc
 from app.core.database import get_db, AsyncSessionLocal
 from app.core.security import decode_token
 from app.core.exceptions import NotFoundException, ConflictException, ForbiddenException, CRMException
-from app.api.deps import get_current_user, require_roles, ALL_ROLES
+from app.api.deps import get_current_user, require_roles, ALL_ROLES, SUPER_ADMIN_ROLES
 from app.models.chat import Conversation, ChatMessage, MessageTypeEnum
 from app.models.user import User
 from app.schemas.common import ResponseEnvelope, PaginatedResponse, PaginationMeta
@@ -35,6 +35,7 @@ from app.schemas.chat import (
     ChatAttachmentResponse,
 )
 from app.services.chat_ws_manager import chat_manager
+from app.services.push_service import send_new_message_notification
 
 router = APIRouter()
 
@@ -156,6 +157,18 @@ async def chat_websocket_endpoint(
                                         # Real-time WebSocket delivery to recipient AND sender
                                         await chat_manager.send_personal_event(str(recipient_uuid), "new_message", msg_dict)
                                         await chat_manager.send_personal_event(str(sender_uuid), "new_message", msg_dict)
+
+                                        # Web push when the recipient is not actively on the chat page
+                                        if not chat_manager.is_user_online(str(recipient_uuid)):
+                                            sender_name = f"{sender_user.first_name} {sender_user.last_name}".strip() or "Super Admin"
+                                            await send_new_message_notification(
+                                                db=db_session,
+                                                recipient_id=recipient_uuid,
+                                                sender_name=sender_name,
+                                                content=msg_dict.get("content") or "",
+                                                message_id=new_msg.id,
+                                                conversation_id=conv.id,
+                                            )
                             except Exception as ex:
                                 pass
 
@@ -214,6 +227,35 @@ async def list_conversations(
     results = []
     for conv in conversations:
         other_user = conv.user2 if conv.user1_id == current_user.id else conv.user1
+
+        # Hide conversations whose other participant has been soft-deleted
+        if other_user is None or other_user.is_deleted:
+            continue
+
+        # Hide conversations whose other participant's client company has been soft-deleted
+        other_role = (other_user.role.name if other_user.role else "").lower()
+        if other_role in ("client", "client_viewer") and other_user.email:
+            from app.models.clients import Contact, Client
+            stmt_owner = select(Contact.client_id).where(func.lower(Contact.email) == other_user.email.lower()).limit(1)
+            res_owner = await db.execute(stmt_owner)
+            owner_client_id = res_owner.scalar_one_or_none()
+            if owner_client_id:
+                stmt_cdel = select(Client.id).where(
+                    Client.id == owner_client_id,
+                    Client.is_deleted == True,
+                )
+                res_cdel = await db.execute(stmt_cdel)
+                if res_cdel.scalar_one_or_none():
+                    continue
+            else:
+                stmt_cdel2 = select(Client.id).where(
+                    (func.lower(Client.email) == other_user.email.lower()) |
+                    (func.lower(Client.name) == other_user.email.lower()),
+                    Client.is_deleted == True,
+                ).limit(1)
+                res_cdel2 = await db.execute(stmt_cdel2)
+                if res_cdel2.scalar_one_or_none():
+                    continue
 
         # Fetch last message
         stmt_last = select(ChatMessage).options(
@@ -398,6 +440,18 @@ async def send_chat_message(
         payload=msg_dict
     )
 
+    # Web push when the recipient is not actively on the chat page
+    if not chat_manager.is_user_online(str(payload.recipient_id)):
+        sender_name = f"{current_user.first_name} {current_user.last_name}".strip() or "Super Admin"
+        await send_new_message_notification(
+            db=db,
+            recipient_id=payload.recipient_id,
+            sender_name=sender_name,
+            content=msg_dict.get("content") or (msg_dict.get("attachment_name") or ""),
+            message_id=new_msg.id,
+            conversation_id=conv.id,
+        )
+
     return ResponseEnvelope(
         success=True,
         message="Message sent successfully",
@@ -530,8 +584,58 @@ async def delete_chat_message(
     msg.soft_delete(user_id=current_user.id)
     await db.commit()
 
+    # Notify both participants so their open UIs drop the message in real time
+    event_payload = {
+        "message_id": str(message_id),
+        "conversation_id": str(msg.conversation_id),
+        "deleted_by": str(current_user.id),
+    }
+    await chat_manager.send_personal_event(str(msg.sender_id), "message_deleted", event_payload)
+    await chat_manager.send_personal_event(str(msg.recipient_id), "message_deleted", event_payload)
+
     return ResponseEnvelope(
         success=True,
         message="Chat message deleted",
         data={"deleted": True, "message_id": str(message_id)}
+    )
+
+
+@router.delete("/conversations/{other_user_id}/messages", response_model=ResponseEnvelope[dict])
+async def clear_chat_history(
+    other_user_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles(SUPER_ADMIN_ROLES))
+):
+    """
+    Soft delete every message in the conversation with other_user_id (Super Admin only).
+    """
+    if str(other_user_id) == str(current_user.id):
+        raise CRMException(status_code=400, detail="Cannot clear a conversation with yourself")
+
+    conv = await get_or_create_conversation(db, current_user.id, other_user_id)
+
+    stmt = select(ChatMessage).where(
+        ChatMessage.conversation_id == conv.id,
+        ChatMessage.is_deleted == False
+    )
+    res = await db.execute(stmt)
+    messages = res.scalars().all()
+
+    for msg in messages:
+        msg.soft_delete(user_id=current_user.id)
+    await db.commit()
+
+    # Notify both participants so their open UIs clear the thread in real time
+    event_payload = {
+        "other_user_id": str(other_user_id),
+        "conversation_id": str(conv.id),
+        "cleared_by": str(current_user.id),
+    }
+    await chat_manager.send_personal_event(str(current_user.id), "conversation_cleared", event_payload)
+    await chat_manager.send_personal_event(str(other_user_id), "conversation_cleared", event_payload)
+
+    return ResponseEnvelope(
+        success=True,
+        message="Chat history cleared",
+        data={"cleared": True, "deleted_count": len(messages), "other_user_id": str(other_user_id)}
     )

@@ -3,6 +3,7 @@ import { User, ApiResponse } from '@/types';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
+import { unsubscribeFromPush } from '@/lib/push';
 
 interface AuthContextType {
   user: User | null;
@@ -157,6 +158,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Ignore if Supabase offline
     }
+    // Remove web push subscription so the next account does not receive this browser's pushes
+    unsubscribeFromPush().catch(() => undefined);
     localStorage.removeItem('crm_access_token');
     localStorage.removeItem('crm_refresh_token');
     queryClient.removeQueries({ queryKey: ['clients'] });

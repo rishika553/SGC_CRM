@@ -72,11 +72,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
             {...register('email', { required: 'Email address is required' })}
           />
 
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-surface-100">
-            <Button variant="outline" size="sm" onClick={handleClose} type="button">
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-surface-100 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleClose} type="button" className="flex-1 sm:flex-none">
               Cancel
             </Button>
-            <Button variant="primary" size="sm" type="submit" isLoading={isLoading}>
+            <Button variant="primary" size="sm" type="submit" isLoading={isLoading} className="flex-1 sm:flex-none">
               Send Reset Link
             </Button>
           </div>

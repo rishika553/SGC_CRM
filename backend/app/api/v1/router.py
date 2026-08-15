@@ -16,6 +16,7 @@ from app.api.v1.endpoints import (
     settings,
     audit,
     consents,
+    notifications,
 )
 
 api_router = APIRouter()
@@ -36,3 +37,4 @@ api_router.include_router(chat.router, prefix="/chat", tags=["Real-Time Chat"])
 api_router.include_router(settings.router, prefix="/settings", tags=["Settings & Preferences"])
 api_router.include_router(audit.router, prefix="/audit-logs", tags=["Audit Trails & Security Logs"])
 api_router.include_router(consents.router, prefix="/consents", tags=["Consent Management"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["Push Notifications"])

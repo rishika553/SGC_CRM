@@ -49,6 +49,7 @@ from app.models.consents import (
     Consent,
     ConsentRequestStatusEnum,
 )
+from app.models.push_subscription import PushSubscription
 
 __all__ = [
     "Base",
@@ -86,4 +87,5 @@ __all__ = [
     "UserSettings",
     "Consent",
     "ConsentRequestStatusEnum",
+    "PushSubscription",
 ]

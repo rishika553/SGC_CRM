@@ -132,9 +132,11 @@ export const ConsentPage: React.FC = () => {
 
   const loadClientsList = async () => {
     try {
+      // Bypass the 5-minute stale cache so soft-deleted clients never appear
       const clients = await queryClient.fetchQuery({
         queryKey: clientQueryKeys.directory,
         queryFn: fetchClientDirectory,
+        staleTime: 0,
       });
       if (clients.length > 0) {
         setClientsList(clients);

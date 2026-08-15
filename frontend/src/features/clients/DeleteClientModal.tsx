@@ -4,6 +4,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/axios';
+import { queryClient } from '@/lib/query-client';
+import { clientQueryKeys } from './clientQueries';
 
 interface DeleteClientModalProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ export const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
     setIsLoading(true);
     try {
       await api.delete(`/clients/${client.id}`);
+      queryClient.invalidateQueries({ queryKey: clientQueryKeys.directory });
       toast('Client Account Deleted', `Client company account "${client.name}" has been deleted.`, 'success');
       onSuccess();
       onClose();

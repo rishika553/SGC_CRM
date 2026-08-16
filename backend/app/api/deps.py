@@ -135,9 +135,15 @@ async def get_user_client_id(user: User, db: AsyncSession) -> uuid.UUID | None:
     if not user or not user.email:
         return None
 
-    from sqlalchemy import func
+    from sqlalchemy import func, or_
     from app.models.role import Role
     from app.models.clients import Contact, Client
+
+    # Portal accounts are provisioned with a bare username that is stored on the
+    # client/contact (e.g. "testing") while the login email gets "@sgccrm.com"
+    # appended (e.g. "testing@sgccrm.com"). Match on both forms.
+    user_email = user.email.lower()
+    username = user_email.split("@")[0] if "@" in user_email else user_email
 
     # Safely query role name without triggering lazy-load MissingGreenlet exception
     if user.role_id:
@@ -148,18 +154,26 @@ async def get_user_client_id(user: User, db: AsyncSession) -> uuid.UUID | None:
         if role_str.lower() not in ("client", "client_viewer"):
             return None
 
-    # 1. Match Contact email
-    stmt_contact = select(Contact.client_id).where(func.lower(Contact.email) == user.email.lower())
+    # 1. Match Contact email (exact email OR bare username; client must be active)
+    stmt_contact = select(Contact.client_id).join(Client, Client.id == Contact.client_id).where(
+        or_(func.lower(Contact.email) == user_email, func.lower(Contact.email) == username),
+        Client.is_deleted == False,
+    )
     res_contact = await db.execute(stmt_contact)
     contact_client_id = res_contact.scalar_one_or_none()
     if contact_client_id:
         return contact_client_id
 
-    # 2. Match Client email, name, or created_by_id
+    # 2. Match Client email, name, or created_by_id (exact email OR bare username; client must be active)
     stmt_client = select(Client.id).where(
-        (func.lower(Client.email) == user.email.lower()) |
-        (func.lower(Client.name) == user.email.lower()) |
-        (Client.created_by_id == user.id)
+        or_(
+            func.lower(Client.email) == user_email,
+            func.lower(Client.email) == username,
+            func.lower(Client.name) == user_email,
+            func.lower(Client.name) == username,
+            Client.created_by_id == user.id,
+        ),
+        Client.is_deleted == False,
     )
     res_client = await db.execute(stmt_client)
     client_id = res_client.scalar_one_or_none()

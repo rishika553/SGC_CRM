@@ -84,11 +84,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
       } else if (urlClientId) {
         const matched = liveClients.find((c) => c.id === urlClientId);
         if (matched) setSelectedClient(matched);
-        else setSelectedClient(SUPERADMIN_OPTION);
+        else {
+          // The URL references a client that no longer exists (e.g. soft-deleted).
+          // Clear the stale reference so pages stop requesting it.
+          localStorage.removeItem('crm_active_client_id');
+          localStorage.removeItem('crm_active_client_name');
+          setSelectedClient(SUPERADMIN_OPTION);
+        }
       } else if (savedClientId && savedClientId !== 'superadmin') {
         const matched = liveClients.find((c) => c.id === savedClientId);
         if (matched) setSelectedClient(matched);
-        else setSelectedClient(SUPERADMIN_OPTION);
+        else {
+          // The stored client was deleted. Clear the stale localStorage key so the
+          // dashboard and other scoped pages fall back to the superadmin view.
+          localStorage.removeItem('crm_active_client_id');
+          localStorage.removeItem('crm_active_client_name');
+          setSelectedClient(SUPERADMIN_OPTION);
+        }
       } else {
         setSelectedClient(SUPERADMIN_OPTION);
       }

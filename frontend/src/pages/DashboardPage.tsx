@@ -68,22 +68,36 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
-      const activeClientId = localStorage.getItem('crm_active_client_id');
       const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
-      const targetClientId = isUUID(activeClientId) ? activeClientId : null;
+      // Resolve the scoped client from the stored reference, falling back to the
+      // superadmin scope when the reference is missing or stale.
+      let targetClientId = isUUID(localStorage.getItem('crm_active_client_id')) ? localStorage.getItem('crm_active_client_id') : null;
 
       try {
-        const scopedParams = { page: 1, page_size: 10, ...(targetClientId ? { client_id: targetClientId } : {}) };
-        const profileRequest = targetClientId
-          ? api.get(`/clients/${targetClientId}`).then((response) => response.data.data || null)
-          : isClientRole
-            ? queryClient.fetchQuery({ queryKey: clientQueryKeys.mine, queryFn: fetchMyClient })
-            : Promise.resolve(null);
+        // Validate the stored client still exists. A soft-deleted client returns 404,
+        // so clear the stale localStorage reference before firing the scoped requests.
+        let profile: Client | null = null;
+        if (targetClientId) {
+          try {
+            const profileResponse = await api.get(`/clients/${targetClientId}`);
+            profile = profileResponse.data.data || null;
+          } catch (err: any) {
+            if (err?.response?.status === 404) {
+              localStorage.removeItem('crm_active_client_id');
+              localStorage.removeItem('crm_active_client_name');
+              targetClientId = null;
+            }
+          }
+        } else if (isClientRole) {
+          profile = await queryClient.fetchQuery({ queryKey: clientQueryKeys.mine, queryFn: fetchMyClient });
+        }
 
+        setClientProfile(profile);
+
+        const scopedParams = { page: 1, page_size: 10, ...(targetClientId ? { client_id: targetClientId } : {}) };
         // These resources do not depend on each other, so start every request at once.
         // Individual failures resolve to null and do not prevent the rest of the dashboard loading.
-        const [profile, projectResponse, taskResponse, documentResponse, invoiceResponse] = await Promise.all([
-          profileRequest.catch(() => null),
+        const [projectResponse, taskResponse, documentResponse, invoiceResponse] = await Promise.all([
           api.get<PaginatedResponse<any>>('/projects', { params: scopedParams }).catch(() => null),
           api.get<PaginatedResponse<any>>('/tasks', { params: scopedParams }).catch(() => null),
           api.get<PaginatedResponse<any>>('/documents', {
@@ -91,8 +105,6 @@ export const DashboardPage: React.FC = () => {
           }).catch(() => null),
           api.get<PaginatedResponse<any>>('/invoices', { params: { page: 1, page_size: 20 } }).catch(() => null),
         ]);
-
-        setClientProfile(profile);
 
         if (projectResponse?.data.success && projectResponse.data.data) {
           setProjects(projectResponse.data.data.map((p: any) => ({

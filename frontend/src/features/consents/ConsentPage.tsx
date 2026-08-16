@@ -105,9 +105,9 @@ export const ConsentPage: React.FC = () => {
   const fetchConsents = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    const activeClientId = localStorage.getItem('crm_active_client_id');
+    const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
     try {
-      const activeClientId = localStorage.getItem('crm_active_client_id');
-      const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
       const params: Record<string, unknown> = { page: 1, page_size: 100 };
       if (statusFilter !== 'all') params.status = statusFilter;
       if (isUUID(activeClientId)) params.client_id = activeClientId;
@@ -119,6 +119,21 @@ export const ConsentPage: React.FC = () => {
         setConsents([]);
       }
     } catch (err: any) {
+      // A soft-deleted active client makes the scoped query 404. Clear the stale
+      // localStorage reference and retry once without the client scope.
+      if (err?.response?.status === 404 && isUUID(activeClientId)) {
+        localStorage.removeItem('crm_active_client_id');
+        localStorage.removeItem('crm_active_client_name');
+        const retryParams: Record<string, unknown> = { page: 1, page_size: 100 };
+        if (statusFilter !== 'all') retryParams.status = statusFilter;
+        const retry = await consentApi.list(retryParams);
+        if (retry.success) {
+          setConsents(retry.data);
+        } else {
+          setConsents([]);
+        }
+        return;
+      }
       setError(err.response?.data?.error?.message || 'Failed to load consent requests.');
       setConsents([]);
     } finally {

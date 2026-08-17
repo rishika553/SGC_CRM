@@ -50,6 +50,18 @@ def agreement_options_loader():
     ]
 
 
+def agreement_list_options_loader():
+    """Lighter loader for list endpoints — avoids nested lazy-load on client.contacts."""
+    return [
+        selectinload(Agreement.client).options(
+            selectinload(Client.assigned_admin).selectinload(User.role),
+            selectinload(Client.account_manager).selectinload(User.role),
+            selectinload(Client.contacts),
+        ),
+        selectinload(Agreement.assigned_admin).selectinload(User.role),
+    ]
+
+
 def generate_agreement_number() -> str:
     now_str = datetime.now(timezone.utc).strftime("%Y%m%d")
     short_uuid = uuid.uuid4().hex[:6].upper()
@@ -90,6 +102,19 @@ async def list_agreements(
         sort_by=sort_by,
         sort_order=sort_order,
     )
+
+    # Re-fetch with full eager loads so AgreementRead → ClientRead → contacts
+    # doesn't trigger a lazy-load in the async greenlet context.
+    if agreements:
+        ids = [a.id for a in agreements]
+        from sqlalchemy import and_
+        stmt_full = (
+            select(Agreement)
+            .options(*agreement_list_options_loader())
+            .where(Agreement.id.in_(ids))
+        )
+        res_full = await db.execute(stmt_full)
+        agreements = res_full.scalars().all()
 
     return build_paginated_response(
         items=[AgreementRead.model_validate(a) for a in agreements],

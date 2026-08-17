@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         else {
           // The URL references a client that no longer exists (e.g. soft-deleted).
           // Clear the stale reference so pages stop requesting it.
-          localStorage.removeItem('crm_active_client_id');
+          localStorage.setItem('crm_active_client_id', 'superadmin');
           localStorage.removeItem('crm_active_client_name');
           setSelectedClient(SUPERADMIN_OPTION);
         }
@@ -97,11 +97,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         else {
           // The stored client was deleted. Clear the stale localStorage key so the
           // dashboard and other scoped pages fall back to the superadmin view.
-          localStorage.removeItem('crm_active_client_id');
+          localStorage.setItem('crm_active_client_id', 'superadmin');
           localStorage.removeItem('crm_active_client_name');
           setSelectedClient(SUPERADMIN_OPTION);
         }
       } else {
+        // Default to superadmin view and ensure localStorage reflects it
+        localStorage.setItem('crm_active_client_id', 'superadmin');
         setSelectedClient(SUPERADMIN_OPTION);
       }
     }
@@ -246,13 +248,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <>
                     <button
                       type="button"
-                      onClick={() => {
-                        const superadminOpt = { id: 'superadmin', name: 'Superadmin Account' };
-                        setSelectedClient(superadminOpt);
-                        if (onSelectClient) onSelectClient(superadminOpt);
-                        else window.location.href = '/dashboard';
-                        setIsClientDropdownOpen(false);
-                      }}
+                      onClick={() => handleClientSelect(SUPERADMIN_OPTION)}
                       className={cn(
                         "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs font-bold transition-colors border mb-1",
                         selectedClient?.id === 'superadmin'
@@ -262,7 +258,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     >
                       <div className="flex items-center gap-2 truncate">
                         <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span className="truncate">Superadmin Account</span>
+                        <span className="truncate">Superadmin Main View</span>
                       </div>
                       {selectedClient?.id === 'superadmin' && <Check className="w-3.5 h-3.5 shrink-0 text-amber-300" />}
                     </button>

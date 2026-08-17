@@ -23,7 +23,8 @@ import { useToast } from '@/components/ui/Toast';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
-import { clientQueryKeys, fetchClientDirectory, fetchMyClient } from '@/features/clients/clientQueries';
+import { useAuth } from '@/features/auth/AuthContext';
+import { clientQueryKeys, fetchClientDirectory, fetchMyClient, resolveClientIdForCurrentUser } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
 
@@ -56,6 +57,9 @@ export interface ProjectModel {
 
 export const ProjectsTasksPage: React.FC = () => {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+  const roleNameStr = String(currentUser?.role?.name || '').toLowerCase();
+  const isClientRole = roleNameStr === 'client' || roleNameStr === 'client_viewer' || roleNameStr.includes('client');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [projects, setProjects] = useState<ProjectModel[]>([]);
 
@@ -80,7 +84,7 @@ export const ProjectsTasksPage: React.FC = () => {
   const fetchProjectsData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const activeClientId = localStorage.getItem('crm_active_client_id');
+      const activeClientId = await resolveClientIdForCurrentUser(isClientRole);
       const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
       const params: any = { page: 1, page_size: 50 };
       if (isUUID(activeClientId)) {

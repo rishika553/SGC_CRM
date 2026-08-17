@@ -46,6 +46,11 @@ async def get_my_client_profile(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Prevent non-client roles from auto-creating phantom Client records
+    user_role_name = current_user.role.name if current_user.role else None
+    if user_role_name in (UserRoleEnum.SUPER_ADMIN,):
+        raise NotFoundException(detail="Super admin accounts do not have a client profile")
+
     from app.api.deps import get_user_client_id
     client_id = await get_user_client_id(current_user, db)
     if not client_id:
@@ -313,7 +318,7 @@ async def delete_client(
 
     deleted_user_ids: list[str] = []
     if client_emails:
-        stmt_users = select(User).where(
+        stmt_users = select(User).options(selectinload(User.role)).where(
             func.lower(User.email).in_([e.lower() for e in client_emails if e]),
             User.is_deleted == False,
         )

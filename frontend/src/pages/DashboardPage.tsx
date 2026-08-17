@@ -90,6 +90,10 @@ export const DashboardPage: React.FC = () => {
           }
         } else if (isClientRole) {
           profile = await queryClient.fetchQuery({ queryKey: clientQueryKeys.mine, queryFn: fetchMyClient });
+          if (profile?.id) {
+            localStorage.setItem('crm_active_client_id', profile.id);
+            localStorage.setItem('crm_active_client_name', profile.name);
+          }
         }
 
         setClientProfile(profile);

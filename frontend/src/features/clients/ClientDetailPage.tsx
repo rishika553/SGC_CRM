@@ -43,6 +43,8 @@ export const ClientDetailPage: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const canDelete = user?.role?.name === 'super_admin';
+
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'contacts' | 'activity'>('overview');
@@ -149,14 +151,16 @@ export const ClientDetailPage: React.FC = () => {
             >
               Log Interaction
             </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              leftIcon={<Trash2 className="w-4 h-4" />}
-              onClick={() => setIsDeleteOpen(true)}
-            >
-              Delete Profile
-            </Button>
+            {canDelete && (
+              <Button
+                variant="danger"
+                size="sm"
+                leftIcon={<Trash2 className="w-4 h-4" />}
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                Delete Profile
+              </Button>
+            )}
           </div>
         </div>
 

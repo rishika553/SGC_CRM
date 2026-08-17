@@ -110,6 +110,11 @@ async def get_current_user(
     if not user.is_active:
         raise ForbiddenException(detail="User account is inactive")
 
+    # Normalize role name to lowercase so DB values like "SUPER_ADMIN"
+    # match our UserRoleEnum values like "super_admin" in all comparisons.
+    if user.role and user.role.name:
+        user.role.name = user.role.name.lower()
+
     if is_me:
         print(f"[ME] AUTH DEP TOTAL: {(time.perf_counter() - t_start) * 1000:.1f} ms")
 

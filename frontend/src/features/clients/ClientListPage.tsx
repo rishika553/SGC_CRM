@@ -24,6 +24,8 @@ export const ClientListPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const canDelete = user?.role?.name === 'super_admin';
+
   const [clients, setClients] = useState<Client[]>([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, page_size: 20, total_pages: 1, has_next: false, has_previous: false });
   const [search, setSearch] = useState('');
@@ -200,14 +202,16 @@ export const ClientListPage: React.FC = () => {
                         >
                           View Account
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => setClientToDelete({ id: c.id, name: c.name })}
-                        >
-                          Delete
-                        </Button>
+                        {canDelete && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => setClientToDelete({ id: c.id, name: c.name })}
+                          >
+                            Delete
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

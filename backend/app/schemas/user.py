@@ -28,11 +28,9 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
-from app.models.role import UserRoleEnum
-
 class RoleRead(BaseModel):
     id: UUID
-    name: UserRoleEnum | str
+    name: str  # plain str so unknown/legacy enum values (e.g. 'CONSULTANT') don't crash
     display_name: str
     description: Optional[str] = None
 

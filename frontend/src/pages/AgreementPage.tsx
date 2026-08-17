@@ -3,16 +3,12 @@ import {
   FileCheck2,
   Download,
   Eye,
-  History,
-  ShieldCheck,
-  CheckCircle2,
-  Clock,
-  Printer,
-  X,
+  Trash2,
   Plus,
   Upload,
   FileText,
   Building2,
+  X,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -24,97 +20,94 @@ import { formatDate } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
-import { clientQueryKeys, fetchClientDirectory } from '@/features/clients/clientQueries';
+import { clientQueryKeys, fetchClientDirectory, isUUID, resolveClientIdForCurrentUser } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
 
-export interface AgreementDocument {
+interface AgreementRecord {
   id: string;
-  type: 'master' | 'nda' | 'consent';
   title: string;
-  category: string;
-  status: 'Executed' | 'Verified' | 'Pending Review';
-  signedDate: string;
-  effectivePeriod: string;
-  signatory: string;
-  versions: {
-    version: string;
-    date: string;
-    summary: string;
-    author: string;
-  }[];
-  contentSnippet: string;
+  agreementNumber: string;
+  type: string;
+  status: string;
+  clientName: string;
+  fileName: string | null;
+  fileSize: number | null;
+  createdAt: string;
+  hasFile: boolean;
 }
 
 export const AgreementPage: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
-  const [activeClient, setActiveClient] = useState<Client | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [agreements, setAgreements] = useState<AgreementDocument[]>([]);
-  const [selectedPreview, setSelectedPreview] = useState<AgreementDocument | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [agreements, setAgreements] = useState<AgreementRecord[]>([]);
 
-  // Upload Agreement Modal State
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [clientsList, setClientsList] = useState<Client[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form State
-  const [formClientId, setFormClientId] = useState<string>('');
-  const [formTitle, setFormTitle] = useState<string>('');
-  const [formType, setFormType] = useState<string>('msa');
-  const [formNotes, setFormNotes] = useState<string>('');
+  const [formClientId, setFormClientId] = useState('');
+  const [formTitle, setFormTitle] = useState('');
+  const [formType, setFormType] = useState('service_agreement');
+  const [formNotes, setFormNotes] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const roleNameStr = String(currentUser?.role?.name || '').toLowerCase();
   const isClientRole = roleNameStr === 'client' || roleNameStr === 'client_viewer' || roleNameStr.includes('client');
+  const isSuperAdmin = roleNameStr === 'super_admin';
 
-  const fetchAgreementData = useCallback(async () => {
+  const [resolvedClientId, setResolvedClientId] = useState<string | null>(() => {
+    const stored = localStorage.getItem('crm_active_client_id');
+    return isUUID(stored) ? stored : null;
+  });
+
+  useEffect(() => {
+    if (!isClientRole || resolvedClientId) return;
+    (async () => {
+      const id = await resolveClientIdForCurrentUser(true);
+      if (id) setResolvedClientId(id);
+    })();
+  }, [isClientRole, resolvedClientId]);
+
+  const fetchAgreements = useCallback(async () => {
     setIsLoading(true);
     try {
-      const activeClientId = localStorage.getItem('crm_active_client_id');
-      const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
-      const params: any = { page: 1, page_size: 50 };
-      if (isUUID(activeClientId)) {
-        params.client_id = activeClientId;
+      const clientId = resolvedClientId || localStorage.getItem('crm_active_client_id');
+      const params: any = { page: 1, page_size: 100 };
+      if (isUUID(clientId)) {
+        params.client_id = clientId;
       }
-      const agrRes = await api.get<PaginatedResponse<any>>('/agreements', { params });
-      if (agrRes.data.success && agrRes.data.data) {
-        const liveDocs: AgreementDocument[] = agrRes.data.data.map((agr: any) => ({
-          id: agr.id,
-          type: agr.agreement_type === 'master_service_agreement' ? 'master' : agr.agreement_type === 'non_disclosure_agreement' ? 'nda' : 'consent',
-          title: agr.title || `Agreement (${agr.client?.name || 'Client'})`,
-          category: agr.agreement_type ? (agr.agreement_type.charAt(0).toUpperCase() + agr.agreement_type.slice(1).replace('_', ' ')) as any : 'Master Agreement',
-          status: agr.status === 'executed' ? 'Executed' : agr.status === 'verified' ? 'Verified' : 'Pending Review',
-          signedDate: formatDate(agr.signed_at || agr.created_at),
-          effectivePeriod: agr.effective_date ? `${formatDate(agr.effective_date)} – ${agr.expiration_date ? formatDate(agr.expiration_date) : 'Active Term'}` : 'Active Statutory Term',
-          signatory: agr.client?.name || 'Client Lead',
-          versions: [
-            {
-              version: 'v1.0',
-              date: formatDate(agr.created_at),
-              summary: agr.notes || 'Executed agreement record',
-              author: agr.assigned_admin ? `${agr.assigned_admin.first_name}` : 'Admin',
-            },
-          ],
-          contentSnippet: agr.notes || `AGREEMENT RECORD: ${agr.title || agr.agreement_number}`,
-        }));
-        setAgreements(liveDocs);
+      const res = await api.get<PaginatedResponse<any>>('/agreements', { params });
+      if (res.data.success && res.data.data) {
+        setAgreements(
+          res.data.data.map((agr: any) => ({
+            id: agr.id,
+            title: agr.title || 'Untitled Agreement',
+            agreementNumber: agr.agreement_number || '',
+            type: agr.type || agr.agreement_type || '',
+            status: agr.status || 'draft',
+            clientName: agr.client?.name || '—',
+            fileName: agr.file_name || null,
+            fileSize: agr.file_size || null,
+            createdAt: agr.created_at,
+            hasFile: Boolean(agr.file_name),
+          }))
+        );
       } else {
         setAgreements([]);
       }
-    } catch (err) {
+    } catch {
       setAgreements([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [resolvedClientId]);
 
   useEffect(() => {
-    fetchAgreementData();
-  }, [fetchAgreementData]);
+    fetchAgreements();
+  }, [fetchAgreements]);
 
-  // Load clients for Super Admin selection
   const loadClientsList = async () => {
     try {
       const clients = await queryClient.fetchQuery({
@@ -123,14 +116,12 @@ export const AgreementPage: React.FC = () => {
       });
       if (clients.length > 0) {
         setClientsList(clients);
-        if (!formClientId) {
-          setFormClientId(clients[0].id);
-        }
+        if (!formClientId) setFormClientId(clients[0].id);
       }
-    } catch (err) {}
+    } catch {}
   };
 
-  const handleOpenUploadModal = () => {
+  const handleOpenUpload = () => {
     loadClientsList();
     setIsUploadModalOpen(true);
   };
@@ -139,200 +130,265 @@ export const AgreementPage: React.FC = () => {
     setFormTitle('');
     setFormNotes('');
     setSelectedFile(null);
-    setFormType('msa');
+    setFormType('service_agreement');
   };
 
-  const handleUploadAgreementSubmit = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) {
       toast('Validation Error', 'Please enter an agreement title.', 'error');
       return;
     }
     if (!formClientId) {
-      toast('Validation Error', 'Please select a target client.', 'error');
+      toast('Validation Error', 'Please select a client.', 'error');
+      return;
+    }
+    if (!selectedFile) {
+      toast('Validation Error', 'Please select a PDF file.', 'error');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // 1. Create Agreement Record
-      const agrPayload = {
+      const res = await api.post('/agreements', {
         title: formTitle.trim(),
         client_id: formClientId,
         type: formType,
         description: formNotes.trim() || undefined,
-      };
-      const res = await api.post('/agreements', agrPayload);
-      const createdAgrId = res.data.data.id;
+      });
+      const agrId = res.data.data.id;
 
-      // 2. Upload PDF file if attached
-      if (selectedFile && createdAgrId) {
+      if (selectedFile && agrId) {
         const formData = new FormData();
         formData.append('file', selectedFile);
-        await api.post(`/agreements/${createdAgrId}/upload-pdf`, formData, {
+        await api.post(`/agreements/${agrId}/upload-pdf`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
 
-      toast('Success', `Agreement "${formTitle.trim()}" uploaded successfully.`, 'success');
+      toast('Success', `Agreement "${formTitle.trim()}" uploaded. Client will see it on their panel.`, 'success');
       setIsUploadModalOpen(false);
       resetForm();
-      fetchAgreementData();
+      fetchAgreements();
     } catch (err: any) {
-      toast('Upload Failed', err.response?.data?.error?.message || 'Failed to upload agreement', 'error');
+      toast('Upload Failed', err.response?.data?.error?.message || 'Failed to upload agreement.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDownloadPdf = (title: string) => {
-    toast('Downloading Document', `Generating PDF for "${title}"...`, 'info');
-    setTimeout(() => {
-      toast('Download Completed', `"${title}" downloaded successfully.`, 'success');
-    }, 1200);
+  const handleDownload = async (agreementId: string, title: string) => {
+    try {
+      toast('Downloading', `Downloading "${title}"…`, 'info');
+      const res = await api.get(`/agreements/${agreementId}/download`, { responseType: 'blob' });
+      const disposition = res.headers['content-disposition'] as string | undefined;
+      let filename = `${title.replace(/[^a-zA-Z0-9 ]/g, '')}.pdf`;
+      const match = disposition && disposition.match(/filename="?([^"]+)"?/);
+      if (match && match[1]) filename = match[1];
+      const url = window.URL.createObjectURL(res.data as Blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast('Downloaded', `"${title}" downloaded successfully.`, 'success');
+    } catch {
+      toast('Download Failed', 'Could not download the agreement PDF.', 'error');
+    }
+  };
+
+  const handlePreview = async (agreementId: string) => {
+    try {
+      const res = await api.get(`/agreements/${agreementId}/preview`, { responseType: 'blob' });
+      const blob = new Blob([res.data as BlobPart], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch {
+      toast('Preview Failed', 'Could not load the agreement PDF.', 'error');
+    }
+  };
+
+  const handleDelete = async (agreementId: string, title: string) => {
+    if (!window.confirm(`Delete "${title}"? This action cannot be undone.`)) return;
+    try {
+      await api.delete(`/agreements/${agreementId}`);
+      toast('Deleted', `"${title}" has been removed.`, 'success');
+      fetchAgreements();
+    } catch (err: any) {
+      toast('Delete Failed', err.response?.data?.error?.message || 'Failed to delete agreement.', 'error');
+    }
+  };
+
+  const formatFileSize = (bytes: number | null): string => {
+    if (!bytes) return '—';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const statusBadge = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === 'executed' || s === 'signed' || s === 'active') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          ● Active
+        </span>
+      );
+    }
+    if (s === 'pending_signature' || s === 'pending' || s === 'draft') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          ● Pending
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+        ● {status}
+      </span>
+    );
   };
 
   return (
-    <MainLayout clientName={activeClient ? activeClient.name : 'Client Desk'} pageTitle="Agreement">
-      <div className="space-y-6">
-        {/* Top Header Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+    <MainLayout clientName="Client Desk" pageTitle="Agreement">
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#27332B] tracking-tight">Legal Agreements & Consents</h1>
-            <p className="text-sm font-medium text-[#6B7280] mt-1">
-              Executed Master Agreements, NDAs, and Portal Authorization Consent Forms
+            <h1 className="text-2xl font-extrabold text-[#27332B] tracking-tight">Agreements</h1>
+            <p className="text-sm text-[#6B7280] mt-0.5">
+              Upload and manage client agreements. Uploaded PDFs are visible on the client panel.
             </p>
           </div>
-
           {!isClientRole && (
-            <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="primary"
-                size="lg"
-                onClick={handleOpenUploadModal}
-                leftIcon={<Plus className="w-5 h-5" />}
-                className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-[14px] shadow-xs text-sm font-bold w-full sm:w-auto"
-              >
-                Upload Agreement
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleOpenUpload}
+              leftIcon={<Plus className="w-4 h-4" />}
+              className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-xs whitespace-nowrap"
+            >
+              Upload Agreement
+            </Button>
           )}
         </div>
 
-        {/* Status Summary Banner */}
-        <div className="bg-[#EEF5EF] border border-[#D7DDD7] rounded-[20px] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#DCE9DE] text-[#2F4F3A] font-bold flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5.5 h-5.5" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-[#27332B]">
-                {agreements.length > 0
-                  ? 'All Core Agreements Are Executed & Verified'
-                  : 'No Agreement Documents Uploaded'}
-              </div>
-              <div className="text-xs text-[#6B7280] mt-0.5">
-                {agreements.length > 0
-                  ? 'Master Service Agreement, NDA, and Consent Forms are up to date.'
-                  : 'Upload an agreement draft or client consent form to begin.'}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#4CAF50] bg-white border border-emerald-200 px-3 py-1 rounded-full shadow-2xs">
-              ● {agreements.length} Active Documents
-            </span>
-          </div>
-        </div>
-
+        {/* Content */}
         {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-64 w-full rounded-[20px]" />
-            <Skeleton className="h-64 w-full rounded-[20px]" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
           </div>
         ) : agreements.length === 0 ? (
-          <div className="py-14 bg-white border border-[#E3E8E3] rounded-[20px] shadow-[0_6px_20px_rgba(47,79,58,.05)]">
+          <div className="py-16 bg-white border border-[#E3E8E3] rounded-2xl shadow-sm">
             <EmptyState
               icon={<FileCheck2 className="w-12 h-12 text-[#5E8C61]" />}
-              title="No Agreement Documents Executed"
+              title="No Agreements Yet"
               description={
                 isClientRole
-                  ? 'Your agreement vault is currently empty. Your Super Admin will upload your Service Level Agreement.'
-                  : 'Your document vault is clear. Click "Upload Agreement" at the top right to upload an agreement.'
+                  ? 'Your admin will upload agreements for you here.'
+                  : 'Click "Upload Agreement" to add a PDF agreement for a client.'
               }
             />
           </div>
         ) : (
-          <div className="space-y-6">
-            {agreements.map((doc) => (
-              <div
-                key={doc.id}
-                className="bg-white border border-[#E3E8E3] rounded-[20px] p-4 sm:p-6 shadow-[0_6px_20px_rgba(47,79,58,.05)] space-y-4 sm:space-y-5 transition-all hover:border-[#5E8C61]/50"
-              >
-                {/* Document Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E3E8E3] pb-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#2F4F3A] text-white font-bold flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-                      <FileCheck2 className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#DCE9DE]" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-base font-extrabold text-[#27332B]">{doc.title}</h2>
-                        <span className="text-[10px] font-extrabold bg-[#DCE9DE] text-[#2F4F3A] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                          {doc.category}
-                        </span>
-                      </div>
-                      <p className="text-xs font-medium text-[#6B7280] mt-0.5">
-                        Client Entity: <b className="text-[#27332B]">{doc.signatory}</b> • Signed: {doc.signedDate}
-                      </p>
-                    </div>
-                  </div>
+          <div className="bg-white border border-[#E3E8E3] rounded-2xl overflow-hidden shadow-sm">
+            {/* Table Header */}
+            <div className="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 bg-[#F7F9F6] border-b border-[#E3E8E3] text-[11px] font-bold text-[#6B7280] uppercase tracking-wider">
+              <div className="col-span-4">Agreement</div>
+              <div className="col-span-2">Client</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-1">File</div>
+              <div className="col-span-1">Date</div>
+              <div className="col-span-2 text-right">Actions</div>
+            </div>
 
-                  <div className="flex items-center gap-2 flex-wrap self-end sm:self-auto">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#4CAF50]/10 text-[#4CAF50] border border-[#4CAF50]/20">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      {doc.status}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedPreview(doc)}
-                      leftIcon={<Eye className="w-4 h-4 text-[#5E8C61]" />}
-                      className="border-[#E3E8E3] text-[#27332B] hover:bg-[#EEF5EF] text-xs font-bold rounded-xl"
-                    >
-                      Preview SLA
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownloadPdf(doc.title)}
-                      leftIcon={<Download className="w-4 h-4 text-[#2F4F3A]" />}
-                      className="border-[#2F4F3A] text-[#2F4F3A] hover:bg-[#DCE9DE] text-xs font-bold rounded-xl"
-                    >
-                      Download PDF
-                    </Button>
+            {/* Rows */}
+            {agreements.map((agr) => (
+              <div
+                key={agr.id}
+                className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-5 py-3.5 border-b border-[#E3E8E3] last:border-b-0 hover:bg-[#FAFDFB] transition-colors"
+              >
+                {/* Title + Type */}
+                <div className="col-span-4 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#EEF5EF] text-[#2F4F3A] flex items-center justify-center shrink-0">
+                    <FileCheck2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-[#27332B] truncate">{agr.title}</div>
+                    <div className="text-[11px] text-[#6B7280] mt-0.5">{agr.type?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Agreement'}</div>
                   </div>
                 </div>
 
-                {/* Term & Version Details */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl p-3.5 text-xs">
-                  <div>
-                    <span className="text-[#6B7280] font-semibold block">Statutory Term Period</span>
-                    <span className="font-bold text-[#27332B] mt-0.5 block">{doc.effectivePeriod}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#6B7280] font-semibold block">Signatory Representative</span>
-                    <span className="font-bold text-[#27332B] mt-0.5 block">{doc.signatory}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#6B7280] font-semibold block">Audit Trail Version</span>
-                    <span className="font-bold text-[#27332B] mt-0.5 block">
-                      {doc.versions[0]?.version} ({doc.versions[0]?.date})
+                {/* Client */}
+                <div className="col-span-2 flex items-center">
+                  <span className="text-sm text-[#27332B] truncate flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-[#5E8C61] shrink-0 hidden sm:inline" />
+                    {agr.clientName}
+                  </span>
+                </div>
+
+                {/* Status */}
+                <div className="col-span-2 flex items-center">{statusBadge(agr.status)}</div>
+
+                {/* File */}
+                <div className="col-span-1 flex items-center">
+                  {agr.hasFile ? (
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      PDF
                     </span>
-                  </div>
+                  ) : (
+                    <span className="text-[11px] text-slate-400">No file</span>
+                  )}
+                </div>
+
+                {/* Date */}
+                <div className="col-span-1 flex items-center">
+                  <span className="text-xs text-[#6B7280]">{formatDate(agr.createdAt)}</span>
+                </div>
+
+                {/* Actions */}
+                <div className="col-span-2 flex items-center justify-end gap-1.5">
+                  {agr.hasFile && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePreview(agr.id)}
+                        title="Preview PDF"
+                        className="p-1.5 rounded-lg border-[#E3E8E3] hover:bg-[#EEF5EF]"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-[#5E8C61]" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(agr.id, agr.title)}
+                        title="Download PDF"
+                        className="p-1.5 rounded-lg border-[#E3E8E3] hover:bg-[#EEF5EF]"
+                      >
+                        <Download className="w-3.5 h-3.5 text-[#2F4F3A]" />
+                      </Button>
+                    </>
+                  )}
+                  {isSuperAdmin && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(agr.id, agr.title)}
+                      title="Delete agreement"
+                      className="p-1.5 rounded-lg border-red-200 hover:bg-red-50 text-red-500"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -340,18 +396,19 @@ export const AgreementPage: React.FC = () => {
         )}
       </div>
 
-      {/* Super Admin Upload Agreement Modal */}
+      {/* Upload Modal */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 sm:p-6 shadow-2xl max-w-lg w-full space-y-5 animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#2F4F3A] text-white flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-xl bg-[#2F4F3A] text-white flex items-center justify-center">
                   <Upload className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-[#27332B]">Upload Agreement</h3>
-                  <p className="text-xs text-slate-500">Upload Service Level Agreement for client company</p>
+                  <p className="text-xs text-[#6B7280]">PDF will be visible to the client on their panel</p>
                 </div>
               </div>
               <button
@@ -363,10 +420,10 @@ export const AgreementPage: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleUploadAgreementSubmit} className="space-y-4">
-              {/* Target Client Dropdown */}
+            <form onSubmit={handleUpload} className="space-y-4">
+              {/* Client Select */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 block">Select Client Company *</label>
+                <label className="text-xs font-bold text-slate-700 block">Client *</label>
                 <div className="flex items-center gap-2 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-3 py-2">
                   <Building2 className="w-4 h-4 text-[#5E8C61] shrink-0" />
                   <select
@@ -375,7 +432,7 @@ export const AgreementPage: React.FC = () => {
                     className="w-full bg-transparent border-none text-xs font-semibold text-[#27332B] focus:outline-none cursor-pointer"
                     required
                   >
-                    <option value="" disabled>Select Target Client Company...</option>
+                    <option value="" disabled>Select client…</option>
                     {clientsList.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -383,61 +440,83 @@ export const AgreementPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Agreement Title */}
+              {/* Title */}
               <Input
                 label="Agreement Title *"
-                placeholder="e.g. Master Service Level Agreement 2026"
+                placeholder="e.g. Master Service Agreement 2026"
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
                 leftIcon={<FileText className="w-4 h-4 text-slate-400" />}
                 required
               />
 
-              {/* Agreement Type Dropdown */}
+              {/* Type */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 block">Agreement Type *</label>
+                <label className="text-xs font-bold text-slate-700 block">Type</label>
                 <select
                   value={formType}
                   onChange={(e) => setFormType(e.target.value)}
                   className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-3 py-2 text-xs font-semibold text-[#27332B] focus:outline-none cursor-pointer"
                 >
-                  <option value="msa">Master Service Agreement (MSA)</option>
-                  <option value="nda">Non-Disclosure Agreement (NDA)</option>
-                  <option value="service_agreement">Service Agreement (SLA)</option>
-                  <option value="sow">Statement of Work (SOW)</option>
-                  <option value="other">Other Statutory Document</option>
+                  <option value="service_agreement">Service Agreement</option>
+                  <option value="msa">Master Service Agreement</option>
+                  <option value="nda">NDA</option>
+                  <option value="sow">Statement of Work</option>
+                  <option value="sla">SLA</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 
-              {/* Notes / Terms */}
+              {/* Notes */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 block">Agreement Description / Notes</label>
+                <label className="text-xs font-bold text-slate-700 block">Notes (optional)</label>
                 <textarea
-                  rows={3}
-                  placeholder="Enter SLA notes or agreement term details..."
+                  rows={2}
+                  placeholder="Brief description…"
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
                   className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl p-3 text-xs text-[#27332B] focus:outline-none focus:bg-white focus:border-[#5E8C61]"
                 />
               </div>
 
-              {/* PDF Document Selector */}
+              {/* PDF File */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700 block">PDF Agreement File (.pdf)</label>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
-                  className="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#DCE9DE] file:text-[#2F4F3A] hover:file:bg-[#2F4F3A] hover:file:text-white cursor-pointer"
-                />
+                <label className="text-xs font-bold text-slate-700 block">PDF File *</label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 flex items-center justify-center gap-2 bg-[#F7F9F6] border border-dashed border-[#5E8C61] rounded-xl px-4 py-3 text-xs cursor-pointer hover:bg-[#EEF5EF] transition-colors">
+                    <Upload className="w-4 h-4 text-[#5E8C61]" />
+                    <span className="font-semibold text-[#27332B]">
+                      {selectedFile ? selectedFile.name : 'Choose PDF…'}
+                    </span>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
+                      className="hidden"
+                      required
+                    />
+                  </label>
+                  {selectedFile && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFile(null)}
+                      className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {selectedFile && (
+                  <p className="text-[11px] text-[#6B7280] mt-1">{formatFileSize(selectedFile.size)}</p>
+                )}
               </div>
 
-              {/* Modal Actions */}
+              {/* Actions */}
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E3E8E3]">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsUploadModalOpen(false)}
+                  onClick={() => { setIsUploadModalOpen(false); resetForm(); }}
                   className="text-xs"
                 >
                   Cancel
@@ -453,86 +532,6 @@ export const AgreementPage: React.FC = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* SLA Document Preview Modal */}
-      {selectedPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 sm:p-6 shadow-2xl max-w-2xl w-full space-y-4 animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#2F4F3A] text-white flex items-center justify-center font-bold">
-                  <FileCheck2 className="w-4.5 h-4.5 text-[#DCE9DE]" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#27332B]">{selectedPreview.title}</h3>
-                  <span className="text-[10px] font-bold text-[#5E8C61] uppercase tracking-wider">
-                    {selectedPreview.category}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedPreview(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="p-4 sm:p-5 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl font-mono text-xs whitespace-pre-wrap leading-relaxed">
-                {selectedPreview.contentSnippet}
-              </div>
-
-              <div className="border-t border-[#E3E8E3] pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <span className="text-[#6B7280] font-semibold block">Execution Date</span>
-                  <span className="font-bold text-[#27332B]">{selectedPreview.signedDate}</span>
-                </div>
-                <div>
-                  <span className="text-[#6B7280] font-semibold block">Digital Signatory</span>
-                  <span className="font-bold text-[#27332B]">{selectedPreview.signatory}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="pt-3 mt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 border-t border-[#E3E8E3]">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => window.print()}
-                leftIcon={<Printer className="w-4 h-4" />}
-                className="text-xs"
-              >
-                Print Document
-              </Button>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSelectedPreview(null)}
-                  className="flex-1 sm:flex-initial text-xs"
-                >
-                  Close
-                </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={() => {
-                    handleDownloadPdf(selectedPreview.title);
-                    setSelectedPreview(null);
-                  }}
-                  leftIcon={<Download className="w-4 h-4" />}
-                  className="flex-1 sm:flex-initial bg-[#2F4F3A] hover:bg-[#243E2E] text-white text-xs"
-                >
-                  Download PDF
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       )}

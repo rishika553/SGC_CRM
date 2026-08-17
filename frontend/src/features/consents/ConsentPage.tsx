@@ -25,7 +25,7 @@ import { formatDate } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
-import { clientQueryKeys, fetchClientDirectory } from '@/features/clients/clientQueries';
+import { clientQueryKeys, fetchClientDirectory, resolveClientIdForCurrentUser } from '@/features/clients/clientQueries';
 import { consentApi } from '@/features/consents/consentApi';
 import { Consent, ConsentStatus } from '@/types/consent';
 import { Client } from '@/types/client';
@@ -65,7 +65,11 @@ const STATUS_FILTERS: Array<{ value: ConsentStatus | 'all'; label: string }> = [
 ];
 
 const StatusBadge: React.FC<{ status: ConsentStatus }> = ({ status }) => {
-  const style = STATUS_STYLES[status];
+  const style = STATUS_STYLES[status] || {
+    label: status,
+    className: 'bg-slate-100 text-slate-600 border-slate-200',
+    icon: <Clock className="w-3.5 h-3.5" />,
+  };
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${style.className}`}>
       {style.icon}
@@ -105,7 +109,7 @@ export const ConsentPage: React.FC = () => {
   const fetchConsents = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const activeClientId = localStorage.getItem('crm_active_client_id');
+    const activeClientId = await resolveClientIdForCurrentUser(isClientRole);
     const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
     try {
       const params: Record<string, unknown> = { page: 1, page_size: 100 };
@@ -139,7 +143,7 @@ export const ConsentPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, isClientRole]);
 
   useEffect(() => {
     fetchConsents();
@@ -213,21 +217,26 @@ export const ConsentPage: React.FC = () => {
     setResponseNotes('');
   };
 
-  const handleRespond = async (status: 'allowed' | 'denied') => {
-    if (!selectedConsent) return;
+  const handleRespond = async (responseStatus: 'allowed' | 'denied') => {
+    if (!selectedConsent || isResponding) return;
     setIsResponding(true);
     try {
-      const updated = await consentApi.respond(selectedConsent.id, {
-        status,
-        denial_reason: status === 'denied' && denialReason.trim() ? denialReason.trim() : undefined,
-        response_notes: responseNotes.trim() || undefined,
-      });
+      const payload: { status: 'allowed' | 'denied'; denial_reason?: string; response_notes?: string } = {
+        status: responseStatus,
+      };
+      if (responseStatus === 'denied' && denialReason.trim()) {
+        payload.denial_reason = denialReason.trim();
+      }
+      if (responseNotes.trim()) {
+        payload.response_notes = responseNotes.trim();
+      }
+      const updated = await consentApi.respond(selectedConsent.id, payload);
       setSelectedConsent(updated);
       setConsents((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-      toast('Success', status === 'allowed' ? 'Consent request allowed.' : 'Consent request denied.', 'success');
+      toast('Success', responseStatus === 'allowed' ? 'Consent request allowed.' : 'Consent request denied.', 'success');
       setResponseMode('none');
     } catch (err: any) {
-      toast('Response Failed', err.response?.data?.error?.message || 'Failed to submit consent response.', 'error');
+      toast('Response Failed', err.response?.data?.error?.details?.[0]?.message || err.response?.data?.error?.message || 'Failed to submit consent response.', 'error');
     } finally {
       setIsResponding(false);
     }
@@ -724,7 +733,7 @@ export const ConsentPage: React.FC = () => {
                         type="button"
                         size="lg"
                         isLoading={isResponding}
-                        onClick={() => handleRespond(responseMode)}
+                        onClick={() => handleRespond(responseMode as 'allowed' | 'denied')}
                         leftIcon={responseMode === 'allowed' ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                         className={`text-sm font-bold rounded-xl py-3 ${
                           responseMode === 'allowed'

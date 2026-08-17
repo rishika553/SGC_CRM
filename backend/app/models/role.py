@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import String, Enum, Text
+from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import BaseCRMModel
 
@@ -13,8 +13,8 @@ class UserRoleEnum(str, enum.Enum):
 class Role(BaseCRMModel):
     __tablename__ = "roles"
 
-    name: Mapped[UserRoleEnum] = mapped_column(
-        Enum(UserRoleEnum, native_enum=False, length=50),
+    name: Mapped[str] = mapped_column(
+        String(50),
         unique=True,
         nullable=False,
         index=True,

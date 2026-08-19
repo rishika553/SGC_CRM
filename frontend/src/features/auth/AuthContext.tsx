@@ -20,7 +20,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('crm_access_token'));
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Fast-path: if there is no stored token we know synchronously the user is not
+  // authenticated. No need for a spinner — skip straight to the login page.
+  const hasStoredToken = !!localStorage.getItem('crm_access_token');
+  const [isLoading, setIsLoading] = useState<boolean>(hasStoredToken);
   const refreshInFlight = useRef<Promise<User | null> | null>(null);
 
   // Single source of truth for the authenticated user profile.
@@ -49,6 +52,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         localStorage.removeItem('crm_access_token');
         localStorage.removeItem('crm_refresh_token');
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          // Ignore Supabase errors
+        }
+        queryClient.clear();
         setUser(null);
         setToken(null);
         return null;

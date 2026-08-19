@@ -52,6 +52,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onAddClient,
 }) => {
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
+  // Suppress the width transition on initial render so the sidebar doesn't animate
+  // from a default state to its actual width, which would cause measurable CLS.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => { setMounted(true); }, []);
   const SUPERADMIN_OPTION: ClientOption = { id: 'superadmin', name: 'Superadmin Main View' };
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(initialActiveClient || SUPERADMIN_OPTION);
 
@@ -159,7 +163,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const sidebarContent = (
     <div
       className={cn(
-        'bg-[#2F4F3A] text-white flex flex-col h-full overflow-hidden select-none transition-all duration-300 ease-in-out shadow-lg max-w-[85vw]',
+        'bg-[#2F4F3A] text-white flex flex-col h-full overflow-hidden select-none shadow-lg max-w-[85vw]',
+        mounted && 'transition-all duration-300 ease-in-out',
         sidebarWidthClass
       )}
     >
@@ -211,102 +216,102 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               )}
 
-            <button
-              type="button"
-              onClick={() => setIsClientDropdownOpen((prev) => !prev)}
-              title={isCollapsed ? (selectedClient ? selectedClient.name : 'Select Client') : undefined}
-              className={cn(
-                'w-full flex items-center justify-between p-2.5 rounded-xl bg-white/[0.08] border border-white/15 hover:bg-white/[0.14] text-left transition-all',
-                isCollapsed && 'justify-center p-2'
-              )}
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-[#DCE9DE]/20 text-[#DCE9DE] font-bold text-xs flex items-center justify-center shrink-0">
-                  {selectedClient?.id === 'superadmin' ? <Crown className="w-3.5 h-3.5 text-amber-300" /> : <Building2 className="w-3.5 h-3.5" />}
-                </div>
-                {!isCollapsed && (
-                  <span className="text-sm font-semibold text-white truncate">
-                    {selectedClient ? selectedClient.name : 'Select Client'}
-                  </span>
-                )}
-              </div>
-              {!isCollapsed && (
-                <ChevronDown className={cn("w-4 h-4 text-white/70 shrink-0 transition-transform duration-200", isClientDropdownOpen && "rotate-180")} />
-              )}
-            </button>
-
-            {/* Client Dropdown Popup */}
-            {isClientDropdownOpen && (
-              <div
+              <button
+                type="button"
+                onClick={() => setIsClientDropdownOpen((prev) => !prev)}
+                title={isCollapsed ? (selectedClient ? selectedClient.name : 'Select Client') : undefined}
                 className={cn(
-                  'absolute top-full mt-1.5 bg-[#25402F] border border-white/20 rounded-xl shadow-2xl p-1.5 z-50 space-y-1',
-                  isCollapsed ? 'left-14 w-60' : 'left-0 right-0'
+                  'w-full flex items-center justify-between p-2.5 rounded-xl bg-white/[0.08] border border-white/15 hover:bg-white/[0.14] text-left transition-all',
+                  isCollapsed && 'justify-center p-2'
                 )}
               >
-                {/* Return to Superadmin Account Option */}
-                {!isClientRole && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleClientSelect(SUPERADMIN_OPTION)}
-                      className={cn(
-                        "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs font-bold transition-colors border mb-1",
-                        selectedClient?.id === 'superadmin'
-                          ? "bg-amber-400/25 text-amber-200 border-amber-400/50 shadow-xs"
-                          : "text-amber-300 border-amber-400/30 hover:bg-amber-400/10"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span className="truncate">Superadmin Main View</span>
-                      </div>
-                      {selectedClient?.id === 'superadmin' && <Check className="w-3.5 h-3.5 shrink-0 text-amber-300" />}
-                    </button>
-                    <div className="border-t border-white/10 my-1" />
-                  </>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-[#DCE9DE]/20 text-[#DCE9DE] font-bold text-xs flex items-center justify-center shrink-0">
+                    {selectedClient?.id === 'superadmin' ? <Crown className="w-3.5 h-3.5 text-amber-300" /> : <Building2 className="w-3.5 h-3.5" />}
+                  </div>
+                  {!isCollapsed && (
+                    <span className="text-sm font-semibold text-white truncate">
+                      {selectedClient ? selectedClient.name : 'Select Client'}
+                    </span>
+                  )}
+                </div>
+                {!isCollapsed && (
+                  <ChevronDown className={cn("w-4 h-4 text-white/70 shrink-0 transition-transform duration-200", isClientDropdownOpen && "rotate-180")} />
                 )}
+              </button>
 
-                {liveClients.length === 0 ? (
-                  <div className="p-2 text-xs text-white/70 text-center">No clients found</div>
-                ) : (
-                  liveClients.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => handleClientSelect(c)}
-                      className={cn(
-                        "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs font-medium transition-colors",
-                        selectedClient?.id === c.id
-                          ? "bg-[#DCE9DE] text-[#2F4F3A] font-bold shadow-xs"
-                          : "text-white/90 hover:bg-white/[0.08] hover:text-white"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <Building2 className="w-3.5 h-3.5 opacity-80" />
-                        <span className="truncate">{c.name}</span>
-                      </div>
-                      {selectedClient?.id === c.id && <Check className="w-3.5 h-3.5 shrink-0" />}
-                    </button>
-                  ))
-                )}
-
-                <div className="border-t border-white/10 pt-1 mt-1" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onAddClient) onAddClient();
-                    else window.location.href = '/clients';
-                    setIsClientDropdownOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 p-2 rounded-lg text-xs font-semibold text-[#DCE9DE] hover:bg-white/[0.08] transition-colors"
+              {/* Client Dropdown Popup */}
+              {isClientDropdownOpen && (
+                <div
+                  className={cn(
+                    'absolute top-full mt-1.5 bg-[#25402F] border border-white/20 rounded-xl shadow-2xl p-1.5 z-50 space-y-1',
+                    isCollapsed ? 'left-14 w-60' : 'left-0 right-0'
+                  )}
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add New Client</span>
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+                  {/* Return to Superadmin Account Option */}
+                  {!isClientRole && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleClientSelect(SUPERADMIN_OPTION)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs font-bold transition-colors border mb-1",
+                          selectedClient?.id === 'superadmin'
+                            ? "bg-amber-400/25 text-amber-200 border-amber-400/50 shadow-xs"
+                            : "text-amber-300 border-amber-400/30 hover:bg-amber-400/10"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <span className="truncate">Superadmin Main View</span>
+                        </div>
+                        {selectedClient?.id === 'superadmin' && <Check className="w-3.5 h-3.5 shrink-0 text-amber-300" />}
+                      </button>
+                      <div className="border-t border-white/10 my-1" />
+                    </>
+                  )}
+
+                  {liveClients.length === 0 ? (
+                    <div className="p-2 text-xs text-white/70 text-center">No clients found</div>
+                  ) : (
+                    liveClients.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => handleClientSelect(c)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs font-medium transition-colors",
+                          selectedClient?.id === c.id
+                            ? "bg-[#DCE9DE] text-[#2F4F3A] font-bold shadow-xs"
+                            : "text-white/90 hover:bg-white/[0.08] hover:text-white"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Building2 className="w-3.5 h-3.5 opacity-80" />
+                          <span className="truncate">{c.name}</span>
+                        </div>
+                        {selectedClient?.id === c.id && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      </button>
+                    ))
+                  )}
+
+                  <div className="border-t border-white/10 pt-1 mt-1" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onAddClient) onAddClient();
+                      else window.location.href = '/clients';
+                      setIsClientDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 p-2 rounded-lg text-xs font-semibold text-[#DCE9DE] hover:bg-white/[0.08] transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add New Client</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Top Section Nav Items */}
           <nav className="space-y-1">

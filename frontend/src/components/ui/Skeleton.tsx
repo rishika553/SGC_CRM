@@ -14,7 +14,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className, variant = 'rectan
 
   return (
     <div
-      className={cn('bg-surface-200 animate-pulse', variants[variant], className)}
+      className={cn('bg-slate-200 animate-pulse', variants[variant], className)}
       {...props}
     />
   );

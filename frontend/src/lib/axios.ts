@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { supabase } from './supabase';
+import { queryClient } from './query-client';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
@@ -23,10 +25,18 @@ api.interceptors.request.use(
 // Response interceptor for automatic 401 handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('crm_access_token');
-      if (window.location.pathname !== '/login') {
+      const loginPaths = ['/login', '/superadmin/login', '/client/login'];
+      if (!loginPaths.includes(window.location.pathname)) {
+        localStorage.removeItem('crm_access_token');
+        localStorage.removeItem('crm_refresh_token');
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          // Ignore Supabase errors
+        }
+        queryClient.clear();
         window.location.href = '/login';
       }
     }

@@ -1,17 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SGC CRM Platform</title>
-    <!-- Google Font: Manrope -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-[#F7F9F6] text-[#27332B] font-['Manrope'] font-sans antialiased selection:bg-[#DCE9DE] selection:text-[#2F4F3A]">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGC CRM Platform</title>
+
+  <!-- Preconnect to Google Fonts CDN early -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Preload the woff2 binary for Manrope wght 700–800.
+       The h1 LCP element uses font-extrabold (=800). Preloading the binary directly
+       means the font is in cache before the h1 paints, without waiting for the CSS
+       descriptor → @font-face → woff2 waterfall on warm-cache visits.
+       URL: Google Fonts CDN, Manrope v15, Latin subset, variable axis wght 300–800. -->
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="https://fonts.gstatic.com/s/manrope/v15/xn7_YHE41ni1AdIRqAuZuw1Bx9mbZk79FO_F87jxeN7B.woff2">
+
+  <!-- Non-blocking stylesheet (display=optional → zero FOUT/CLS, no layout shift) -->
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=optional"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=optional">
+  </noscript>
+</head>
+
+<body
+  class="bg-[#F7F9F6] text-[#27332B] font-['Manrope'] font-sans antialiased selection:bg-[#DCE9DE] selection:text-[#2F4F3A]">
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

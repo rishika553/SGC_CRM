@@ -61,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="bg-white border-b border-[#E3E8E3] px-3 sm:px-4 md:px-6 py-2.5 sm:py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-subtle">
+    <header className="bg-white border-b border-[#E3E8E3] px-3 sm:px-4 md:px-6 py-2.5 sm:py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-subtle h-[60px]">
       {/* Left Section: Mobile Menu, Breadcrumb & Title */}
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button
@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="min-w-0">
+        <div className="min-w-0 min-w-[120px]">
           <div className="text-[10px] sm:text-[11px] font-semibold text-[#6B7280] tracking-wide truncate max-w-[40vw] sm:max-w-xs md:max-w-none">
             <span>{isClientRole ? clientProfileName : clientName}</span> &nbsp;/&nbsp;{' '}
             <b className="text-[#27332B] font-bold">{pageTitle}</b>

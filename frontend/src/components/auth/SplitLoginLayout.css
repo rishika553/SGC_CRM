@@ -1,0 +1,194 @@
+/* ==========================================================
+   SplitLoginLayout — extracted from inline JSX <style> block
+   to eliminate post-first-paint style recalculation (CLS-5)
+   ========================================================== */
+
+.split-login-grid {
+  display: grid;
+  grid-template-columns: 58% 42%;
+  min-height: 100vh;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+.split-login-left {
+  position: relative;
+  background: #f4f7f5;
+  padding: 52px 60px 0 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  overflow: hidden;
+}
+.split-login-left-brand { display: flex; align-items: center; gap: 14px; }
+.split-login-left-brand-text span:first-child {
+  display: block; font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700; font-size: 20px; letter-spacing: 3px; color: #12181a; line-height: 1.1;
+}
+.split-login-left-brand-text span:last-child {
+  display: block; font-size: 10px; letter-spacing: 4px; color: #6b7678;
+  border-top: 1px solid #9aa4a6; padding-top: 4px; margin-top: 4px; font-weight: 500;
+}
+.split-login-left-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: #f2f8f4; border: 1px solid #e7f3ec; color: #14532d;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 1.4px;
+  padding: 6px 13px; border-radius: 20px; width: fit-content;
+}
+.split-login-left-headline {
+  font-weight: 800; font-size: clamp(26px, 2.6vw, 36px); line-height: 1.22;
+  letter-spacing: -0.8px; color: #12181a; max-width: 440px; margin: 0;
+}
+.split-login-left-lede {
+  font-size: 13.5px; line-height: 1.68; color: #6b7678; max-width: 400px; margin: 0;
+}
+.split-login-left-lede br { display: none; }
+.split-login-right {
+  background: #ffffff; border-left: 1px solid #e4e8e6;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 56px 52px;
+}
+.split-login-right-inner { width: 100%; max-width: 380px; }
+.split-login-mobile-brand {
+  display: none; align-items: center; justify-content: center; gap: 10px;
+  padding: 20px 20px 0; text-align: center;
+}
+.split-login-mobile-brand svg { flex-shrink: 0; }
+.split-login-mobile-brand-text span:first-child {
+  display: block; font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700; font-size: 16px; letter-spacing: 2px; color: #12181a; line-height: 1.1;
+}
+.split-login-mobile-brand-text span:last-child {
+  display: block; font-size: 9px; letter-spacing: 3px; color: #6b7678;
+  border-top: 1px solid #9aa4a6; padding-top: 3px; margin-top: 3px; font-weight: 500;
+}
+.split-login-mobile-badge {
+  display: none; align-items: center; gap: 6px; justify-content: center;
+  background: #f2f8f4; border: 1px solid #e7f3ec; color: #14532d;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px;
+  padding: 5px 11px; border-radius: 20px; margin: 10px auto 0; width: fit-content;
+}
+
+/* Mobile hero section (hidden on desktop) */
+.split-login-mobile-hero { display: none; }
+.split-login-mobile-hero-headline {
+  font-weight: 800; font-size: 22px; line-height: 1.25; letter-spacing: -0.5px;
+  color: #12181a; text-align: center; margin: 16px 0 4px;
+}
+.split-login-mobile-hero-headline span { color: #1c6b3a; }
+.split-login-mobile-hero-lede {
+  font-size: 12.5px; line-height: 1.55; color: #6b7678;
+  text-align: center; margin: 0 0 18px; padding: 0 8px;
+}
+.split-login-mobile-features {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px;
+}
+.split-login-mobile-feature-card {
+  background: #fff; border: 1px solid #e4e8e6; border-radius: 10px;
+  padding: 12px 10px; text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 7px;
+}
+.split-login-mobile-feature-icon {
+  width: 34px; height: 34px; min-width: 34px; border-radius: 8px;
+  background: #e7f3ec; display: flex; align-items: center; justify-content: center;
+  color: #14532d;
+}
+.split-login-mobile-feature-title {
+  font-size: 11px; font-weight: 700; color: #12181a; line-height: 1.2;
+}
+.split-login-mobile-stats {
+  display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;
+  padding: 12px 0; border-top: 1px solid #e4e8e6; border-bottom: 1px solid #e4e8e6;
+}
+.split-login-mobile-stat { text-align: center; }
+.split-login-mobile-stat-val {
+  font-size: 20px; font-weight: 800; color: #1c6b3a; line-height: 1;
+}
+.split-login-mobile-stat-label {
+  font-size: 10px; color: #6b7678; font-weight: 500; margin-top: 3px;
+}
+.split-login-mobile-chart {
+  margin-bottom: 20px; background: #f7fbf8; border: 1px solid #e4ede6;
+  border-radius: 10px; padding: 12px 14px;
+}
+.split-login-mobile-chart-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.split-login-mobile-chart-label { font-size: 10px; color: #9aa4a6; font-weight: 500; }
+.split-login-mobile-chart-value {
+  font-size: 16px; font-weight: 800; color: #12181a; display: flex; align-items: center; gap: 6px;
+}
+.split-login-mobile-chart-value span {
+  font-size: 9px; font-weight: 700; background: #e8f5e9; color: #2e7d32;
+  padding: 2px 6px; border-radius: 10px;
+}
+.split-login-mobile-activity { margin-bottom: 16px; }
+.split-login-mobile-activity-title {
+  font-size: 11px; font-weight: 700; color: #12181a; margin-bottom: 8px;
+}
+.split-login-mobile-activity-item {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.split-login-mobile-activity-dot {
+  width: 26px; height: 26px; min-width: 26px; border-radius: 50%;
+  background: #1c6b3a; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.split-login-mobile-activity-name { font-size: 11px; font-weight: 600; color: #12181a; }
+.split-login-mobile-activity-time { font-size: 9.5px; color: #9aa4a6; }
+
+@media (max-width: 768px) {
+  .split-login-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .split-login-left {
+    display: none !important;
+  }
+  .split-login-right {
+    border-left: none !important;
+    padding: 0 20px 24px !important;
+    justify-content: flex-start !important;
+  }
+  .split-login-mobile-brand {
+    display: flex !important;
+  }
+  .split-login-mobile-badge {
+    display: flex !important;
+  }
+  .split-login-mobile-hero {
+    display: block !important;
+  }
+  .split-login-right-inner {
+    max-width: 100% !important;
+  }
+  .split-login-right .split-login-shield {
+    display: none !important;
+  }
+  .split-login-right .split-login-form-card {
+    padding: 24px 18px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 30px rgba(15,40,25,.06) !important;
+  }
+  .split-login-right .split-login-form-card h2 {
+    font-size: 20px !important;
+  }
+  .split-login-right .split-login-trust-badges {
+    gap: 14px !important;
+  }
+  .split-login-right .split-login-trust-badge-item {
+    font-size: 10px !important;
+  }
+  .split-login-right .split-login-secure-line {
+    margin: 16px 0 12px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .split-login-right {
+    padding: 16px 14px !important;
+  }
+  .split-login-right .split-login-form-card {
+    padding: 22px 16px !important;
+  }
+  .split-login-right .split-login-trust-badges {
+    gap: 10px !important;
+  }
+}

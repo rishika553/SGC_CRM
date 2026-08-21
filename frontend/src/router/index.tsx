@@ -30,6 +30,7 @@ const PageSpinner: React.FC = () => (
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const hasStoredToken = !!localStorage.getItem('crm_access_token');
 
   if (isLoading) {
     return (
@@ -39,7 +40,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !hasStoredToken) {
     return <Navigate to="/superadmin/login" replace />;
   }
 
@@ -48,6 +49,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const SuperAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const hasStoredToken = !!localStorage.getItem('crm_access_token');
 
   if (isLoading) {
     return (
@@ -57,7 +59,7 @@ const SuperAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !hasStoredToken) {
     return <Navigate to="/superadmin/login" replace />;
   }
 

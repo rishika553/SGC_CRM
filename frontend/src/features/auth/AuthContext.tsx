@@ -49,7 +49,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return response.data.data;
         }
         return null;
-      } catch (error) {
+      } catch (error: any) {
+        const status = error?.response?.status;
+        // 404 / 500 / 503 — backend unreachable or cold-starting.
+        // Keep the existing token so we can retry on next navigation instead of
+        // forcing a full sign-out.
+        if (status === 404 || status === 500 || status === 503) {
+          console.warn(`[Auth] /users/me returned ${status} — keeping session for retry`);
+          return null;
+        }
+        // 401 / 403 — genuinely invalid token. Sign out.
         localStorage.removeItem('crm_access_token');
         localStorage.removeItem('crm_refresh_token');
         try {

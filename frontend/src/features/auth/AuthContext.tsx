@@ -17,18 +17,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function clearLocalAuth() {
+  localStorage.removeItem('crm_access_token');
+  localStorage.removeItem('crm_refresh_token');
+  queryClient.clear();
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('crm_access_token'));
-  // Fast-path: if there is no stored token we know synchronously the user is not
-  // authenticated. No need for a spinner — skip straight to the login page.
   const hasStoredToken = !!localStorage.getItem('crm_access_token');
   const [isLoading, setIsLoading] = useState<boolean>(hasStoredToken);
   const refreshInFlight = useRef<Promise<User | null> | null>(null);
+  // Guard: when true, the onAuthStateChange listener must NOT clear auth state
+  // because login() is in flight and owns the session lifecycle.
+  const loginInProgress = useRef(false);
 
-  // Single source of truth for the authenticated user profile.
-  // Concurrent callers share the same in-flight request so /users/me is
-  // only ever sent once at a time (e.g. INITIAL_SESSION + TOKEN_REFRESHED racing).
   const refreshProfile = useCallback((): Promise<User | null> => {
     if (refreshInFlight.current) {
       return refreshInFlight.current;
@@ -37,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const currentToken = localStorage.getItem('crm_access_token');
     if (!currentToken) {
       setUser(null);
+      setToken(null);
       setIsLoading(false);
       return Promise.resolve(null);
     }
@@ -51,22 +56,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       } catch (error: any) {
         const status = error?.response?.status;
-        // 404 / 500 / 503 — backend unreachable or cold-starting.
-        // Keep the existing token so we can retry on next navigation instead of
-        // forcing a full sign-out.
-        if (status === 404 || status === 500 || status === 503) {
-          console.warn(`[Auth] /users/me returned ${status} — keeping session for retry`);
+        // Backend down / cold-start / transient — keep the token so we retry
+        // on next navigation rather than destroying the Supabase session.
+        if (!status || status === 404 || status === 500 || status === 502 || status === 503) {
+          console.warn(`[Auth] /users/me returned ${status ?? 'network'} — keeping session for retry`);
           return null;
         }
-        // 401 / 403 — genuinely invalid token. Sign out.
-        localStorage.removeItem('crm_access_token');
-        localStorage.removeItem('crm_refresh_token');
-        try {
-          await supabase.auth.signOut();
-        } catch (e) {
-          // Ignore Supabase errors
-        }
-        queryClient.clear();
+        // 401 / 403 / session_not_found — clear LOCAL state only.
+        // Do NOT call supabase.auth.signOut() here.  Only the explicit
+        // logout() action should destroy the Supabase session, otherwise
+        // a race between onAuthStateChange and login() will nuke the
+        // brand-new session with a "session_not_found" error.
+        clearLocalAuth();
         setUser(null);
         setToken(null);
         return null;
@@ -82,17 +83,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let active = true;
 
-    // Single session listener is the source of truth for auth state.
-    // On mount, supabase-js v2 emits INITIAL_SESSION with the restored session,
-    // which is the ONLY trigger for the initial /users/me request.
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // During an active login() call, the login function owns the full lifecycle.
+      // The listener should only update the token; it must NOT clear state on
+      // SIGNED_OUT events triggered by our own error-handling signOut() calls,
+      // because that would race with the in-flight login.
+      if (loginInProgress.current) {
+        if (session?.access_token) {
+          localStorage.setItem('crm_access_token', session.access_token);
+          setToken(session.access_token);
+        }
+        return;
+      }
+
       if (session?.access_token) {
         localStorage.setItem('crm_access_token', session.access_token);
         setToken(session.access_token);
         await refreshProfile();
       } else if (active) {
-        localStorage.removeItem('crm_access_token');
-        localStorage.removeItem('crm_refresh_token');
+        clearLocalAuth();
         setToken(null);
         setUser(null);
         setIsLoading(false);
@@ -106,21 +115,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshProfile]);
 
   const login = async (emailInput: string, password: string, portal?: string) => {
+    loginInProgress.current = true;
     setIsLoading(true);
     try {
       let email = emailInput.trim();
       if (!email.includes('@')) {
         email = `${email}@sgccrm.com`;
       }
-      // 1. Authenticate directly via Supabase Auth
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data?.session) {
         throw new Error(error?.message || 'Authentication failed. Please check your credentials.');
       }
 
       const accessToken = data.session.access_token;
-      // Client records are user-scoped. Do not let a previous account's cache
-      // survive an account switch in the same browser session.
       queryClient.removeQueries({ queryKey: ['clients'] });
       localStorage.setItem('crm_access_token', accessToken);
       if (data.session.refresh_token) {
@@ -128,35 +136,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       setToken(accessToken);
 
-      // 2. Fetch DB-verified user profile from FastAPI backend (single source of truth)
       const userData = await refreshProfile();
       if (!userData) {
-        await supabase.auth.signOut();
-        localStorage.removeItem('crm_access_token');
-        localStorage.removeItem('crm_refresh_token');
+        // Backend returned an error but we do NOT destroy the Supabase session.
+        // The user can retry — the backend may be cold-starting.
+        clearLocalAuth();
         setToken(null);
         setUser(null);
-        throw new Error('User profile record not found in database.');
+        throw new Error('User profile record not found in database. The backend may be starting up — please try again in a moment.');
       }
 
       const rawRole = userData.role?.name ? String(userData.role.name).toLowerCase() : '';
       const isClientUser = rawRole === 'client' || rawRole === 'client_viewer';
       const isAdminUser = rawRole === 'super_admin' || rawRole === 'admin';
 
-      // 3. Enforce Portal Protection based on DB-verified role
       if (portal === 'superadmin' && !isAdminUser) {
-        await supabase.auth.signOut();
-        localStorage.removeItem('crm_access_token');
-        localStorage.removeItem('crm_refresh_token');
+        clearLocalAuth();
         setToken(null);
         setUser(null);
         throw new Error('Access Denied: Client accounts cannot access the Super Admin Portal. Please use the Client Login page.');
       }
 
       if (portal === 'client' && !isClientUser) {
-        await supabase.auth.signOut();
-        localStorage.removeItem('crm_access_token');
-        localStorage.removeItem('crm_refresh_token');
+        clearLocalAuth();
         setToken(null);
         setUser(null);
         throw new Error('Access Denied: Corporate Admin accounts cannot access the Client Portal. Please use the Super Admin Login page.');
@@ -166,6 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       throw err;
     } finally {
+      loginInProgress.current = false;
       setIsLoading(false);
     }
   };
@@ -176,11 +179,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Ignore if Supabase offline
     }
-    // Remove web push subscription so the next account does not receive this browser's pushes
     unsubscribeFromPush().catch(() => undefined);
-    localStorage.removeItem('crm_access_token');
-    localStorage.removeItem('crm_refresh_token');
-    queryClient.removeQueries({ queryKey: ['clients'] });
+    clearLocalAuth();
     setToken(null);
     setUser(null);
     window.location.href = '/superadmin/login';

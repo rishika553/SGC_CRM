@@ -77,32 +77,51 @@ async def get_current_user(
         print(f"[ME] USER QUERY (incl ROLE/ORG): {(t_db3 - t_db2) * 1000:.1f} ms")
 
     if not user and email:
-        # Auto-provision user from Supabase token info if user record is missing in public.users
-        from app.models.role import Role, UserRoleEnum
-        stmt_role = select(Role).where(Role.name == UserRoleEnum.SUPER_ADMIN)
-        role_res = await db.execute(stmt_role)
-        role = role_res.scalar_one_or_none()
+        # Auto-provision user from Supabase token info if user record is missing in public.users.
+        # This covers: (a) first Supabase login when seed was never run on this DB,
+        # (b) ID mismatch between Supabase auth UUID and a previously-seeded random UUID
+        #     when the email lookup also fails (e.g. soft-deleted or different email casing).
+        try:
+            from app.models.role import Role, UserRoleEnum
+            stmt_role = select(Role).where(Role.name == UserRoleEnum.SUPER_ADMIN)
+            role_res = await db.execute(stmt_role)
+            role = role_res.scalar_one_or_none()
 
-        user = User(
-            id=user_id,
-            email=email,
-            hashed_password="",
-            first_name=payload.get("user_metadata", {}).get("first_name", "Supabase"),
-            last_name=payload.get("user_metadata", {}).get("last_name", "User"),
-            role_id=role.id if role else None,
-            is_active=True,
-            is_verified=True,
-        )
-        db.add(user)
-        await db.commit()
-        
-        # Re-query to load relationships
-        stmt_reload = select(User).options(
-            selectinload(User.role),
-            selectinload(User.organization)
-        ).where(User.id == user.id)
-        res_reload = await db.execute(stmt_reload)
-        user = res_reload.scalar_one()
+            # Create the SUPER_ADMIN role if it doesn't exist yet (fresh production DB).
+            if not role:
+                role = Role(
+                    name=UserRoleEnum.SUPER_ADMIN,
+                    display_name="Super Administrator",
+                    description="Full system administration and global access",
+                )
+                db.add(role)
+                await db.flush()
+
+            user = User(
+                id=user_id,
+                email=email,
+                hashed_password="",
+                first_name=payload.get("user_metadata", {}).get("first_name", "Supabase"),
+                last_name=payload.get("user_metadata", {}).get("last_name", "User"),
+                role_id=role.id,
+                is_active=True,
+                is_verified=True,
+            )
+            db.add(user)
+            await db.flush()
+
+            # Re-query to load relationships
+            stmt_reload = select(User).options(
+                selectinload(User.role),
+                selectinload(User.organization)
+            ).where(User.id == user.id)
+            res_reload = await db.execute(stmt_reload)
+            user = res_reload.scalar_one_or_none()
+        except Exception:
+            # Auto-provision failed — don't crash the request with a 500.
+            # The caller will get "User not found" which is the correct
+            # signal that this token doesn't map to a known CRM user.
+            user = None
 
     if not user:
         raise UnauthorizedException(detail="User not found")

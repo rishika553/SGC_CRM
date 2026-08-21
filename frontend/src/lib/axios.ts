@@ -1,10 +1,9 @@
 import axios from 'axios';
-import { supabase } from './supabase';
 import { queryClient } from './query-client';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
-  timeout: 60000, // Bound request time so a cold server/hung DB never leaves the UI Pending forever
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -23,6 +22,9 @@ api.interceptors.request.use(
 );
 
 // Response interceptor for automatic 401 handling
+// IMPORTANT: We only clear LOCAL state here.  Never call supabase.auth.signOut()
+// from an interceptor — it races with in-flight login() calls and causes
+// "session_not_found" errors by destroying the brand-new Supabase session.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -31,13 +33,8 @@ api.interceptors.response.use(
       if (!loginPaths.includes(window.location.pathname)) {
         localStorage.removeItem('crm_access_token');
         localStorage.removeItem('crm_refresh_token');
-        try {
-          await supabase.auth.signOut();
-        } catch (e) {
-          // Ignore Supabase errors
-        }
         queryClient.clear();
-        window.location.href = '/login';
+        window.location.href = '/superadmin/login';
       }
     }
     return Promise.reject(error);

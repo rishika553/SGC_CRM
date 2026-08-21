@@ -1,12 +1,10 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-// Login pages are the unauthenticated entry point — keep eager.
 import { SuperAdminLoginPage } from '@/pages/SuperAdminLoginPage';
 import { ClientLoginPage } from '@/pages/ClientLoginPage';
-// DashboardPage is the universal landing for authenticated users — keep eager so its
-// h1 LCP element renders as soon as auth resolves, without a serial chunk fetch.
 import { DashboardPage } from '@/pages/DashboardPage';
-// All other protected pages are lazy-loaded (only downloaded on first navigation).
+import { AuthProvider, useAuth } from '@/features/auth/AuthContext';
+
 const AgreementPage = React.lazy(() => import('@/pages/AgreementPage').then(m => ({ default: m.AgreementPage })));
 const ProjectsTasksPage = React.lazy(() => import('@/pages/ProjectsTasksPage').then(m => ({ default: m.ProjectsTasksPage })));
 const BillingPage = React.lazy(() => import('@/pages/BillingPage').then(m => ({ default: m.BillingPage })));
@@ -19,47 +17,50 @@ const ConsentPage = React.lazy(() => import('@/features/consents/ConsentPage').t
 const ClientListPage = React.lazy(() => import('@/features/clients/ClientListPage').then(m => ({ default: m.ClientListPage })));
 const ClientDetailPage = React.lazy(() => import('@/features/clients/ClientDetailPage').then(m => ({ default: m.ClientDetailPage })));
 const CalendarPage = React.lazy(() => import('@/pages/CalendarPage').then(m => ({ default: m.CalendarPage })));
-import { AuthProvider, useAuth } from '@/features/auth/AuthContext';
 
-/** Minimal full-screen spinner used as the Suspense fallback while a lazy chunk loads. */
 const PageSpinner: React.FC = () => (
   <div className="min-h-screen bg-[#F7F9F6] flex items-center justify-center">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2F4F3A]" />
   </div>
 );
 
+/**
+ * Reusable auth guard — applied to every protected route.
+ *
+ * Security model:
+ * - Never trusts localStorage alone. The AuthProvider validates the Supabase
+ *   session on mount via supabase.auth.getSession(). Until that validation
+ *   completes, `isLoading` is true and this guard shows a spinner.
+ * - After loading: if `isAuthenticated` is false (no valid Supabase session
+ *   AND no valid backend profile), redirect to login immediately.
+ * - This prevents: direct URL access, bookmarks, back-button cache, stale tokens.
+ */
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-  const hasStoredToken = !!localStorage.getItem('crm_access_token');
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#F7F9F6] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2F4F3A]"></div>
-      </div>
-    );
+    return <PageSpinner />;
   }
 
-  if (!isAuthenticated && !hasStoredToken) {
+  if (!isAuthenticated) {
     return <Navigate to="/superadmin/login" replace />;
   }
 
   return <>{children}</>;
 };
 
+/**
+ * SuperAdmin-only guard: extends ProtectedRoute with a role check.
+ * Client-role users hitting admin routes are bounced to the dashboard.
+ */
 const SuperAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const hasStoredToken = !!localStorage.getItem('crm_access_token');
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#F7F9F6] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2F4F3A]"></div>
-      </div>
-    );
+    return <PageSpinner />;
   }
 
-  if (!isAuthenticated && !hasStoredToken) {
+  if (!isAuthenticated) {
     return <Navigate to="/superadmin/login" replace />;
   }
 
@@ -77,121 +78,30 @@ export const AppRouter: React.FC = () => {
       <AuthProvider>
         <React.Suspense fallback={<PageSpinner />}>
           <Routes>
+            {/* Public routes — no auth guard */}
             <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
             <Route path="/client/login" element={<ClientLoginPage />} />
             <Route path="/login" element={<Navigate to="/superadmin/login" replace />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/agreement"
-              element={
-                <ProtectedRoute>
-                  <AgreementPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/consent"
-              element={
-                <ProtectedRoute>
-                  <ConsentPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/projects"
-              element={
-                <ProtectedRoute>
-                  <ProjectsTasksPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/billing"
-              element={
-                <ProtectedRoute>
-                  <BillingPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/documents"
-              element={
-                <ProtectedRoute>
-                  <DocumentsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/notifications"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/chat"
-              element={
-                <ProtectedRoute>
-                  <ChatPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <SuperAdminRoute>
-                  <UserManagementPage />
-                </SuperAdminRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <UserProfilePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/clients"
-              element={
-                <SuperAdminRoute>
-                  <ClientListPage />
-                </SuperAdminRoute>
-              }
-            />
-            <Route
-              path="/clients/:id"
-              element={
-                <SuperAdminRoute>
-                  <ClientDetailPage />
-                </SuperAdminRoute>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <ProtectedRoute>
-                  <CalendarPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/showcase"
-              element={
-                <ProtectedRoute>
-                  <ComponentShowcasePage />
-                </ProtectedRoute>
-              }
-            />
+
+            {/* Protected routes — require valid Supabase session */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/agreement" element={<ProtectedRoute><AgreementPage /></ProtectedRoute>} />
+            <Route path="/consent" element={<ProtectedRoute><ConsentPage /></ProtectedRoute>} />
+            <Route path="/projects" element={<ProtectedRoute><ProjectsTasksPage /></ProtectedRoute>} />
+            <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
+            <Route path="/documents" element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
+            <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+            <Route path="/showcase" element={<ProtectedRoute><ComponentShowcasePage /></ProtectedRoute>} />
+
+            {/* SuperAdmin-only routes — require valid session + admin role */}
+            <Route path="/users" element={<SuperAdminRoute><UserManagementPage /></SuperAdminRoute>} />
+            <Route path="/clients" element={<SuperAdminRoute><ClientListPage /></SuperAdminRoute>} />
+            <Route path="/clients/:id" element={<SuperAdminRoute><ClientDetailPage /></SuperAdminRoute>} />
+
+            {/* Catch-all */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

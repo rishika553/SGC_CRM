@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -10,8 +10,12 @@ import {
   Trash2,
   CheckSquare,
   CornerDownRight,
-  Clock,
   FolderKanban,
+  Search,
+  ChevronsLeft,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  ChevronsRight,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -26,7 +30,7 @@ import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
 import { clientQueryKeys, fetchClientDirectory, fetchMyClient, resolveClientIdForCurrentUser } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
-import { PaginatedResponse } from '@/types';
+import { PaginatedResponse, PaginatedMeta } from '@/types';
 
 export interface SubTaskItem {
   id: string;
@@ -63,6 +67,25 @@ export const ProjectsTasksPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [projects, setProjects] = useState<ProjectModel[]>([]);
 
+  // Search & Pagination
+  const [searchInput, setSearchInput] = useState<string>('');
+  const [activeSearch, setActiveSearch] = useState<string>('');
+  const [meta, setMeta] = useState<PaginatedMeta>({ total: 0, page: 1, page_size: 10, total_pages: 1, has_next: false, has_previous: false });
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setActiveSearch(value);
+      setMeta((prev) => ({ ...prev, page: 1 }));
+    }, 300);
+  };
+
+  const goToPage = (page: number) => {
+    setMeta((prev) => ({ ...prev, page }));
+  };
+
   // Track sub-task input text per parent task ID
   const [subTaskInputs, setSubTaskInputs] = useState<{ [taskId: string]: string }>({});
   // Track new task input text per project ID
@@ -86,13 +109,19 @@ export const ProjectsTasksPage: React.FC = () => {
     try {
       const activeClientId = await resolveClientIdForCurrentUser(isClientRole);
       const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
-      const params: any = { page: 1, page_size: 50 };
+      const params: any = { page: meta.page, page_size: meta.page_size };
       if (isUUID(activeClientId)) {
         params.client_id = activeClientId;
+      }
+      if (activeSearch.trim()) {
+        params.search = activeSearch.trim();
       }
       const projRes = await api.get<PaginatedResponse<any>>('/projects', { params });
       
       if (projRes.data.success && projRes.data.data) {
+        if (projRes.data.meta) {
+          setMeta(projRes.data.meta);
+        }
         const rawProjects = projRes.data.data;
 
         const formattedProjects: ProjectModel[] = rawProjects.map((p: any) => {
@@ -157,7 +186,7 @@ export const ProjectsTasksPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isClientRole, activeSearch, meta.page, meta.page_size]);
 
   useEffect(() => {
     fetchProjectsData();
@@ -398,6 +427,24 @@ export const ProjectsTasksPage: React.FC = () => {
 
   const isUUID = (str?: string) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
+  const pageNumbers = useMemo(() => {
+    const pages: (number | string)[] = [];
+    const tp = meta.total_pages;
+    const cp = meta.page;
+    if (tp <= 7) {
+      for (let i = 1; i <= tp; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (cp > 3) pages.push('...');
+      const start = Math.max(2, cp - 1);
+      const end = Math.min(tp - 1, cp + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (cp < tp - 2) pages.push('...');
+      pages.push(tp);
+    }
+    return pages;
+  }, [meta.total_pages, meta.page]);
+
   // Add Top-Level Task to Project
   const handleAddTask = async (projectId: string, clientId?: string) => {
     const text = (newTaskInputs[projectId] || '').trim();
@@ -531,6 +578,17 @@ export const ProjectsTasksPage: React.FC = () => {
           </Button>
         </div>
 
+        {/* Search Bar */}
+        <div className="w-full sm:w-80 md:w-96">
+          <Input
+            placeholder="Search by project or client name..."
+            leftIcon={<Search className="w-4 h-4 text-slate-400" />}
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="bg-[#F7F9F6] border-[#E3E8E3] focus:bg-white focus:border-[#5E8C61] rounded-xl text-xs py-2"
+          />
+        </div>
+
         {/* Loading State */}
         {isLoading ? (
           <div className="space-y-4">
@@ -541,8 +599,8 @@ export const ProjectsTasksPage: React.FC = () => {
           <div className="py-16 bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-xs">
             <EmptyState
               icon={<FolderKanban className="w-12 h-12 text-[#5E8C61]" />}
-              title="No Projects Found"
-              description="Click 'Create Project' at the top right to add a new project."
+              title={activeSearch ? "No Matching Projects" : "No Projects Found"}
+              description={activeSearch ? `No projects found matching "${activeSearch}". Try a different search term.` : "Click 'Create Project' at the top right to add a new project."}
             />
           </div>
         ) : (
@@ -778,6 +836,69 @@ export const ProjectsTasksPage: React.FC = () => {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && meta.total > 0 && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-500 pt-2 border-t border-slate-200">
+            <span className="font-medium">
+              Showing {((meta.page - 1) * meta.page_size) + 1}–{Math.min(meta.page * meta.page_size, meta.total)} of {meta.total} projects
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm" variant="outline"
+                disabled={!meta.has_previous}
+                onClick={() => goToPage(1)}
+                title="First page"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm" variant="outline"
+                disabled={!meta.has_previous}
+                onClick={() => goToPage(meta.page - 1)}
+                leftIcon={<ChevronLeftIcon className="w-3.5 h-3.5" />}
+              >
+                Prev
+              </Button>
+
+              {pageNumbers.map((p, i) =>
+                p === '...' ? (
+                  <span key={`e${i}`} className="px-1.5 text-slate-400">...</span>
+                ) : (
+                  <Button
+                    key={p}
+                    size="sm"
+                    variant={p === meta.page ? 'primary' : 'outline'}
+                    onClick={() => goToPage(p as number)}
+                    className={cn(
+                      "min-w-[32px] justify-center",
+                      p === meta.page && "bg-[#2F4F3A] hover:bg-[#243E2E] text-white"
+                    )}
+                  >
+                    {p}
+                  </Button>
+                )
+              )}
+
+              <Button
+                size="sm" variant="outline"
+                disabled={!meta.has_next}
+                onClick={() => goToPage(meta.page + 1)}
+                rightIcon={<ChevronRightIcon className="w-3.5 h-3.5" />}
+              >
+                Next
+              </Button>
+              <Button
+                size="sm" variant="outline"
+                disabled={!meta.has_next}
+                onClick={() => goToPage(meta.total_pages)}
+                title="Last page"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>

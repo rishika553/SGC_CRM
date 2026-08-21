@@ -86,12 +86,13 @@ async def list_projects(
 
     if search:
         search_fmt = f"%{search.strip()}%"
-        query = query.where(
+        query = query.outerjoin(Client, Project.client_id == Client.id).where(
             or_(
                 Project.name.ilike(search_fmt),
                 Project.project_code.ilike(search_fmt),
                 Project.description.ilike(search_fmt),
                 Project.notes.ilike(search_fmt),
+                Client.name.ilike(search_fmt),
             )
         )
 

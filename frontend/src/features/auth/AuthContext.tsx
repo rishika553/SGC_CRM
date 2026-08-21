@@ -20,17 +20,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 function clearLocalAuth() {
   localStorage.removeItem('crm_access_token');
   localStorage.removeItem('crm_refresh_token');
+  localStorage.removeItem('crm_active_client_id');
+  localStorage.removeItem('crm_active_client_name');
+  sessionStorage.clear();
   queryClient.clear();
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('crm_access_token'));
-  const hasStoredToken = !!localStorage.getItem('crm_access_token');
-  const [isLoading, setIsLoading] = useState<boolean>(hasStoredToken);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const refreshInFlight = useRef<Promise<User | null> | null>(null);
-  // Guard: when true, the onAuthStateChange listener must NOT clear auth state
-  // because login() is in flight and owns the session lifecycle.
   const loginInProgress = useRef(false);
 
   const refreshProfile = useCallback((): Promise<User | null> => {
@@ -53,20 +53,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(response.data.data);
           return response.data.data;
         }
+        console.error('[Auth] /users/me returned non-success:', response.data);
         return null;
       } catch (error: any) {
         const status = error?.response?.status;
-        // Backend down / cold-start / transient — keep the token so we retry
-        // on next navigation rather than destroying the Supabase session.
+        const body = error?.response?.data;
+        const url = error?.config?.url || '/users/me';
+        console.error(`[Auth] /users/me FAILED [${status ?? 'network'}] url=${url}`, {
+          status,
+          url: error?.config?.baseURL ? error.config.baseURL + url : url,
+          message: error?.message,
+          responseBody: body,
+        });
         if (!status || status === 404 || status === 500 || status === 502 || status === 503) {
-          console.warn(`[Auth] /users/me returned ${status ?? 'network'} — keeping session for retry`);
           return null;
         }
-        // 401 / 403 / session_not_found — clear LOCAL state only.
-        // Do NOT call supabase.auth.signOut() here.  Only the explicit
-        // logout() action should destroy the Supabase session, otherwise
-        // a race between onAuthStateChange and login() will nuke the
-        // brand-new session with a "session_not_found" error.
         clearLocalAuth();
         setUser(null);
         setToken(null);
@@ -80,14 +81,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return refreshInFlight.current;
   }, []);
 
+  // On mount: validate the Supabase session server-side (not just localStorage).
+  // This catches expired/revoked sessions, back-button cache, and stale tokens.
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!active) return;
+
+        if (error || !session?.access_token) {
+          clearLocalAuth();
+          setUser(null);
+          setToken(null);
+          setIsLoading(false);
+          return;
+        }
+
+        localStorage.setItem('crm_access_token', session.access_token);
+        if (session.refresh_token) {
+          localStorage.setItem('crm_refresh_token', session.refresh_token);
+        }
+        setToken(session.access_token);
+
+        try {
+          const response = await api.get<ApiResponse<User>>('/users/me');
+          if (active && response.data?.success && response.data.data) {
+            setUser(response.data.data);
+          } else if (active) {
+            clearLocalAuth();
+            setToken(null);
+          }
+        } catch {
+          if (active) console.warn('[Auth] /users/me failed during mount — will retry on next navigation');
+        }
+      } catch {
+        // Unexpected error during session check.
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+
+    return () => { active = false; };
+  }, []);
+
+  // Listen for Supabase session changes (token refresh, sign-out from other tabs).
   useEffect(() => {
     let active = true;
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // During an active login() call, the login function owns the full lifecycle.
-      // The listener should only update the token; it must NOT clear state on
-      // SIGNED_OUT events triggered by our own error-handling signOut() calls,
-      // because that would race with the in-flight login.
       if (loginInProgress.current) {
         if (session?.access_token) {
           localStorage.setItem('crm_access_token', session.access_token);
@@ -100,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('crm_access_token', session.access_token);
         setToken(session.access_token);
         await refreshProfile();
-      } else if (active) {
+      } else if (active && event === 'SIGNED_OUT') {
         clearLocalAuth();
         setToken(null);
         setUser(null);
@@ -138,8 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const userData = await refreshProfile();
       if (!userData) {
-        // Backend returned an error but we do NOT destroy the Supabase session.
-        // The user can retry — the backend may be cold-starting.
+        console.error('[Auth] login() failed: refreshProfile() returned null — backend /users/me is unreachable or returned an error.');
         clearLocalAuth();
         setToken(null);
         setUser(null);
@@ -183,7 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearLocalAuth();
     setToken(null);
     setUser(null);
-    window.location.href = '/superadmin/login';
+    window.location.replace('/superadmin/login');
   };
 
   return (

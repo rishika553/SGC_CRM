@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Bell, User as UserIcon, LogOut, Menu, Crown } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { Dropdown } from '../ui/Dropdown';
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   onMenuToggle,
 }) => {
+  const navigate = useNavigate();
   const { user: authUser, logout } = useAuth();
   const user = userProp || authUser;
   const userInitials = user ? `${user.first_name[0]}${user.last_name[0]}` : 'U';
@@ -40,13 +42,13 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'superadmin-account',
       label: 'Superadmin Account View',
       icon: <Crown className="w-4 h-4 text-amber-600" />,
-      onClick: () => (window.location.href = '/dashboard'),
+      onClick: () => navigate('/dashboard'),
     }] : []),
     {
       id: 'profile',
       label: 'My Profile',
       icon: <UserIcon className="w-4 h-4" />,
-      onClick: () => (window.location.href = '/settings'),
+      onClick: () => navigate('/settings'),
     },
     {
       id: 'logout',
@@ -93,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => {
               localStorage.setItem('crm_active_client_id', 'superadmin');
               localStorage.setItem('crm_active_client_name', 'Superadmin Main View');
-              window.location.href = '/dashboard';
+              navigate('/dashboard');
             }}
             className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 hover:bg-amber-100 transition-all text-xs font-bold shadow-2xs shrink-0"
             title="Return to Superadmin Main Account View"

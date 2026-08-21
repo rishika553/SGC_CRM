@@ -117,6 +117,40 @@ def create_application() -> FastAPI:
             "status": "healthy"
         }
 
+    @application.get("/debug/db")
+    async def debug_db():
+        """Unauthenticated diagnostic — remove after debugging."""
+        from sqlalchemy import text
+        from app.core.database import AsyncSessionLocal
+        info = {"db_url": settings.DATABASE_URL[:40] + "..."}
+        try:
+            async with AsyncSessionLocal() as db:
+                # Check tables
+                res = await db.execute(text(
+                    "SELECT table_name FROM information_schema.tables "
+                    "WHERE table_schema = 'public' ORDER BY table_name"
+                ))
+                info["public_tables"] = [r[0] for r in res.fetchall()]
+
+                # Count roles
+                try:
+                    res = await db.execute(text("SELECT COUNT(*) FROM roles"))
+                    info["roles_count"] = res.scalar()
+                except Exception as e:
+                    info["roles_error"] = str(e)
+
+                # Count users (including soft-deleted)
+                try:
+                    res = await db.execute(text("SELECT COUNT(*) FROM users"))
+                    info["users_count"] = res.scalar()
+                    res2 = await db.execute(text("SELECT id, email, is_deleted FROM users"))
+                    info["users"] = [{"id": str(r[0]), "email": r[1], "is_deleted": r[2]} for r in res2.fetchall()]
+                except Exception as e:
+                    info["users_error"] = str(e)
+        except Exception as e:
+            info["db_error"] = str(e)
+        return info
+
     return application
 
 

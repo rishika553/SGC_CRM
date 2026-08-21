@@ -18,6 +18,7 @@ import {
   Crown,
   Shield,
   ClipboardCheck,
+  Calendar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -117,6 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { label: 'Dashboard', path: '/dashboard', icon: <Building2 className="w-5 h-5 shrink-0" /> },
     { label: 'Clients', path: '/clients', icon: <UserIcon className="w-5 h-5 shrink-0" /> },
     { label: 'Projects & Tasks', path: '/projects', icon: <Kanban className="w-5 h-5 shrink-0" /> },
+    { label: 'Calendar & Notes', path: '/calendar', icon: <Calendar className="w-5 h-5 shrink-0" /> },
     { label: 'Agreement', path: '/agreement', icon: <FileCheck2 className="w-5 h-5 shrink-0" /> },
     { label: 'Consent', path: '/consent', icon: <ClipboardCheck className="w-5 h-5 shrink-0" /> },
     { label: 'Billing / Ledger', path: '/billing', icon: <Receipt className="w-5 h-5 shrink-0" /> },
@@ -127,6 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const clientNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <Building2 className="w-5 h-5 shrink-0" /> },
+    { label: 'Calendar & Notes', path: '/calendar', icon: <Calendar className="w-5 h-5 shrink-0" /> },
     { label: 'Agreement', path: '/agreement', icon: <FileCheck2 className="w-5 h-5 shrink-0" /> },
     { label: 'Consent', path: '/consent', icon: <ClipboardCheck className="w-5 h-5 shrink-0" /> },
     { label: 'Projects & Tasks', path: '/projects', icon: <Kanban className="w-5 h-5 shrink-0" /> },

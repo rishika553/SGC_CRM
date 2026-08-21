@@ -50,6 +50,8 @@ from app.models.consents import (
     ConsentRequestStatusEnum,
 )
 from app.models.push_subscription import PushSubscription
+from app.models.meetings import Meeting, MeetingStatusEnum, MeetingTypeEnum
+from app.models.notes import Note
 
 __all__ = [
     "Base",
@@ -88,4 +90,8 @@ __all__ = [
     "Consent",
     "ConsentRequestStatusEnum",
     "PushSubscription",
+    "Meeting",
+    "MeetingStatusEnum",
+    "MeetingTypeEnum",
+    "Note",
 ]

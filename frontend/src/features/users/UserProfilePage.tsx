@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/features/auth/AuthContext';
 import { api } from '@/lib/axios';
+import { supabase } from '@/lib/supabase';
 
 interface ProfileFormData {
   first_name: string;
@@ -20,6 +21,7 @@ interface ProfileFormData {
 interface SecurityFormData {
   current_password: string;
   new_password: string;
+  confirm_password: string;
 }
 
 export const UserProfilePage: React.FC = () => {
@@ -57,17 +59,26 @@ export const UserProfilePage: React.FC = () => {
   };
 
   const onChangePassword = async (data: SecurityFormData) => {
-    if (isClientRole) {
-      toast('Access Denied', 'Client accounts cannot change passwords. Please contact Super Admin.', 'error');
-      return;
-    }
     setIsUpdatingPassword(true);
     try {
-      await api.put('/users/me/change-password', data);
+      await api.post('/settings/password', {
+        current_password: data.current_password,
+        new_password: data.new_password,
+        confirm_password: data.confirm_password,
+      });
+
+      const { error: supabaseError } = await supabase.auth.updateUser({
+        password: data.new_password,
+      });
+      if (supabaseError) {
+        console.warn('Supabase password sync warning:', supabaseError.message);
+      }
+
       securityForm.reset();
-      toast('Success', 'Security password changed successfully', 'success');
+      toast('Success', 'Password changed successfully', 'success');
     } catch (err: any) {
-      toast('Password Change Failed', err.response?.data?.error?.message || 'Invalid current password', 'error');
+      const msg = err.response?.data?.error?.message || err.response?.data?.detail || 'Invalid current password';
+      toast('Password Change Failed', msg, 'error');
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -96,8 +107,7 @@ export const UserProfilePage: React.FC = () => {
             </div>
 
             {/* Tabs toggle */}
-            {!isClientRole && (
-              <div className="flex flex-wrap bg-surface-100 p-1 rounded-lg border border-surface-200">
+            <div className="flex flex-wrap bg-surface-100 p-1 rounded-lg border border-surface-200">
                 <button
                   onClick={() => setActiveTab('profile')}
                   className={`px-3 sm:px-4 py-2 text-xs font-semibold rounded-md transition-colors ${
@@ -119,7 +129,6 @@ export const UserProfilePage: React.FC = () => {
                   Security & Auth
                 </button>
               </div>
-            )}
           </div>
         </Card>
 
@@ -203,6 +212,17 @@ export const UserProfilePage: React.FC = () => {
                     {...securityForm.register('new_password', {
                       required: 'New password is required',
                       minLength: { value: 8, message: 'Password must be at least 8 characters' },
+                    })}
+                  />
+                  <Input
+                    label="Confirm New Password"
+                    type="password"
+                    leftIcon={<Lock className="w-4 h-4" />}
+                    error={securityForm.formState.errors.confirm_password?.message}
+                    {...securityForm.register('confirm_password', {
+                      required: 'Please confirm your new password',
+                      validate: (value) =>
+                        value === securityForm.getValues('new_password') || 'Passwords do not match',
                     })}
                   />
                 </div>

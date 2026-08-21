@@ -10,12 +10,14 @@ import {
   User,
   ShieldCheck,
   ChevronRight,
+  Receipt,
+  AlertTriangle,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
-import { cn, formatDate } from '@/lib/utils';
+import { cn, formatDate, formatCurrency } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -63,6 +65,8 @@ export const DashboardPage: React.FC = () => {
   const [tasks, setTasks] = useState<DashboardTask[]>([]);
   const [documentsCount, setDocumentsCount] = useState<number>(0);
   const [outstandingBilling, setOutstandingBilling] = useState<number>(0);
+  const [totalPaid, setTotalPaid] = useState<number>(0);
+  const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
   const [activities, setActivities] = useState<DashboardActivity[]>([]);
 
   useEffect(() => {
@@ -136,13 +140,20 @@ export const DashboardPage: React.FC = () => {
         }
 
         if (invoiceResponse?.data.success && invoiceResponse.data.data) {
-          const totalUnpaid = invoiceResponse.data.data.reduce((sum: number, inv: any) => {
-            if (inv.status === 'sent' || inv.status === 'overdue') {
-              return sum + (inv.total_amount || inv.amount || 0);
+          const invData = invoiceResponse.data.data;
+          let outstanding = 0;
+          let paid = 0;
+          invData.forEach((inv: any) => {
+            if (inv.status === 'sent' || inv.status === 'overdue' || inv.status === 'partially_paid' || inv.status === 'unpaid') {
+              outstanding += inv.outstanding_amount || inv.total_amount || 0;
             }
-            return sum;
-          }, 0);
-          setOutstandingBilling(totalUnpaid > 0 ? totalUnpaid : 0);
+            if (inv.status === 'paid') {
+              paid += inv.total_amount || 0;
+            }
+          });
+          setOutstandingBilling(outstanding);
+          setTotalPaid(paid);
+          setRecentInvoices(invData.slice(0, 5));
         }
 
         // 6. Generate Recent Activities from real data
@@ -289,6 +300,61 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
 
+        {/* 3. Billing Summary Row */}
+        {!isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Outstanding Balance */}
+            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-400" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">OUTSTANDING</span>
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <span className="text-2xl font-extrabold text-[#27332B]">{formatCurrency(outstandingBilling)}</span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-400 mt-1">Pending payment</p>
+            </div>
+
+            {/* Paid So Far */}
+            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">PAID</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <span className="text-2xl font-extrabold text-emerald-600">{formatCurrency(totalPaid)}</span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-400 mt-1">Total settled</p>
+            </div>
+
+            {/* Total Invoices */}
+            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">INVOICES</span>
+                <div className="w-8 h-8 rounded-xl bg-[#DCE9DE] text-[#2F4F3A] flex items-center justify-center">
+                  <Receipt className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <span className="text-2xl font-extrabold text-[#27332B]">{recentInvoices.length > 0 ? recentInvoices.length : 0}</span>
+                <span className="text-xs font-semibold text-slate-500 ml-2">recent</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/billing')}
+                className="text-[11px] font-bold text-[#5E8C61] hover:text-[#2F4F3A] flex items-center gap-1 mt-1 transition-colors"
+              >
+                View Full Ledger <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 4. Main Two Column Dashboard Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -408,6 +474,50 @@ export const DashboardPage: React.FC = () => {
 
           {/* Right Column: Quick Actions & Recent Activity (1 Col Wide) */}
           <div className="space-y-6">
+
+            {/* Recent Invoices */}
+            {!isLoading && recentInvoices.length > 0 && (
+              <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)]">
+                <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="w-5 h-5 text-[#2F4F3A]" />
+                    <h3 className="text-sm font-extrabold text-[#27332B]">Recent Invoices</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/billing')}
+                    className="text-xs font-bold text-[#5E8C61] hover:text-[#2F4F3A] flex items-center gap-1 transition-colors"
+                  >
+                    View All <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="divide-y divide-[#E3E8E3]">
+                  {recentInvoices.map((inv: any) => {
+                    const isPaid = inv.status === 'paid';
+                    const isOverdue = inv.status === 'overdue';
+                    return (
+                      <div key={inv.id} className="py-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-[#27332B] truncate">{inv.invoice_number}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5">{formatDate(inv.issue_date || inv.created_at)}</div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-xs font-bold text-[#27332B]">{formatCurrency(inv.total_amount || 0)}</div>
+                          <span className={cn(
+                            'text-[10px] font-bold px-2 py-0.5 rounded-full border mt-1 inline-block',
+                            isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            isOverdue ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                            'bg-amber-50 text-amber-700 border-amber-200'
+                          )}>
+                            {isPaid ? 'Paid' : isOverdue ? 'Overdue' : inv.status === 'partially_paid' ? 'Partial' : 'Unpaid'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Quick Actions Grid */}
             <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)]">

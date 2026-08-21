@@ -90,10 +90,6 @@ async def change_password(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    user_role_str = current_user.role.name.value if current_user.role and hasattr(current_user.role.name, "value") else (str(current_user.role.name) if current_user.role else "")
-    if user_role_str.lower() in ("client", "client_viewer"):
-        raise ForbiddenException(detail="Access Denied: Client accounts do not have authority to change passwords. Password management is handled by Super Admin.")
-
     if not verify_password(payload.current_password, current_user.hashed_password):
         raise UnauthorizedException(detail="Current password is incorrect")
 

@@ -18,6 +18,7 @@ const UserProfilePage = React.lazy(() => import('@/features/users/UserProfilePag
 const ConsentPage = React.lazy(() => import('@/features/consents/ConsentPage').then(m => ({ default: m.ConsentPage })));
 const ClientListPage = React.lazy(() => import('@/features/clients/ClientListPage').then(m => ({ default: m.ClientListPage })));
 const ClientDetailPage = React.lazy(() => import('@/features/clients/ClientDetailPage').then(m => ({ default: m.ClientDetailPage })));
+const CalendarPage = React.lazy(() => import('@/pages/CalendarPage').then(m => ({ default: m.CalendarPage })));
 import { AuthProvider, useAuth } from '@/features/auth/AuthContext';
 
 /** Minimal full-screen spinner used as the Suspense fallback while a lazy chunk loads. */
@@ -171,6 +172,14 @@ export const AppRouter: React.FC = () => {
                 <SuperAdminRoute>
                   <ClientDetailPage />
                 </SuperAdminRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <CalendarPage />
+                </ProtectedRoute>
               }
             />
             <Route

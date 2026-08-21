@@ -126,10 +126,13 @@ class InvoiceRead(InvoiceBase):
     @model_validator(mode="after")
     def calculate_computed_fields(self):
         now = datetime.now(timezone.utc)
-        if self.due_date and self.status not in (InvoiceStatusEnum.PAID, InvoiceStatusEnum.CANCELLED):
-            if self.due_date < now:
+        due = self.due_date
+        if due and due.tzinfo is None:
+            due = due.replace(tzinfo=timezone.utc)
+        if due and self.status not in (InvoiceStatusEnum.PAID, InvoiceStatusEnum.CANCELLED):
+            if due < now:
                 self.is_overdue = True
-                delta = now - self.due_date
+                delta = now - due
                 self.days_overdue = max(0, delta.days)
             else:
                 self.is_overdue = False

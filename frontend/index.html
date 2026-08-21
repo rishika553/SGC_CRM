@@ -11,14 +11,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <!-- Preload the woff2 binary for Manrope wght 700–800.
-       The h1 LCP element uses font-extrabold (=800). Preloading the binary directly
-       means the font is in cache before the h1 paints, without waiting for the CSS
-       descriptor → @font-face → woff2 waterfall on warm-cache visits.
-       URL: Google Fonts CDN, Manrope v15, Latin subset, variable axis wght 300–800. -->
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="https://fonts.gstatic.com/s/manrope/v15/xn7_YHE41ni1AdIRqAuZuw1Bx9mbZk79FO_F87jxeN7B.woff2">
-
   <!-- Non-blocking stylesheet (display=optional → zero FOUT/CLS, no layout shift) -->
   <link rel="preload" as="style"
     href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=optional"

@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   FileText,
   Printer,
+  Trash2,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -51,6 +52,7 @@ export const BillingPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeClient, setActiveClient] = useState<Client | null>(null);
   const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [clientList, setClientList] = useState<Client[]>([]);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -60,53 +62,64 @@ export const BillingPage: React.FC = () => {
   // Create Manual Invoice Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [newInvoiceForm, setNewInvoiceForm] = useState({
-    invoiceNumber: `INV-2024-${Math.floor(100 + Math.random() * 900)}`,
-    invoiceDate: new Date().toISOString().split('T')[0],
+    client_id: '',
     dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    clientName: '',
-    description: 'Virtual CFO & CA Retainership Fee',
-    amount: 150000,
-    status: 'Sent' as 'Paid' | 'Sent' | 'Overdue' | 'Draft',
+    description: '',
+    amount: '',
+    taxRate: '18',
+    status: 'unpaid',
   });
 
-  useEffect(() => {
-    const fetchBillingData = async () => {
-      setIsLoading(true);
-      try {
-        const activeClientId = await resolveClientIdForCurrentUser(isClientRole);
-        const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
-        const params: any = { page: 1, page_size: 50 };
-        if (isUUID(activeClientId)) {
-          params.client_id = activeClientId;
-        }
-        const invRes = await api.get<PaginatedResponse<any>>('/invoices', { params });
-        if (invRes.data.success && invRes.data.data) {
-          const liveInvoices: InvoiceItem[] = invRes.data.data.map((inv: any) => ({
-            id: inv.id,
-            invoiceNumber: inv.invoice_number,
-            invoiceDate: formatDate(inv.issue_date || inv.created_at),
-            dueDate: inv.due_date ? formatDate(inv.due_date) : 'N/A',
-            clientName: inv.client?.name || 'Client',
-            description: inv.notes || inv.project?.name || 'Professional Services Fee',
-            amount: inv.subtotal_amount || inv.total_amount || 0,
-            taxAmount: inv.tax_amount || 0,
-            totalAmount: inv.total_amount || 0,
-            outstandingAmount: inv.status === 'paid' ? 0 : (inv.total_amount || 0),
-            status: inv.status === 'paid' ? 'Paid' : inv.status === 'overdue' ? 'Overdue' : inv.status === 'draft' ? 'Draft' : 'Sent',
-          }));
-          setInvoices(liveInvoices);
-        } else {
-          setInvoices([]);
-        }
-      } catch (err) {
-        setInvoices([]);
-      } finally {
-        setIsLoading(false);
+  const fetchBillingData = async () => {
+    setIsLoading(true);
+    try {
+      const activeClientId = await resolveClientIdForCurrentUser(isClientRole);
+      const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+      const params: any = { page: 1, page_size: 50 };
+      if (isUUID(activeClientId)) {
+        params.client_id = activeClientId;
       }
-    };
+      const invRes = await api.get<PaginatedResponse<any>>('/invoices', { params });
+      if (invRes.data.success && invRes.data.data) {
+        const liveInvoices: InvoiceItem[] = invRes.data.data.map((inv: any) => ({
+          id: inv.id,
+          invoiceNumber: inv.invoice_number,
+          invoiceDate: formatDate(inv.issue_date || inv.created_at),
+          dueDate: inv.due_date ? formatDate(inv.due_date) : 'N/A',
+          clientName: inv.client?.name || 'Client',
+          description: inv.notes || inv.project?.name || 'Professional Services Fee',
+          amount: inv.subtotal_amount || inv.total_amount || 0,
+          taxAmount: inv.tax_amount || 0,
+          totalAmount: inv.total_amount || 0,
+          outstandingAmount: inv.status === 'paid' ? 0 : (inv.total_amount || 0),
+          status: inv.status === 'paid' ? 'Paid' : inv.status === 'overdue' ? 'Overdue' : inv.status === 'draft' ? 'Draft' : 'Sent',
+        }));
+        setInvoices(liveInvoices);
+      } else {
+        setInvoices([]);
+      }
+    } catch (err) {
+      setInvoices([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const fetchClientList = async () => {
+    try {
+      const res = await api.get('/clients', { params: { page: 1, page_size: 100 } });
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setClientList(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch client list:', err);
+    }
+  };
+
+  useEffect(() => {
     fetchBillingData();
-  }, []);
+    if (!isClientRole) fetchClientList();
+  }, [isClientRole]);
 
   // Filtered and Sorted Invoices
   const filteredInvoices = useMemo(() => {
@@ -144,31 +157,35 @@ export const BillingPage: React.FC = () => {
     }, 1200);
   };
 
-  const handleCreateInvoice = (e: React.FormEvent) => {
+  const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const amount = Number(newInvoiceForm.amount) || 100000;
-    const taxAmount = Math.round(amount * 0.18);
-    const totalAmount = amount + taxAmount;
-    const isPaid = newInvoiceForm.status === 'Paid';
-
-    const createdInv: InvoiceItem = {
-      id: `manual-inv-${Date.now()}`,
-      invoiceNumber: newInvoiceForm.invoiceNumber,
-      invoiceDate: newInvoiceForm.invoiceDate,
-      dueDate: newInvoiceForm.dueDate,
-      clientName: newInvoiceForm.clientName || (activeClient ? activeClient.name : 'Client Desk Account'),
-      description: newInvoiceForm.description,
-      amount,
-      taxAmount,
-      totalAmount,
-      outstandingAmount: isPaid ? 0 : totalAmount,
-      status: newInvoiceForm.status,
-    };
-
-    setInvoices([createdInv, ...invoices]);
-    setIsCreateModalOpen(false);
-    toast('Invoice Created', `Manual Invoice #${createdInv.invoiceNumber} recorded successfully.`, 'success');
+    try {
+      const subtotal = Number(newInvoiceForm.amount) || 0;
+      const taxRate = Number(newInvoiceForm.taxRate) || 18;
+      const res = await api.post('/invoices', {
+        client_id: newInvoiceForm.client_id,
+        subtotal,
+        tax_rate: taxRate,
+        due_date: newInvoiceForm.dueDate ? newInvoiceForm.dueDate + 'T00:00:00Z' : undefined,
+        notes: newInvoiceForm.description || undefined,
+        status: newInvoiceForm.status,
+      });
+      if (res.data.success) {
+        toast('Invoice Created', 'Invoice has been created successfully.', 'success');
+        setIsCreateModalOpen(false);
+        setNewInvoiceForm({
+          client_id: '',
+          dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          description: '',
+          amount: '',
+          taxRate: '18',
+          status: 'unpaid',
+        });
+        fetchBillingData();
+      }
+    } catch (err: any) {
+      toast('Error', err.response?.data?.error?.message || err.response?.data?.detail || 'Failed to create invoice', 'error');
+    }
   };
 
   const handleStatusChange = (invId: string, newStatus: 'Paid' | 'Sent' | 'Overdue' | 'Draft') => {
@@ -184,6 +201,19 @@ export const BillingPage: React.FC = () => {
       })
     );
     toast('Invoice Updated', `Invoice status updated to ${newStatus}.`, 'success');
+  };
+
+  const handleDeleteInvoice = async (invId: string, invNumber: string) => {
+    if (!window.confirm(`Are you sure you want to delete invoice #${invNumber}?`)) return;
+    try {
+      const res = await api.delete(`/invoices/${invId}`);
+      if (res.data?.success) {
+        toast('Invoice Deleted', `Invoice #${invNumber} has been deleted.`, 'success');
+        setInvoices((prev) => prev.filter((inv) => inv.id !== invId));
+      }
+    } catch (err: any) {
+      toast('Error', err.response?.data?.error?.message || err.response?.data?.detail || 'Failed to delete invoice', 'error');
+    }
   };
 
   const statusStyles = {
@@ -206,6 +236,7 @@ export const BillingPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
+            {!isClientRole && (
             <Button
               type="button"
               variant="primary"
@@ -214,8 +245,9 @@ export const BillingPage: React.FC = () => {
               leftIcon={<Plus className="w-5 h-5" />}
               className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-[16px] shadow-xs text-sm font-bold w-full sm:w-auto"
             >
-              Create Manual Invoice
+              Create Invoice
             </Button>
+            )}
           </div>
         </div>
 
@@ -391,6 +423,7 @@ export const BillingPage: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1.5">
                         <Button
                           type="button"
                           variant="outline"
@@ -400,6 +433,18 @@ export const BillingPage: React.FC = () => {
                         >
                           PDF
                         </Button>
+                        {!isClientRole && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleDeleteInvoice(inv.id, inv.invoiceNumber)}
+                            leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                            className="border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+                          >
+                            Delete
+                          </Button>
+                        )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -417,8 +462,8 @@ export const BillingPage: React.FC = () => {
           <div className="relative z-10 bg-white rounded-t-[20px] sm:rounded-[20px] p-5 sm:p-6 md:p-8 max-w-lg w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-[#E3E8E3] animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-4 mb-5">
               <div>
-                <h3 className="text-lg sm:text-xl font-bold text-[#27332B]">Create Manual Tax Invoice</h3>
-                <p className="text-xs text-[#6B7280] mt-0.5">Record an invoice entry into client ledger</p>
+                <h3 className="text-lg sm:text-xl font-bold text-[#27332B]">Create Invoice</h3>
+                <p className="text-xs text-[#6B7280] mt-0.5">Create a new invoice for a client</p>
               </div>
               <button
                 type="button"
@@ -430,70 +475,72 @@ export const BillingPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleCreateInvoice} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Invoice Number"
-                  value={newInvoiceForm.invoiceNumber}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, invoiceNumber: e.target.value })}
+              <div>
+                <label className="block text-xs font-bold text-[#27332B] mb-1.5">Client *</label>
+                <select
+                  value={newInvoiceForm.client_id}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, client_id: e.target.value })}
+                  className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-3 py-2 text-xs font-bold text-[#27332B] focus:outline-none focus:border-[#5E8C61]"
                   required
-                />
-                <Input
-                  label="Client Name"
-                  placeholder="Leave empty for active client"
-                  value={newInvoiceForm.clientName}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, clientName: e.target.value })}
-                />
+                >
+                  <option value="">Select a client...</option>
+                  {clientList.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Issue Date"
-                  type="date"
-                  value={newInvoiceForm.invoiceDate}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, invoiceDate: e.target.value })}
+                  label="Subtotal Amount (₹)"
+                  type="number"
+                  placeholder="0"
+                  value={newInvoiceForm.amount}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: e.target.value })}
+                  required
                 />
+                <Input
+                  label="Tax Rate (%)"
+                  type="number"
+                  value={newInvoiceForm.taxRate}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, taxRate: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Due Date"
                   type="date"
                   value={newInvoiceForm.dueDate}
                   onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, dueDate: e.target.value })}
                 />
-              </div>
-
-              <Input
-                label="Invoice Description / Notes"
-                value={newInvoiceForm.description}
-                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, description: e.target.value })}
-                required
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Subtotal Amount (₹)"
-                  type="number"
-                  value={newInvoiceForm.amount}
-                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: Number(e.target.value) })}
-                  required
-                />
                 <div>
-                  <label className="block text-xs font-bold text-[#27332B] mb-1.5">Initial Payment Status</label>
+                  <label className="block text-xs font-bold text-[#27332B] mb-1.5">Status</label>
                   <select
                     value={newInvoiceForm.status}
-                    onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, status: e.target.value as any })}
+                    onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, status: e.target.value })}
                     className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-3 py-2 text-xs font-bold text-[#27332B] focus:outline-none focus:border-[#5E8C61]"
                   >
-                    <option value="Sent">Sent (Pending)</option>
-                    <option value="Paid">Paid (Settled)</option>
-                    <option value="Overdue">Overdue</option>
-                    <option value="Draft">Draft</option>
+                    <option value="unpaid">Unpaid</option>
+                    <option value="draft">Draft</option>
+                    <option value="sent">Sent</option>
                   </select>
                 </div>
               </div>
 
-              <div className="p-3 bg-[#EEF5EF] border border-[#5E8C61]/30 rounded-xl text-xs flex justify-between font-bold text-[#2F4F3A]">
-                <span>Total Payable (incl 18% GST):</span>
-                <span>{formatCurrency(Math.round(Number(newInvoiceForm.amount || 0) * 1.18))}</span>
-              </div>
+              <Input
+                label="Notes / Description"
+                placeholder="Invoice description..."
+                value={newInvoiceForm.description}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, description: e.target.value })}
+              />
+
+              {newInvoiceForm.amount && (
+                <div className="p-3 bg-[#EEF5EF] border border-[#5E8C61]/30 rounded-xl text-xs flex justify-between font-bold text-[#2F4F3A]">
+                  <span>Total Payable (incl {newInvoiceForm.taxRate || 18}% GST):</span>
+                  <span>{formatCurrency(Math.round(Number(newInvoiceForm.amount || 0) * (1 + Number(newInvoiceForm.taxRate || 18) / 100)))}</span>
+                </div>
+              )}
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#E3E8E3]">
                 <Button
@@ -509,7 +556,7 @@ export const BillingPage: React.FC = () => {
                   variant="primary"
                   className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-5 py-2 text-xs font-semibold"
                 >
-                  Record Invoice
+                  Create Invoice
                 </Button>
               </div>
             </form>

@@ -36,6 +36,7 @@ class Settings(BaseSettings):
         "https://sgc-crm-dba4.vercel.app",
         "https://sgc-crm-dba4-4kuuizzkx-rishikas-projects-8b0257d5.vercel.app",
         "https://sgc-crm-eight.vercel.app",
+        "http://localhost:4173",
     ]
 
     # Web Push (VAPID) Notifications

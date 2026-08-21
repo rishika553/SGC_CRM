@@ -1,7 +1,7 @@
 import { User } from './index';
 
 export type ClientTier = 'enterprise' | 'mid_market' | 'smb';
-export type ClientStatus = 'active' | 'prospect' | 'churned';
+export type ClientStatus = 'active' | 'prospect' | 'churned' | 'inactive' | 'on_hold' | 'archived';
 export type CommunicationType = 'meeting' | 'call' | 'email' | 'note';
 
 export interface Contact {
@@ -35,6 +35,7 @@ export interface Client {
   id: string;
   name: string;
   email?: string;
+  phone?: string;
   industry?: string;
   company_size?: string;
   website?: string;
@@ -42,6 +43,8 @@ export interface Client {
   annual_revenue?: number;
   tier: ClientTier;
   status: ClientStatus;
+  city?: string;
+  state?: string;
   account_manager?: User;
   contacts: Contact[];
   created_at: string;

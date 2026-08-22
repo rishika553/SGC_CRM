@@ -216,6 +216,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    const rawRole = user?.role?.name ? String(user.role.name).toLowerCase() : '';
+    const isClientRole = rawRole === 'client' || rawRole === 'client_viewer';
     try {
       await supabase.auth.signOut();
     } catch {
@@ -225,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearLocalAuth();
     setToken(null);
     setUser(null);
-    window.location.replace('/superadmin/login');
+    window.location.replace(isClientRole ? '/client/login' : '/superadmin/login');
   };
 
   return (

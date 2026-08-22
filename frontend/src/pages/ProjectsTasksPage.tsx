@@ -16,6 +16,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   ChevronsRight,
+  RotateCcw,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
@@ -43,6 +44,7 @@ export interface TaskItem {
   title: string;
   completed: boolean;
   priority?: 'High' | 'Medium' | 'Low';
+  recurrence_type?: string;
   subtasks: SubTaskItem[];
 }
 
@@ -90,6 +92,8 @@ export const ProjectsTasksPage: React.FC = () => {
   const [subTaskInputs, setSubTaskInputs] = useState<{ [taskId: string]: string }>({});
   // Track new task input text per project ID
   const [newTaskInputs, setNewTaskInputs] = useState<{ [projectId: string]: string }>({});
+  // Track recurrence options per project ID
+  const [taskRecurrence, setTaskRecurrence] = useState<{ [projectId: string]: { type: string; interval: number } }>({});
 
   // Create Project Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -143,6 +147,7 @@ export const ProjectsTasksPage: React.FC = () => {
                 title: t.title,
                 completed: t.status === 'completed',
                 priority: t.priority ? (t.priority.charAt(0).toUpperCase() + t.priority.slice(1)) as any : 'Medium',
+                recurrence_type: t.recurrence_type || 'none',
                 subtasks: childSubs,
               };
             });
@@ -451,12 +456,19 @@ export const ProjectsTasksPage: React.FC = () => {
     if (!text) return;
 
     setNewTaskInputs((prev) => ({ ...prev, [projectId]: '' }));
+    setTaskRecurrence((prev) => ({ ...prev, [projectId]: { type: 'none', interval: 1 } }));
+
+    const rec = taskRecurrence[projectId];
+    const recurrenceType = rec?.type || 'none';
+    const recurrenceInterval = rec?.interval || 1;
 
     try {
       const payload: any = {
         title: text,
         priority: 'medium',
         status: 'todo',
+        recurrence_type: recurrenceType,
+        recurrence_interval: recurrenceType !== 'none' ? recurrenceInterval : undefined,
       };
       if (isUUID(projectId)) payload.project_id = projectId;
       if (isUUID(clientId)) payload.client_id = clientId;
@@ -469,6 +481,7 @@ export const ProjectsTasksPage: React.FC = () => {
           id: newTaskData.id,
           title: newTaskData.title,
           completed: newTaskData.status === 'completed',
+          recurrence_type: recurrenceType,
           subtasks: [],
         };
 
@@ -724,6 +737,11 @@ export const ProjectsTasksPage: React.FC = () => {
                                 >
                                   {task.title}
                                 </span>
+                                {task.recurrence_type && task.recurrence_type !== 'none' && (
+                                  <span title={`Repeats ${task.recurrence_type}`}>
+                                    <RotateCcw size={12} className="text-[#5E8C61] shrink-0" />
+                                  </span>
+                                )}
                               </div>
 
                               <button
@@ -831,6 +849,50 @@ export const ProjectsTasksPage: React.FC = () => {
                       >
                         Add Task
                       </Button>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <RotateCcw size={12} className="text-slate-400" />
+                      <select
+                        value={taskRecurrence[p.id]?.type || 'none'}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setTaskRecurrence((prev) => ({
+                            ...prev,
+                            [p.id]: { type: val, interval: prev[p.id]?.interval || 1 },
+                          }));
+                        }}
+                        className="text-[11px] border border-slate-200 rounded-lg px-2 py-1 text-slate-600 bg-white outline-none"
+                      >
+                        <option value="none">No repeat</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="custom">Custom</option>
+                      </select>
+                      {(taskRecurrence[p.id]?.type && taskRecurrence[p.id]?.type !== 'none') && (
+                        <>
+                          <span className="text-[11px] text-slate-400">every</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={365}
+                            value={taskRecurrence[p.id]?.interval || 1}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 1;
+                              setTaskRecurrence((prev) => ({
+                                ...prev,
+                                [p.id]: { type: prev[p.id]?.type || 'none', interval: val },
+                              }));
+                            }}
+                            className="w-12 text-[11px] border border-slate-200 rounded-lg px-1.5 py-1 text-center text-slate-600 outline-none"
+                          />
+                          <span className="text-[11px] text-slate-400">
+                            {taskRecurrence[p.id]?.type === 'daily' ? 'day(s)' :
+                             taskRecurrence[p.id]?.type === 'weekly' ? 'week(s)' :
+                             taskRecurrence[p.id]?.type === 'monthly' ? 'month(s)' : 'day(s)'}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}

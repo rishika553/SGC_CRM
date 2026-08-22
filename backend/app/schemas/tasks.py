@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
-from app.models.tasks import TaskStatusEnum, TaskPriorityEnum
+from app.models.tasks import TaskStatusEnum, TaskPriorityEnum, RecurrenceTypeEnum
 from app.schemas.user import UserRead
 from app.schemas.clients import ClientRead
 
@@ -51,6 +51,9 @@ class TaskCreate(TaskBase):
     client_id: Optional[UUID] = None
     parent_task_id: Optional[UUID] = None
     task_code: Optional[str] = None
+    recurrence_type: Optional[RecurrenceTypeEnum] = RecurrenceTypeEnum.NONE
+    recurrence_interval: Optional[int] = None
+    recurrence_end_date: Optional[datetime] = None
 
 
 class TaskUpdate(BaseModel):
@@ -59,6 +62,9 @@ class TaskUpdate(BaseModel):
     status: Optional[TaskStatusEnum] = None
     priority: Optional[TaskPriorityEnum] = None
     due_date: Optional[datetime] = None
+    recurrence_type: Optional[RecurrenceTypeEnum] = None
+    recurrence_interval: Optional[int] = None
+    recurrence_end_date: Optional[datetime] = None
 
     assigned_to_id: Optional[UUID] = None
     project_id: Optional[UUID] = None
@@ -87,6 +93,11 @@ class TaskRead(TaskBase):
     project_id: Optional[UUID] = None
     client_id: Optional[UUID] = None
     parent_task_id: Optional[UUID] = None
+
+    recurrence_type: RecurrenceTypeEnum = RecurrenceTypeEnum.NONE
+    recurrence_interval: Optional[int] = None
+    recurrence_end_date: Optional[datetime] = None
+    recurrence_parent_id: Optional[UUID] = None
 
     assigned_to: Optional[UserRead] = None
     client: Optional[ClientRead] = None

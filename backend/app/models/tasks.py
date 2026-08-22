@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
-from sqlalchemy import String, Text, Enum, ForeignKey, DateTime
+from sqlalchemy import String, Text, Enum, ForeignKey, DateTime, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import BaseCRMModel
@@ -21,6 +21,14 @@ class TaskPriorityEnum(str, enum.Enum):
     MEDIUM = "medium"
     HIGH = "high"
     URGENT = "urgent"
+
+
+class RecurrenceTypeEnum(str, enum.Enum):
+    NONE = "none"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    CUSTOM = "custom"
 
 
 class Task(BaseCRMModel):
@@ -45,6 +53,21 @@ class Task(BaseCRMModel):
 
     due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Recurrence fields
+    recurrence_type: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        server_default="none",
+    )
+    recurrence_interval: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, server_default=None)
+    recurrence_end_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    recurrence_parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tasks.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Foreign Keys
     assigned_to_id: Mapped[Optional[uuid.UUID]] = mapped_column(
@@ -76,7 +99,8 @@ class Task(BaseCRMModel):
     assigned_to = relationship("User", foreign_keys=[assigned_to_id])
     project = relationship("Project", back_populates="tasks", foreign_keys=[project_id])
     client = relationship("Client", foreign_keys=[client_id])
-    parent_task = relationship("Task", remote_side="Task.id", backref="subtasks")
+    parent_task = relationship("Task", remote_side="Task.id", foreign_keys=[parent_task_id], backref="subtasks")
+    recurrence_parent = relationship("Task", remote_side="Task.id", foreign_keys=[recurrence_parent_id], backref="recurrence_children")
     comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
 
 

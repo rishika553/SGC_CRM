@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
 
@@ -12,7 +12,7 @@ from sqlalchemy import func, or_, desc, asc
 from app.core.database import get_db
 from app.core.exceptions import NotFoundException, ConflictException, ForbiddenException, CRMException
 from app.api.deps import get_current_user, require_roles, ADMIN_ROLES, ALL_ROLES, get_user_client_id
-from app.models.tasks import Task, TaskComment, TaskStatusEnum, TaskPriorityEnum
+from app.models.tasks import Task, TaskComment, TaskStatusEnum, TaskPriorityEnum, RecurrenceTypeEnum
 from app.models.projects import Project
 from app.models.clients import Client
 from app.models.audit import AuditLog
@@ -30,6 +30,22 @@ from app.schemas.tasks import (
 )
 from app.schemas.audit import AuditLogRead
 from app.services.audit_service import log_audit_event
+
+
+def _calculate_next_due_date(task: Task) -> Optional[datetime]:
+    if not task.due_date:
+        return None
+    interval = task.recurrence_interval or 1
+    if task.recurrence_type == RecurrenceTypeEnum.DAILY:
+        return task.due_date + timedelta(days=interval)
+    elif task.recurrence_type == RecurrenceTypeEnum.WEEKLY:
+        return task.due_date + timedelta(weeks=interval)
+    elif task.recurrence_type == RecurrenceTypeEnum.MONTHLY:
+        return task.due_date + timedelta(days=interval * 30)
+    elif task.recurrence_type == RecurrenceTypeEnum.CUSTOM:
+        return task.due_date + timedelta(days=interval)
+    return None
+
 
 router = APIRouter()
 
@@ -213,6 +229,9 @@ async def create_task(
             project_id=valid_project_id,
             client_id=valid_client_id,
             parent_task_id=payload.parent_task_id,
+            recurrence_type=(payload.recurrence_type.value if payload.recurrence_type else "none"),
+            recurrence_interval=payload.recurrence_interval,
+            recurrence_end_date=payload.recurrence_end_date,
             created_by_id=creator_id,
             updated_by_id=creator_id,
         )
@@ -397,6 +416,35 @@ async def toggle_task_completion(
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
     )
+
+    if task.status == TaskStatusEnum.COMPLETED and task.recurrence_type and task.recurrence_type != RecurrenceTypeEnum.NONE:
+        next_due_date = _calculate_next_due_date(task)
+        if next_due_date:
+            if task.recurrence_end_date and next_due_date > task.recurrence_end_date:
+                pass
+            else:
+                parent_id = task.recurrence_parent_id or task.id
+                new_code = generate_task_code()
+                new_task = Task(
+                    title=task.title,
+                    task_code=new_code,
+                    description=task.description,
+                    status=TaskStatusEnum.TODO,
+                    priority=task.priority,
+                    due_date=next_due_date,
+                    assigned_to_id=task.assigned_to_id,
+                    project_id=task.project_id,
+                    client_id=task.client_id,
+                    parent_task_id=task.parent_task_id,
+                    recurrence_type=task.recurrence_type,
+                    recurrence_interval=task.recurrence_interval,
+                    recurrence_end_date=task.recurrence_end_date,
+                    recurrence_parent_id=parent_id,
+                    created_by_id=task.created_by_id,
+                    updated_by_id=current_user.id,
+                )
+                db.add(new_task)
+
     await db.commit()
     await db.refresh(task)
 
@@ -453,6 +501,33 @@ async def update_task_status(
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
     )
+
+    if payload.status == TaskStatusEnum.COMPLETED and task.recurrence_type and task.recurrence_type != RecurrenceTypeEnum.NONE:
+        next_due_date = _calculate_next_due_date(task)
+        if next_due_date:
+            if not (task.recurrence_end_date and next_due_date > task.recurrence_end_date):
+                parent_id = task.recurrence_parent_id or task.id
+                new_code = generate_task_code()
+                new_task = Task(
+                    title=task.title,
+                    task_code=new_code,
+                    description=task.description,
+                    status=TaskStatusEnum.TODO,
+                    priority=task.priority,
+                    due_date=next_due_date,
+                    assigned_to_id=task.assigned_to_id,
+                    project_id=task.project_id,
+                    client_id=task.client_id,
+                    parent_task_id=task.parent_task_id,
+                    recurrence_type=task.recurrence_type,
+                    recurrence_interval=task.recurrence_interval,
+                    recurrence_end_date=task.recurrence_end_date,
+                    recurrence_parent_id=parent_id,
+                    created_by_id=task.created_by_id,
+                    updated_by_id=current_user.id,
+                )
+                db.add(new_task)
+
     await db.commit()
     await db.refresh(task)
 

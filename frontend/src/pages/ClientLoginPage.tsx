@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/features/auth/AuthContext';
-import { ForgotPasswordModal } from '@/features/auth/ForgotPasswordModal';
 import { SplitLoginLayout } from '@/components/auth/SplitLoginLayout';
 
 interface LoginFormData {
@@ -16,23 +15,14 @@ interface LoginFormData {
 
 export const ClientLoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  useEffect(() => {
-    const handlePopState = () => {
-      navigate('/settings', { replace: true });
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [navigate]);
-
   if (!authLoading && isAuthenticated) {
-    return <Navigate to="/settings" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const onSubmit = async (data: LoginFormData) => {
@@ -83,18 +73,11 @@ export const ClientLoginPage: React.FC = () => {
             {...register('password', { required: 'Password is required' })}
           />
 
-          <div className="flex items-center justify-between gap-2 flex-wrap text-xs pt-1">
+          <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
             <label className="flex items-center gap-2 cursor-pointer select-none text-[#6B7280] hover:text-[#27332B] transition-colors">
               <input type="checkbox" className="w-4 h-4 rounded border-[#E3E8E3] text-[#5E8C61] focus:ring-[#5E8C61]" />
               <span>Remember me</span>
             </label>
-            <button
-              type="button"
-              onClick={() => setIsForgotOpen(true)}
-              className="text-[#5E8C61] font-semibold hover:text-[#4F7A52] transition-colors focus:outline-none"
-            >
-              Forgot password?
-            </button>
           </div>
 
           <Button
@@ -108,8 +91,6 @@ export const ClientLoginPage: React.FC = () => {
           </Button>
         </form>
       </SplitLoginLayout>
-
-      <ForgotPasswordModal isOpen={isForgotOpen} onClose={() => setIsForgotOpen(false)} />
     </>
   );
 };

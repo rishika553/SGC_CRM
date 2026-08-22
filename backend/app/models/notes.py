@@ -32,8 +32,14 @@ class Note(BaseCRMModel):
         nullable=True,
         index=True,
     )
+    created_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     # Relationships
     client = relationship("Client", foreign_keys=[client_id])
     project = relationship("Project", foreign_keys=[project_id])
     meeting = relationship("Meeting", foreign_keys=[meeting_id])
+    created_by = relationship("User", foreign_keys=[created_by_id])

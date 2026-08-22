@@ -13,6 +13,7 @@ from app.core.exceptions import NotFoundException, ForbiddenException
 from app.api.deps import get_current_user, get_user_client_id, require_roles, ADMIN_ROLES, CLIENT_ROLES, ALL_ROLES
 from app.models.meetings import Meeting, MeetingStatusEnum
 from app.models.clients import Client
+from app.models.projects import Project
 from app.models.user import User
 from app.schemas.common import ResponseEnvelope, PaginatedResponse, PaginationMeta
 from app.schemas.meetings import MeetingCreate, MeetingUpdate, MeetingRead
@@ -23,8 +24,13 @@ router = APIRouter()
 
 def meeting_options_loader():
     return [
-        selectinload(Meeting.client),
-        selectinload(Meeting.project),
+        selectinload(Meeting.client).selectinload(Client.assigned_admin).selectinload(User.role),
+        selectinload(Meeting.client).selectinload(Client.account_manager).selectinload(User.role),
+        selectinload(Meeting.client).selectinload(Client.contacts),
+        selectinload(Meeting.project).selectinload(Project.client).selectinload(Client.assigned_admin).selectinload(User.role),
+        selectinload(Meeting.project).selectinload(Project.client).selectinload(Client.account_manager).selectinload(User.role),
+        selectinload(Meeting.project).selectinload(Project.client).selectinload(Client.contacts),
+        selectinload(Meeting.project).selectinload(Project.assigned_admin).selectinload(User.role),
         selectinload(Meeting.created_by).selectinload(User.role),
     ]
 
@@ -32,7 +38,7 @@ def meeting_options_loader():
 @router.get("", response_model=PaginatedResponse[MeetingRead])
 async def list_meetings(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
     search: Optional[str] = Query(None),
     status_filter: Optional[MeetingStatusEnum] = Query(None, alias="status"),
     client_id: Optional[UUID] = Query(None),
@@ -48,7 +54,9 @@ async def list_meetings(
     if include_deleted:
         query = query.where(Meeting.is_deleted == True)
     else:
-        query = query.join(Meeting.client).where(Meeting.is_deleted == False, Client.is_deleted == False)
+        query = query.outerjoin(Client, Meeting.client_id == Client.id).where(
+            Meeting.is_deleted == False
+        )
 
     user_client_id = await get_user_client_id(current_user, db)
     if user_client_id:
@@ -69,7 +77,7 @@ async def list_meetings(
 
     if search:
         search_fmt = f"%{search.strip()}%"
-        query = query.join(Meeting.client).where(
+        query = query.where(
             or_(
                 Meeting.title.ilike(search_fmt),
                 Meeting.description.ilike(search_fmt),

@@ -21,6 +21,16 @@ ADMIN_ROLES = [UserRoleEnum.SUPER_ADMIN]
 CLIENT_ROLES = [UserRoleEnum.CLIENT, UserRoleEnum.CLIENT_VIEWER]
 ALL_ROLES = [UserRoleEnum.SUPER_ADMIN, UserRoleEnum.CLIENT, UserRoleEnum.CLIENT_VIEWER]
 
+# Lowercase role names that should be treated as admin/internal roles.
+# This covers roles seeded in the DB that may not exist in UserRoleEnum.
+INTERNAL_ADMIN_ROLE_NAMES = {
+    "super_admin", "firm_admin", "admin",
+    "managing_consultant", "senior_consultant", "consultant",
+}
+
+# Role names that are treated as client roles (should NOT get admin access).
+CLIENT_ROLE_NAMES = {"client", "client_viewer"}
+
 
 async def get_current_user(
     request: Request,
@@ -163,12 +173,16 @@ async def get_current_user(
 
 def require_roles(allowed_roles: List[UserRoleEnum]) -> Callable:
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if not current_user.role or current_user.role.name not in allowed_roles:
-            raise ForbiddenException(
-                detail=f"Action requires one of the following roles: {[r.value for r in allowed_roles]}"
-            )
-        return current_user
-
+        role_name = (current_user.role.name if current_user.role else "").lower()
+        allowed_values = {r.value.lower() for r in allowed_roles}
+        if role_name in allowed_values:
+            return current_user
+        is_admin_group = allowed_roles == ALL_ROLES or allowed_roles == ADMIN_ROLES
+        if is_admin_group and role_name in INTERNAL_ADMIN_ROLE_NAMES:
+            return current_user
+        raise ForbiddenException(
+            detail=f"Action requires one of the following roles: {[r.value for r in allowed_roles]}"
+        )
     return role_checker
 
 

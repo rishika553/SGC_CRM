@@ -13,6 +13,7 @@ from app.core.exceptions import NotFoundException, ForbiddenException
 from app.api.deps import get_current_user, get_user_client_id, require_roles, ADMIN_ROLES, ALL_ROLES
 from app.models.notes import Note
 from app.models.clients import Client
+from app.models.projects import Project
 from app.models.user import User
 from app.schemas.common import ResponseEnvelope, PaginatedResponse, PaginationMeta
 from app.schemas.notes import NoteCreate, NoteUpdate, NoteRead
@@ -23,8 +24,13 @@ router = APIRouter()
 
 def note_options_loader():
     return [
-        selectinload(Note.client),
-        selectinload(Note.project),
+        selectinload(Note.client).selectinload(Client.assigned_admin).selectinload(User.role),
+        selectinload(Note.client).selectinload(Client.account_manager).selectinload(User.role),
+        selectinload(Note.client).selectinload(Client.contacts),
+        selectinload(Note.project).selectinload(Project.assigned_admin).selectinload(User.role),
+        selectinload(Note.project).selectinload(Project.client).selectinload(Client.assigned_admin).selectinload(User.role),
+        selectinload(Note.project).selectinload(Project.client).selectinload(Client.account_manager).selectinload(User.role),
+        selectinload(Note.project).selectinload(Project.client).selectinload(Client.contacts),
         selectinload(Note.meeting),
         selectinload(Note.created_by).selectinload(User.role),
     ]

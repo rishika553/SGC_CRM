@@ -20,7 +20,7 @@ import {
   ClipboardCheck,
   Calendar,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatName, getInitials } from '@/lib/utils';
 
 import { useAuth } from '@/features/auth/AuthContext';
 import { useClientDirectory } from '@/features/clients/clientQueries';
@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const adminNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <Building2 className="w-5 h-5 shrink-0" /> },
     { label: 'Clients', path: '/clients', icon: <UserIcon className="w-5 h-5 shrink-0" /> },
-    { label: 'Projects & Tasks', path: '/projects', icon: <Kanban className="w-5 h-5 shrink-0" /> },
+    { label: 'Agenda & Task', path: '/agendas', icon: <Kanban className="w-5 h-5 shrink-0" /> },
     { label: 'Calendar & Notes', path: '/calendar', icon: <Calendar className="w-5 h-5 shrink-0" /> },
     { label: 'Agreement', path: '/agreement', icon: <FileCheck2 className="w-5 h-5 shrink-0" /> },
     { label: 'Consent', path: '/consent', icon: <ClipboardCheck className="w-5 h-5 shrink-0" /> },
@@ -129,12 +129,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const clientNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <Building2 className="w-5 h-5 shrink-0" /> },
+    { label: 'Agenda & Task', path: '/agendas', icon: <Kanban className="w-5 h-5 shrink-0" /> },
     { label: 'Calendar & Notes', path: '/calendar', icon: <Calendar className="w-5 h-5 shrink-0" /> },
-    { label: 'Agreement', path: '/agreement', icon: <FileCheck2 className="w-5 h-5 shrink-0" /> },
-    { label: 'Consent', path: '/consent', icon: <ClipboardCheck className="w-5 h-5 shrink-0" /> },
-    { label: 'Projects & Tasks', path: '/projects', icon: <Kanban className="w-5 h-5 shrink-0" /> },
-    { label: 'Documents', path: '/documents', icon: <FileText className="w-5 h-5 shrink-0" /> },
     { label: 'Chat', path: '/chat', icon: <MessageSquare className="w-5 h-5 shrink-0" /> },
+    { label: 'Consent', path: '/consent', icon: <ClipboardCheck className="w-5 h-5 shrink-0" /> },
+    { label: 'Agreement', path: '/agreement', icon: <FileCheck2 className="w-5 h-5 shrink-0" /> },
+    { label: 'Documents', path: '/documents', icon: <FileText className="w-5 h-5 shrink-0" /> },
   ];
 
   const topNavItems = isClientRole ? clientNavItems : adminNavItems;
@@ -372,8 +372,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* User Profile Section at Bottom */}
           {(() => {
             const { user } = useAuth();
-            const userInitials = user ? `${user.first_name[0]}${user.last_name[0]}` : 'U';
-            const userName = user ? `${user.first_name} ${user.last_name}` : 'User Account';
+            const userInitials = user ? getInitials(user.first_name, user.last_name) : 'U';
+            const userName = user ? formatName(user.first_name, user.last_name) : 'User Account';
             const userRole = user?.role?.display_name || user?.role?.name || 'Portal User';
 
             return (

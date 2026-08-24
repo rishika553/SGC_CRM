@@ -6,6 +6,7 @@ from app.models.projects import ProjectStatusEnum, ProjectPriorityEnum
 from app.models.tasks import TaskPriorityEnum, TaskStatusEnum
 from app.schemas.user import UserRead
 from app.schemas.clients import ClientRead
+from app.schemas.assignments import AssignmentRead
 
 
 class ProjectBase(BaseModel):
@@ -45,6 +46,7 @@ class ProjectCreate(ProjectBase):
     client_id: Optional[UUID] = None
     assigned_admin_id: Optional[UUID] = None
     project_code: Optional[str] = None
+    assignee_ids: Optional[List[UUID]] = None
 
 
 class ProjectUpdate(BaseModel):
@@ -62,6 +64,7 @@ class ProjectUpdate(BaseModel):
     deadline: Optional[datetime] = None
 
     assigned_admin_id: Optional[UUID] = None
+    assignee_ids: Optional[List[UUID]] = None
 
     @field_validator("progress", mode="before")
     @classmethod
@@ -121,6 +124,7 @@ class ProjectRead(ProjectBase):
     client: Optional[ClientRead] = None
     assigned_admin: Optional[UserRead] = None
     tasks: List[ProjectTaskRead] = Field(default_factory=list)
+    assignees: List[AssignmentRead] = Field(default_factory=list, validation_alias="assignments")
 
     is_overdue: bool = False
     days_remaining: Optional[int] = None

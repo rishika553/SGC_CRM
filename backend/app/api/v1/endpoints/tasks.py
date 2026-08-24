@@ -18,6 +18,7 @@ from app.models.clients import Client
 from app.models.audit import AuditLog
 from app.models.role import UserRoleEnum
 from app.models.user import User
+from app.models.assignments import TaskAssignment
 from app.schemas.common import ResponseEnvelope, PaginatedResponse, PaginationMeta
 from app.schemas.tasks import (
     TaskRead,
@@ -30,6 +31,7 @@ from app.schemas.tasks import (
 )
 from app.schemas.audit import AuditLogRead
 from app.services.audit_service import log_audit_event
+from app.services.assignment_service import sync_task_assignments
 
 
 def _calculate_next_due_date(task: Task) -> Optional[datetime]:
@@ -57,6 +59,7 @@ def task_options_loader():
         selectinload(Task.client).selectinload(Client.account_manager).selectinload(User.role),
         selectinload(Task.client).selectinload(Client.contacts),
         selectinload(Task.subtasks),
+        selectinload(Task.assignments).selectinload(TaskAssignment.user).selectinload(User.role),
     ]
 
 
@@ -239,7 +242,9 @@ async def create_task(
             new_task.completed_at = datetime.now(timezone.utc)
 
         db.add(new_task)
-        await db.commit()
+        await db.flush()
+
+        await sync_task_assignments(db, new_task.id, payload.assignee_ids, current_user.id)
 
         if cur_user_exists:
             try:
@@ -258,9 +263,10 @@ async def create_task(
                     ip_address=request.client.host if request.client else None,
                     user_agent=request.headers.get("user-agent"),
                 )
-                await db.commit()
             except Exception:
                 pass
+
+        await db.commit()
 
         stmt = select(Task).options(*task_options_loader()).where(Task.id == new_task.id)
         res = await db.execute(stmt)
@@ -340,6 +346,7 @@ async def update_task(
 
     changes = {}
     update_data = payload.model_dump(exclude_unset=True)
+    assignee_ids = update_data.pop("assignee_ids", None)
 
     for field, new_val in update_data.items():
         if hasattr(task, field):
@@ -356,6 +363,10 @@ async def update_task(
 
     if changes:
         task.updated_by_id = current_user.id
+
+    await sync_task_assignments(db, task.id, assignee_ids, current_user.id)
+
+    if changes:
         await log_audit_event(
             db=db,
             action="TASK_UPDATED",
@@ -366,11 +377,14 @@ async def update_task(
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent"),
         )
-        await db.commit()
-        await db.refresh(task)
+    await db.commit()
 
-    tr = TaskRead.model_validate(task)
-    tr.subtasks_count = len(task.subtasks) if task.subtasks else 0
+    stmt_reload = select(Task).options(*task_options_loader()).where(Task.id == task.id)
+    res_reload = await db.execute(stmt_reload)
+    reloaded = res_reload.scalar_one()
+
+    tr = TaskRead.model_validate(reloaded)
+    tr.subtasks_count = len(reloaded.subtasks) if reloaded.subtasks else 0
 
     return ResponseEnvelope(
         success=True,

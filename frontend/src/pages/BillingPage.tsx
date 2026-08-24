@@ -229,7 +229,6 @@ export const BillingPage: React.FC = () => {
         {/* Module Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#27332B] tracking-tight">Billing & Invoices</h1>
             <p className="text-sm font-medium text-[#6B7280] mt-1">
               Manual Invoice Record-Keeping, Tax Invoices & Payment Status
             </p>

@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -30,6 +30,7 @@ import { consentApi } from '@/features/consents/consentApi';
 import { Consent, ConsentStatus } from '@/types/consent';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
+import { MultiUserSelect } from '@/components/ui/MultiUserSelect';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
@@ -105,6 +106,10 @@ export const ConsentPage: React.FC = () => {
   const [denialReason, setDenialReason] = useState<string>('');
   const [responseNotes, setResponseNotes] = useState<string>('');
   const [isResponding, setIsResponding] = useState<boolean>(false);
+
+  // Consent assignment state
+  const [consentAssigneeIds, setConsentAssigneeIds] = useState<string[]>([]);
+  const [isSavingAssignees, setIsSavingAssignees] = useState<boolean>(false);
 
   const fetchConsents = useCallback(async () => {
     setIsLoading(true);
@@ -215,6 +220,7 @@ export const ConsentPage: React.FC = () => {
     setResponseMode('none');
     setDenialReason('');
     setResponseNotes('');
+    setConsentAssigneeIds((consent.assignees || []).map((a) => a.user_id));
   };
 
   const handleRespond = async (responseStatus: 'allowed' | 'denied') => {
@@ -263,6 +269,21 @@ export const ConsentPage: React.FC = () => {
     }
   };
 
+  const handleSaveConsentAssignees = async () => {
+    if (!selectedConsent) return;
+    setIsSavingAssignees(true);
+    try {
+      const updated = await consentApi.update(selectedConsent.id, { assignee_ids: consentAssigneeIds });
+      setSelectedConsent(updated);
+      setConsents((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      toast('Assignees Updated', 'Relationship manager assignments have been updated.', 'success');
+    } catch (err: any) {
+      toast('Update Failed', err.response?.data?.error?.message || 'Failed to update assignments.', 'error');
+    } finally {
+      setIsSavingAssignees(false);
+    }
+  };
+
   const pendingCount = consents.filter((c) => c.status === 'pending').length;
   const allowedCount = consents.filter((c) => c.status === 'allowed').length;
   const deniedCount = consents.filter((c) => c.status === 'denied').length;
@@ -275,7 +296,6 @@ export const ConsentPage: React.FC = () => {
         {/* Top Header Banner */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#27332B] tracking-tight">Consent Management</h1>
             <p className="text-sm font-medium text-[#6B7280] mt-1">
               {isClientRole
                 ? 'Review assigned consent requests, read the terms, and record your decision.'
@@ -646,7 +666,7 @@ export const ConsentPage: React.FC = () => {
                 <div>
                   <span className="text-[#6B7280] font-semibold block">Responded By</span>
                   <span className="font-bold text-[#27332B] mt-0.5 block">
-                    {selected.responded_by ? `${selected.responded_by.first_name} ${selected.responded_by.last_name}` : 'Client Portal'}
+                     {selected.responded_by ? formatName(selected.responded_by.first_name, selected.responded_by.last_name) : 'Client Portal'}
                   </span>
                 </div>
                 {selected.status === 'denied' && (
@@ -751,23 +771,40 @@ export const ConsentPage: React.FC = () => {
 
             {/* Admin: no response actions available */}
             {!isClientRole && (
-              <div className="pt-3 mt-3 flex items-center justify-end gap-2 flex-wrap border-t border-[#E3E8E3]">
-                <span className="text-[11px] text-[#6B7280] mr-auto">
-                  Created {formatDate(selected.created_at)}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDeleteConsent(selected)}
-                  leftIcon={<Trash2 className="w-4 h-4 text-rose-600" />}
-                  className="border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-xl"
+              <div className="space-y-3 pt-3 mt-3 border-t border-[#E3E8E3]">
+                <MultiUserSelect
+                  selectedIds={consentAssigneeIds}
+                  onChange={setConsentAssigneeIds}
+                  placeholder="Assign relationship managers..."
+                />
+                <div className="flex items-center justify-end gap-2 flex-wrap">
+                  <span className="text-[11px] text-[#6B7280] mr-auto">
+                    Created {formatDate(selected.created_at)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={handleSaveConsentAssignees}
+                    disabled={isSavingAssignees}
+                    className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white text-xs font-bold rounded-xl"
+                  >
+                    {isSavingAssignees ? 'Saving...' : 'Update Assignees'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteConsent(selected)}
+                    leftIcon={<Trash2 className="w-4 h-4 text-rose-600" />}
+                    className="border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-xl"
                 >
                   Delete
                 </Button>
                 <Button type="button" variant="outline" size="sm" onClick={() => setSelectedConsent(null)} className="text-xs">
                   Close
                 </Button>
+                </div>
               </div>
             )}
           </div>

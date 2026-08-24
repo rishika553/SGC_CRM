@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from app.models.consents import ConsentRequestStatusEnum
 from app.schemas.clients import ClientRead
 from app.schemas.user import UserRead
+from app.schemas.assignments import AssignmentRead
 
 
 class ConsentResponsePayload(BaseModel):
@@ -23,6 +24,7 @@ class ConsentResponsePayload(BaseModel):
 class ConsentUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    assignee_ids: Optional[List[UUID]] = None
 
 
 class ConsentRead(BaseModel):
@@ -48,6 +50,7 @@ class ConsentRead(BaseModel):
 
     client: Optional[ClientRead] = None
     responded_by: Optional[UserRead] = None
+    assignees: List[AssignmentRead] = Field(default_factory=list, validation_alias="assignments")
 
     is_deleted: bool = False
     deleted_at: Optional[datetime] = None

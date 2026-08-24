@@ -18,6 +18,7 @@ from app.models.clients import Client, ClientStatusEnum
 from app.models.audit import AuditLog
 from app.models.role import UserRoleEnum
 from app.models.user import User
+from app.models.assignments import ProjectAssignment
 from app.schemas.common import ResponseEnvelope, PaginatedResponse, PaginationMeta
 from app.schemas.projects import (
     ProjectRead,
@@ -28,6 +29,7 @@ from app.schemas.projects import (
 )
 from app.schemas.audit import AuditLogRead
 from app.services.audit_service import log_audit_event
+from app.services.assignment_service import sync_project_assignments
 
 router = APIRouter()
 
@@ -39,6 +41,7 @@ def project_options_loader():
         selectinload(Project.client).selectinload(Client.contacts),
         selectinload(Project.assigned_admin).selectinload(User.role),
         selectinload(Project.tasks.and_(Task.is_deleted == False)),
+        selectinload(Project.assignments).selectinload(ProjectAssignment.user).selectinload(User.role),
     ]
 
 
@@ -206,7 +209,9 @@ async def create_project(
         new_project.actual_completion_date = datetime.now(timezone.utc)
 
     db.add(new_project)
-    await db.commit()
+    await db.flush()
+
+    await sync_project_assignments(db, new_project.id, payload.assignee_ids, current_user.id)
 
     # Log audit event
     try:
@@ -225,11 +230,11 @@ async def create_project(
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent"),
         )
-        await db.commit()
     except Exception:
         pass
 
-    # Load relationships
+    await db.commit()
+
     stmt = select(Project).options(*project_options_loader()).where(Project.id == new_project.id)
     res = await db.execute(stmt)
     created_proj = res.scalar_one()
@@ -291,6 +296,7 @@ async def update_project(
 
     changes = {}
     update_data = payload.model_dump(exclude_unset=True)
+    assignee_ids = update_data.pop("assignee_ids", None)
 
     for field, new_val in update_data.items():
         if hasattr(project, field):
@@ -310,6 +316,10 @@ async def update_project(
 
     if changes:
         project.updated_by_id = current_user.id
+
+    await sync_project_assignments(db, project.id, assignee_ids, current_user.id)
+
+    if changes:
         await log_audit_event(
             db=db,
             action="PROJECT_UPDATED",
@@ -320,13 +330,16 @@ async def update_project(
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent"),
         )
-        await db.commit()
-        await db.refresh(project)
+    await db.commit()
+
+    stmt_reload = select(Project).options(*project_options_loader()).where(Project.id == project.id)
+    res_reload = await db.execute(stmt_reload)
+    reloaded = res_reload.scalar_one()
 
     return ResponseEnvelope(
         success=True,
         message="Project details updated successfully",
-        data=ProjectRead.model_validate(project)
+        data=ProjectRead.model_validate(reloaded)
     )
 
 

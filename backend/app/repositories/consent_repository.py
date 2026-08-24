@@ -8,6 +8,7 @@ from sqlalchemy import func, or_, desc, asc
 from app.models.consents import Consent, ConsentRequestStatusEnum
 from app.models.clients import Client
 from app.models.user import User
+from app.models.assignments import ConsentAssignment
 from app.repositories.base_repository import BaseRepository
 
 
@@ -24,6 +25,7 @@ class ConsentRepository(BaseRepository[Consent]):
             selectinload(Consent.client).selectinload(Client.contacts),
             selectinload(Consent.responded_by).selectinload(User.role),
             selectinload(Consent.responded_by).selectinload(User.organization),
+            selectinload(Consent.assignments).selectinload(ConsentAssignment.user).selectinload(User.role),
         ]
 
     async def get_by_id_with_details(self, db: AsyncSession, consent_id: UUID, include_deleted: bool = False) -> Optional[Consent]:

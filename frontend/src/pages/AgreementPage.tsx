@@ -257,7 +257,6 @@ export const AgreementPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#27332B] tracking-tight">Agreements</h1>
             <p className="text-sm text-[#6B7280] mt-0.5">
               Upload and manage client agreements. Uploaded PDFs are visible on the client panel.
             </p>

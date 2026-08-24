@@ -56,3 +56,4 @@ class Consent(BaseCRMModel):
     # Relationships
     client = relationship("Client", foreign_keys=[client_id])
     responded_by = relationship("User", foreign_keys=[responded_by_id])
+    assignments = relationship("ConsentAssignment", back_populates="consent", cascade="all, delete-orphan")

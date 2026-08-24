@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
 import { User, Role } from '@/types';
 import { api } from '@/lib/axios';
+import { formatName } from '@/lib/utils';
 
 interface EditUserDrawerProps {
   user: User | null;
@@ -60,7 +61,7 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({ user, isOpen, on
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title={`Edit Consultant: ${user.first_name} ${user.last_name}`}
+      title={`Edit Consultant: ${formatName(user.first_name, user.last_name)}`}
       description={user.email}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

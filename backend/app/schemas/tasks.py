@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from app.models.tasks import TaskStatusEnum, TaskPriorityEnum, RecurrenceTypeEnum
 from app.schemas.user import UserRead
 from app.schemas.clients import ClientRead
+from app.schemas.assignments import AssignmentRead
 
 
 class TaskCommentCreate(BaseModel):
@@ -54,6 +55,7 @@ class TaskCreate(TaskBase):
     recurrence_type: Optional[RecurrenceTypeEnum] = RecurrenceTypeEnum.NONE
     recurrence_interval: Optional[int] = None
     recurrence_end_date: Optional[datetime] = None
+    assignee_ids: Optional[List[UUID]] = None
 
 
 class TaskUpdate(BaseModel):
@@ -70,6 +72,7 @@ class TaskUpdate(BaseModel):
     project_id: Optional[UUID] = None
     client_id: Optional[UUID] = None
     parent_task_id: Optional[UUID] = None
+    assignee_ids: Optional[List[UUID]] = None
 
     @field_validator("title")
     @classmethod
@@ -101,6 +104,7 @@ class TaskRead(TaskBase):
 
     assigned_to: Optional[UserRead] = None
     client: Optional[ClientRead] = None
+    assignees: List[AssignmentRead] = Field(default_factory=list, validation_alias="assignments")
 
     is_overdue: bool = False
     days_remaining: Optional[int] = None

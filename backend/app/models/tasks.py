@@ -70,6 +70,8 @@ class Task(BaseCRMModel):
     )
 
     # Foreign Keys
+    # DEPRECATED: Use task_assignments table (via `assignments` relationship) instead.
+    # Kept for backward compatibility; will be removed in a future migration.
     assigned_to_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
@@ -102,6 +104,7 @@ class Task(BaseCRMModel):
     parent_task = relationship("Task", remote_side="Task.id", foreign_keys=[parent_task_id], backref="subtasks")
     recurrence_parent = relationship("Task", remote_side="Task.id", foreign_keys=[recurrence_parent_id], backref="recurrence_children")
     comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
+    assignments = relationship("TaskAssignment", back_populates="task", cascade="all, delete-orphan")
 
 
 class TaskComment(BaseCRMModel):

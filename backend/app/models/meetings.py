@@ -10,8 +10,6 @@ from app.db.base import BaseCRMModel
 
 class MeetingStatusEnum(str, enum.Enum):
     SCHEDULED = "scheduled"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
     CANCELLED = "cancelled"
     RESCHEDULED = "rescheduled"
 
@@ -69,3 +67,4 @@ class Meeting(BaseCRMModel):
     client = relationship("Client", foreign_keys=[client_id])
     project = relationship("Project", foreign_keys=[project_id])
     created_by = relationship("User", foreign_keys=[created_by_id])
+    assignments = relationship("MeetingAssignment", back_populates="meeting", cascade="all, delete-orphan")

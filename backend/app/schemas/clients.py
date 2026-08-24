@@ -16,7 +16,7 @@ POSTAL_CODE_REGEX = re.compile(r"^[0-9A-Za-z\s\-]{3,10}$")
 
 class ContactBase(BaseModel):
     first_name: str
-    last_name: str
+    last_name: Optional[str] = ""
     email: str
     phone: Optional[str] = None
     job_title: Optional[str] = None
@@ -253,7 +253,7 @@ class ClientDetailRead(ClientRead):
 class ProvisionClientAccountRequest(BaseModel):
     client_name: str
     first_name: str
-    last_name: str
+    last_name: Optional[str] = ""
     username_or_email: str
     password: str
     job_title: Optional[str] = "Client Stakeholder"

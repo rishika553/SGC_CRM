@@ -49,6 +49,11 @@ export const consentApi = {
     return res.data.data;
   },
 
+  async update(id: string, payload: { assignee_ids?: string[] }): Promise<Consent> {
+    const res = await api.patch<{ data: Consent }>(`/consents/${id}`, payload);
+    return res.data.data;
+  },
+
   async remove(id: string): Promise<void> {
     await api.delete(`/consents/${id}`);
   },

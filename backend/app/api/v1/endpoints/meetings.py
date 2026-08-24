@@ -15,9 +15,11 @@ from app.models.meetings import Meeting, MeetingStatusEnum
 from app.models.clients import Client
 from app.models.projects import Project
 from app.models.user import User
+from app.models.assignments import MeetingAssignment
 from app.schemas.common import ResponseEnvelope, PaginatedResponse, PaginationMeta
-from app.schemas.meetings import MeetingCreate, MeetingUpdate, MeetingRead
+from app.schemas.meetings import MeetingCreate, MeetingUpdate, MeetingRead, ClientMeetingCreate
 from app.services.audit_service import log_audit_event
+from app.services.assignment_service import sync_meeting_assignments
 
 router = APIRouter()
 
@@ -32,6 +34,7 @@ def meeting_options_loader():
         selectinload(Meeting.project).selectinload(Project.client).selectinload(Client.contacts),
         selectinload(Meeting.project).selectinload(Project.assigned_admin).selectinload(User.role),
         selectinload(Meeting.created_by).selectinload(User.role),
+        selectinload(Meeting.assignments).selectinload(MeetingAssignment.user).selectinload(User.role),
     ]
 
 
@@ -158,7 +161,9 @@ async def create_meeting(
         created_by_id=current_user.id,
     )
     db.add(new_meeting)
-    await db.commit()
+    await db.flush()
+
+    await sync_meeting_assignments(db, new_meeting.id, payload.assignee_ids, current_user.id)
 
     await log_audit_event(
         db=db,
@@ -183,6 +188,62 @@ async def create_meeting(
     )
 
 
+@router.post("/client-schedule", response_model=ResponseEnvelope[MeetingRead], status_code=status.HTTP_201_CREATED)
+async def client_schedule_meeting(
+    payload: ClientMeetingCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_roles(CLIENT_ROLES)),
+):
+    client_id = await get_user_client_id(current_user, db)
+    if not client_id:
+        raise ForbiddenException(detail="No client account linked to this user")
+
+    stmt_client = select(Client).where(Client.id == client_id, Client.is_deleted == False)
+    res_client = await db.execute(stmt_client)
+    if not res_client.scalar_one_or_none():
+        raise NotFoundException(detail="Client account not found")
+
+    new_meeting = Meeting(
+        title=payload.title,
+        description=payload.description,
+        location=payload.location,
+        meeting_type=payload.meeting_type,
+        status=MeetingStatusEnum.SCHEDULED,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+        timezone="Asia/Kolkata",
+        client_id=client_id,
+        created_by_id=current_user.id,
+    )
+    db.add(new_meeting)
+    await db.flush()
+
+    await sync_meeting_assignments(db, new_meeting.id, payload.assignee_ids, current_user.id)
+
+    await log_audit_event(
+        db=db,
+        action="MEETING_CREATED",
+        entity_name="Meeting",
+        entity_id=str(new_meeting.id),
+        changes={"title": new_meeting.title, "client_id": str(client_id), "source": "client_portal"},
+        user_id=current_user.id,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    await db.commit()
+
+    stmt = select(Meeting).options(*meeting_options_loader()).where(Meeting.id == new_meeting.id)
+    res = await db.execute(stmt)
+    created = res.scalar_one()
+
+    return ResponseEnvelope(
+        success=True,
+        message="Meeting scheduled successfully",
+        data=MeetingRead.model_validate(created),
+    )
+
+
 @router.put("/{meeting_id}", response_model=ResponseEnvelope[MeetingRead])
 async def update_meeting(
     meeting_id: UUID,
@@ -198,11 +259,13 @@ async def update_meeting(
         raise NotFoundException(detail="Meeting not found")
 
     update_data = payload.model_dump(exclude_unset=True)
+    assignee_ids = update_data.pop("assignee_ids", None)
     for field, value in update_data.items():
         setattr(meeting, field, value)
 
     meeting.updated_by_id = current_user.id
-    await db.commit()
+
+    await sync_meeting_assignments(db, meeting.id, assignee_ids, current_user.id)
 
     await log_audit_event(
         db=db,

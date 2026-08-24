@@ -11,13 +11,14 @@ import {
   ShieldCheck,
   ChevronRight,
   Receipt,
-  AlertTriangle,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
-import { cn, formatDate, formatCurrency } from '@/lib/utils';
+import { cn, formatDate, formatCurrency, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -63,11 +64,11 @@ export const DashboardPage: React.FC = () => {
   // Dashboard Metrics
   const [projects, setProjects] = useState<DashboardProject[]>([]);
   const [tasks, setTasks] = useState<DashboardTask[]>([]);
-  const [documentsCount, setDocumentsCount] = useState<number>(0);
+  const [pendingConsentsCount, setPendingConsentsCount] = useState<number>(0);
   const [outstandingBilling, setOutstandingBilling] = useState<number>(0);
-  const [totalPaid, setTotalPaid] = useState<number>(0);
   const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
   const [activities, setActivities] = useState<DashboardActivity[]>([]);
+  const [upcomingMeetings, setUpcomingMeetings] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -105,13 +106,16 @@ export const DashboardPage: React.FC = () => {
         const scopedParams = { page: 1, page_size: 10, ...(targetClientId ? { client_id: targetClientId } : {}) };
         // These resources do not depend on each other, so start every request at once.
         // Individual failures resolve to null and do not prevent the rest of the dashboard loading.
-        const [projectResponse, taskResponse, documentResponse, invoiceResponse] = await Promise.all([
-          api.get<PaginatedResponse<any>>('/projects', { params: scopedParams }).catch(() => null),
+        const [projectResponse, taskResponse, consentsResponse, invoiceResponse, meetingsResponse] = await Promise.all([
+          api.get<PaginatedResponse<any>>('/agendas', { params: scopedParams }).catch(() => null),
           api.get<PaginatedResponse<any>>('/tasks', { params: scopedParams }).catch(() => null),
-          api.get<PaginatedResponse<any>>('/documents', {
-            params: { page: 1, page_size: 1, ...(targetClientId ? { client_id: targetClientId } : {}) },
+          api.get<PaginatedResponse<any>>('/consents', {
+            params: { page: 1, page_size: 1, status: 'pending', ...(targetClientId ? { client_id: targetClientId } : {}) },
           }).catch(() => null),
           api.get<PaginatedResponse<any>>('/invoices', { params: { page: 1, page_size: 20 } }).catch(() => null),
+          api.get<PaginatedResponse<any>>('/meetings', {
+            params: { page: 1, page_size: 5, status: 'scheduled', ...(targetClientId ? { client_id: targetClientId } : {}) },
+          }).catch(() => null),
         ]);
 
         if (projectResponse?.data.success && projectResponse.data.data) {
@@ -135,25 +139,24 @@ export const DashboardPage: React.FC = () => {
           })));
         }
 
-        if (documentResponse?.data.success && documentResponse.data.meta) {
-          setDocumentsCount(documentResponse.data.meta.total || documentResponse.data.data.length || 0);
+        if (consentsResponse?.data.success && consentsResponse.data.meta) {
+          setPendingConsentsCount(consentsResponse.data.meta.total || consentsResponse.data.data.length || 0);
         }
 
         if (invoiceResponse?.data.success && invoiceResponse.data.data) {
           const invData = invoiceResponse.data.data;
           let outstanding = 0;
-          let paid = 0;
           invData.forEach((inv: any) => {
             if (inv.status === 'sent' || inv.status === 'overdue' || inv.status === 'partially_paid' || inv.status === 'unpaid') {
               outstanding += inv.outstanding_amount || inv.total_amount || 0;
             }
-            if (inv.status === 'paid') {
-              paid += inv.total_amount || 0;
-            }
           });
           setOutstandingBilling(outstanding);
-          setTotalPaid(paid);
           setRecentInvoices(invData.slice(0, 5));
+        }
+
+        if (meetingsResponse?.data.success && meetingsResponse.data.data) {
+          setUpcomingMeetings(meetingsResponse.data.data);
         }
 
         // 6. Generate Recent Activities from real data
@@ -182,8 +185,9 @@ export const DashboardPage: React.FC = () => {
   const totalTasksCount = tasks.length;
   const pendingTasksCount = tasks.filter((t) => t.status !== 'completed').length;
 
-  const clientNameDisplay = currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Valued Partner';
+  const clientNameDisplay = currentUser ? formatName(currentUser.first_name, currentUser.last_name) : 'Valued Partner';
   const companyNameDisplay = clientProfile?.name || 'Acme Advisory Group';
+  const activeClientId = clientProfile?.id || localStorage.getItem('crm_active_client_id');
 
   return (
     <MainLayout
@@ -206,11 +210,11 @@ export const DashboardPage: React.FC = () => {
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Welcome back, {clientNameDisplay} 👋
-            </h1>
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Welcome back, {clientNameDisplay}
+            </p>
             <p className="text-sm text-white/80 max-w-xl">
-              Here is your active project overview, task status, and communications summary for <b className="text-white underline decoration-[#DCE9DE]">{companyNameDisplay}</b>.
+              Here is your active agenda overview, task status, and communications summary for <b className="text-white underline decoration-[#DCE9DE]">{companyNameDisplay}</b>.
             </p>
           </div>
 
@@ -236,150 +240,128 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Top Summary Metrics Cards (3 Columns) */}
+        {/* 2. Summary Metrics Cards (4 Columns) */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Skeleton className="h-28 rounded-2xl" />
             <Skeleton className="h-28 rounded-2xl" />
             <Skeleton className="h-28 rounded-2xl" />
             <Skeleton className="h-28 rounded-2xl" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             
-            {/* Card 1: Project Status */}
-            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
+            {/* Card 1: Active Projects */}
+            <button
+              type="button"
+              onClick={() => navigate('/agendas')}
+              className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden text-left hover:border-[#5E8C61]/40 hover:shadow-md transition-all cursor-pointer group"
+            >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">PROJECT STATUS</span>
-                <div className="w-8 h-8 rounded-xl bg-[#DCE9DE] text-[#2F4F3A] flex items-center justify-center font-bold">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">ACTIVE AGENDAS</span>
+                <div className="w-8 h-8 rounded-xl bg-[#DCE9DE] text-[#2F4F3A] flex items-center justify-center font-bold group-hover:bg-[#2F4F3A] group-hover:text-white transition-colors">
                   <Kanban className="w-4 h-4" />
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-[#27332B]">{totalProjectsCount}</span>
-                <span className="text-xs font-semibold text-emerald-600">({inProgressProjectsCount} In Progress)</span>
+                <span className="text-3xl font-extrabold text-[#27332B]">{inProgressProjectsCount}</span>
+                <span className="text-xs font-semibold text-slate-500">/ {totalProjectsCount}</span>
               </div>
               <p className="text-[11px] font-medium text-slate-400 mt-1">
-                {completedProjectsCount} project(s) completed
+                {completedProjectsCount} completed
               </p>
-            </div>
+            </button>
 
-            {/* Card 2: Total / Pending Tasks */}
-            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
+            {/* Card 2: Pending Approvals */}
+            <button
+              type="button"
+              onClick={() => navigate('/consent')}
+              className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden text-left hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group"
+            >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">TASKS OVERVIEW</span>
-                <div className="w-8 h-8 rounded-xl bg-[#DCE9DE] text-[#2F4F3A] flex items-center justify-center font-bold">
-                  <CheckCircle2 className="w-4 h-4" />
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">PENDING APPROVALS</span>
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                  <FileCheck2 className="w-4 h-4" />
                 </div>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-[#27332B]">{pendingTasksCount}</span>
-                <span className="text-xs font-semibold text-amber-600">Pending</span>
+                <span className="text-3xl font-extrabold text-[#27332B]">{pendingConsentsCount}</span>
+                <span className="text-xs font-semibold text-amber-600">Awaiting</span>
               </div>
               <p className="text-[11px] font-medium text-slate-400 mt-1">
-                Total {totalTasksCount} tasks assigned
+                Consents needing review
               </p>
-            </div>
+            </button>
 
-            {/* Card 3: Documents Repository */}
-            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">DOCUMENTS</span>
-                <div className="w-8 h-8 rounded-xl bg-[#DCE9DE] text-[#2F4F3A] flex items-center justify-center font-bold">
-                  <FileText className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-[#27332B]">{documentsCount}</span>
-                <span className="text-xs font-semibold text-slate-500">Files</span>
-              </div>
-              <p className="text-[11px] font-medium text-slate-400 mt-1">
-                In secure document repository
-              </p>
-            </div>
-
-          </div>
-        )}
-
-        {/* 3. Billing Summary Row */}
-        {!isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Outstanding Balance */}
-            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
+            {/* Card 3: Invoice Due */}
+            <button
+              type="button"
+              onClick={() => navigate('/billing')}
+              className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden text-left hover:border-amber-300 hover:shadow-md transition-all cursor-pointer group"
+            >
               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-400" />
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">OUTSTANDING</span>
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <AlertTriangle className="w-4 h-4" />
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">INVOICE DUE</span>
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                  <Receipt className="w-4 h-4" />
                 </div>
               </div>
               <div className="mt-3">
                 <span className="text-2xl font-extrabold text-[#27332B]">{formatCurrency(outstandingBilling)}</span>
               </div>
-              <p className="text-[11px] font-medium text-slate-400 mt-1">Pending payment</p>
-            </div>
+              <p className="text-[11px] font-medium text-slate-400 mt-1">Outstanding balance</p>
+            </button>
 
-            {/* Paid So Far */}
-            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
+            {/* Card 4: Open Tasks */}
+            <button
+              type="button"
+              onClick={() => navigate('/agendas')}
+              className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden text-left hover:border-[#5E8C61]/40 hover:shadow-md transition-all cursor-pointer group"
+            >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">PAID</span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">OPEN TASKS</span>
+                <div className="w-8 h-8 rounded-xl bg-[#DCE9DE] text-[#2F4F3A] flex items-center justify-center font-bold group-hover:bg-[#2F4F3A] group-hover:text-white transition-colors">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3">
-                <span className="text-2xl font-extrabold text-emerald-600">{formatCurrency(totalPaid)}</span>
+              <div className="mt-3 flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-[#27332B]">{pendingTasksCount}</span>
+                <span className="text-xs font-semibold text-slate-500">/ {totalTasksCount}</span>
               </div>
-              <p className="text-[11px] font-medium text-slate-400 mt-1">Total settled</p>
-            </div>
+              <p className="text-[11px] font-medium text-slate-400 mt-1">
+                Tasks pending completion
+              </p>
+            </button>
 
-            {/* Total Invoices */}
-            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)] relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">INVOICES</span>
-                <div className="w-8 h-8 rounded-xl bg-[#DCE9DE] text-[#2F4F3A] flex items-center justify-center">
-                  <Receipt className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <span className="text-2xl font-extrabold text-[#27332B]">{recentInvoices.length > 0 ? recentInvoices.length : 0}</span>
-                <span className="text-xs font-semibold text-slate-500 ml-2">recent</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate('/billing')}
-                className="text-[11px] font-bold text-[#5E8C61] hover:text-[#2F4F3A] flex items-center gap-1 mt-1 transition-colors"
-              >
-                View Full Ledger <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
           </div>
         )}
 
-        {/* 4. Main Two Column Dashboard Content */}
+
+        {/* 3. Main Two Column Dashboard Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Left Column: Project Progress & Recent Tasks (2 Cols Wide) */}
+          {/* Left Column: Agenda Progress (2 Cols Wide) */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* Project Progress Section */}
+            {/* Agenda Progress Section */}
             <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)]">
               <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3 mb-4">
                 <div className="flex items-center gap-2">
                   <Kanban className="w-5 h-5 text-[#2F4F3A]" />
-                  <h3 className="text-sm font-extrabold text-[#27332B]">Project Progress</h3>
+                  <h3 className="text-sm font-extrabold text-[#27332B]">Agenda Progress</h3>
                 </div>
                 <button
                   type="button"
-                  onClick={() => navigate('/projects')}
+                  onClick={() => navigate('/agendas')}
                   className="text-xs font-bold text-[#5E8C61] hover:text-[#2F4F3A] flex items-center gap-1 transition-colors"
                 >
-                  View All Projects <ChevronRight className="w-4 h-4" />
+                  View All Agendas <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
               {projects.length === 0 ? (
                 <div className="py-8 text-center text-slate-400">
-                  <p className="text-xs font-semibold">No active projects found for your company.</p>
+                  <p className="text-xs font-semibold">No active agendas found for your company.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -414,55 +396,6 @@ export const DashboardPage: React.FC = () => {
                       <div className="flex items-center justify-between gap-1 flex-wrap text-[10px] text-slate-500 pt-1 font-medium">
                         <span>Started: {formatDate(proj.start_date)}</span>
                         <span>Expected Completion: {formatDate(proj.deadline)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Recent Tasks Section */}
-            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)]">
-              <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-[#2F4F3A]" />
-                  <h3 className="text-sm font-extrabold text-[#27332B]">Recent Tasks</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/projects')}
-                  className="text-xs font-bold text-[#5E8C61] hover:text-[#2F4F3A] flex items-center gap-1 transition-colors"
-                >
-                  View All Tasks <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {tasks.length === 0 ? (
-                <div className="py-8 text-center text-slate-400">
-                  <p className="text-xs font-semibold">No recent tasks found.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-[#E3E8E3]">
-                  {tasks.map((t) => (
-                    <div key={t.id} className="py-3 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className={cn(
-                          'w-2 h-2 rounded-full shrink-0',
-                          t.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'
-                        )} />
-                        <span className="text-xs font-bold text-[#27332B] truncate">{t.title}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className={cn(
-                          'text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase',
-                          t.priority === 'high' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-700 border-slate-200'
-                        )}>
-                          {t.priority}
-                        </span>
-                        <span className="hidden min-[380px]:inline text-[11px] text-slate-500 font-medium">
-                          {t.due_date ? formatDate(t.due_date) : 'No due date'}
-                        </span>
                       </div>
                     </div>
                   ))}
@@ -519,79 +452,52 @@ export const DashboardPage: React.FC = () => {
               </div>
             )}
 
-            {/* Quick Actions Grid */}
-            <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)]">
-              <h3 className="text-sm font-extrabold text-[#27332B] mb-3">Quick Actions</h3>
-              <div className="grid grid-cols-1 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => navigate('/chat')}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#F7F9F6] border border-[#E3E8E3] hover:bg-[#DCE9DE]/40 text-left transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#2F4F3A] text-white flex items-center justify-center font-bold">
-                      <MessageSquare className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-[#27332B]">Chat with Admin</h4>
-                      <p className="text-[10px] text-slate-500">Direct message Virtual CFO</p>
-                    </div>
+            {/* Upcoming Meetings */}
+            {!isLoading && (
+              <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)]">
+                <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-[#2F4F3A]" />
+                    <h3 className="text-sm font-extrabold text-[#27332B]">Upcoming Meetings</h3>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate('/documents')}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#F7F9F6] border border-[#E3E8E3] hover:bg-[#DCE9DE]/40 text-left transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#2F4F3A] text-white flex items-center justify-center font-bold">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-[#27332B]">Documents Repository</h4>
-                      <p className="text-[10px] text-slate-500">View & download files</p>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/calendar')}
+                    className="text-xs font-bold text-[#5E8C61] hover:text-[#2F4F3A] flex items-center gap-1 transition-colors"
+                  >
+                    View All <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                {upcomingMeetings.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4">No upcoming meetings</p>
+                ) : (
+                  <div className="space-y-3">
+                    {upcomingMeetings.map((m: any) => (
+                      <div key={m.id} className="p-3 rounded-xl bg-[#F7F9F6] border border-[#E3E8E3]">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-[#27332B] truncate">{m.title}</span>
+                          <span className="text-[10px] font-bold text-[#2F4F3A] bg-[#DCE9DE] px-2 py-0.5 rounded-full shrink-0">
+                            {m.meeting_type === 'video_call' ? 'Video' : m.meeting_type === 'phone_call' ? 'Phone' : 'In Person'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                          <Clock className="w-3 h-3" />
+                          <span>{formatDate(m.start_time)}</span>
+                        </div>
+                        {m.assignees?.length > 0 && (
+                          <div className="mt-2 flex items-center gap-1">
+                            <span className="text-[10px] text-slate-400">RM:</span>
+                            <span className="text-[10px] font-semibold text-[#2F4F3A]">
+                              {m.assignees.map((a: any) => formatName(a.user?.first_name, a.user?.last_name)).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate('/projects')}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#F7F9F6] border border-[#E3E8E3] hover:bg-[#DCE9DE]/40 text-left transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#2F4F3A] text-white flex items-center justify-center font-bold">
-                      <Kanban className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-[#27332B]">Projects & Tasks</h4>
-                      <p className="text-[10px] text-slate-500">Track deliverable progress</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate('/agreement')}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#F7F9F6] border border-[#E3E8E3] hover:bg-[#DCE9DE]/40 text-left transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#2F4F3A] text-white flex items-center justify-center font-bold">
-                      <FileCheck2 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-[#27332B]">Service Agreement</h4>
-                      <p className="text-[10px] text-slate-500">Review terms & SLA</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                </button>
+                )}
               </div>
-            </div>
+            )}
 
           </div>
 

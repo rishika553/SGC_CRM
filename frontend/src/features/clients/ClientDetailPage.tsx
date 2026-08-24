@@ -2,23 +2,24 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Building2,
-  Globe,
-  MapPin,
-  Users,
-  MessageSquare,
-  Plus,
   ArrowLeft,
   Calendar,
-  Phone,
-  Mail,
-  Briefcase,
-  Trash2,
   KeyRound,
   ShieldCheck,
-  Copy,
   Check,
   Lock,
   UserCheck,
+  FolderKanban,
+  CheckSquare,
+  ClipboardCheck,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  Video,
+  MapPin as MapPinIcon,
+  ChevronDown,
+  FileText,
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
@@ -29,12 +30,11 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/features/auth/AuthContext';
-import { CreateContactModal } from './CreateContactModal';
-import { LogCommunicationModal } from './LogCommunicationModal';
 import { DeleteClientModal } from './DeleteClientModal';
 import { CreateClientUserModal } from './CreateClientUserModal';
 import { ClientDetail } from '@/types/client';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { Consent } from '@/types/consent';
+import { formatCurrency, formatDate, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
 
 export const ClientDetailPage: React.FC = () => {
@@ -47,12 +47,23 @@ export const ClientDetailPage: React.FC = () => {
 
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'contacts' | 'activity'>('overview');
+  const [activeTab, setActiveTab] = useState<'projects' | 'tasks' | 'consents' | 'meetings'>('projects');
 
-  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
-  const [isLogCommOpen, setIsLogCommOpen] = useState(false);
+  // Client entity data
+  const [clientProjects, setClientProjects] = useState<any[]>([]);
+  const [clientTasks, setClientTasks] = useState<any[]>([]);
+  const [clientConsents, setClientConsents] = useState<Consent[]>([]);
+  const [clientMeetings, setClientMeetings] = useState<any[]>([]);
+  const [clientInvoices, setClientInvoices] = useState<any[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const [loadingConsents, setLoadingConsents] = useState(false);
+  const [loadingMeetings, setLoadingMeetings] = useState(false);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isProvisionLoginOpen, setIsProvisionLoginOpen] = useState(false);
+  const [isCredentialsExpanded, setIsCredentialsExpanded] = useState(false);
 
   const fetchClientDetails = useCallback(async () => {
     if (!id) return;
@@ -72,6 +83,77 @@ export const ClientDetailPage: React.FC = () => {
   useEffect(() => {
     fetchClientDetails();
   }, [fetchClientDetails]);
+
+  const fetchClientProjects = useCallback(async () => {
+    if (!id) return;
+    setLoadingProjects(true);
+    try {
+      const res = await api.get('/agendas', { params: { client_id: id, page: 1, page_size: 100 } });
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setClientProjects(res.data.data);
+      }
+    } catch { /* silent */ } finally { setLoadingProjects(false); }
+  }, [id]);
+
+  const fetchClientTasks = useCallback(async () => {
+    if (!id) return;
+    setLoadingTasks(true);
+    try {
+      const res = await api.get('/tasks', { params: { client_id: id, page: 1, page_size: 100 } });
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setClientTasks(res.data.data);
+      }
+    } catch { /* silent */ } finally { setLoadingTasks(false); }
+  }, [id]);
+
+  const fetchClientConsents = useCallback(async () => {
+    if (!id) return;
+    setLoadingConsents(true);
+    try {
+      const res = await api.get('/consents', { params: { client_id: id, page: 1, page_size: 100 } });
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setClientConsents(res.data.data);
+      }
+    } catch { /* silent */ } finally { setLoadingConsents(false); }
+  }, [id]);
+
+  const fetchClientMeetings = useCallback(async () => {
+    if (!id) return;
+    setLoadingMeetings(true);
+    try {
+      const res = await api.get('/meetings', { params: { client_id: id, page: 1, page_size: 100 } });
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setClientMeetings(res.data.data);
+      }
+    } catch { /* silent */ } finally { setLoadingMeetings(false); }
+  }, [id]);
+
+  const fetchClientInvoices = useCallback(async () => {
+    if (!id) return;
+    setLoadingInvoices(true);
+    try {
+      const res = await api.get('/invoices', { params: { client_id: id, page: 1, page_size: 100 } });
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setClientInvoices(res.data.data);
+      }
+    } catch { /* silent */ } finally { setLoadingInvoices(false); }
+  }, [id]);
+
+  // Lazy-load tab data on first view
+  useEffect(() => {
+    if (clientProjects.length === 0 && !loadingProjects) fetchClientProjects();
+    if (clientTasks.length === 0 && !loadingTasks) fetchClientTasks();
+    if (clientMeetings.length === 0 && !loadingMeetings) fetchClientMeetings();
+    if (clientInvoices.length === 0 && !loadingInvoices) fetchClientInvoices();
+    if (activeTab === 'consents' && clientConsents.length === 0 && !loadingConsents) fetchClientConsents();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // Dashboard stats derived from loaded data
+  const unpaidInvoices = clientInvoices.filter((inv: any) => inv.status === 'unpaid' || inv.status === 'overdue' || inv.status === 'pending');
+  const nextMeeting = clientMeetings
+    .filter((m: any) => m.status === 'scheduled' && new Date(m.start_time) >= new Date())
+    .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0] || null;
 
   if (isLoading) {
     return (
@@ -120,8 +202,7 @@ export const ClientDetailPage: React.FC = () => {
                 {client.name[0]}
               </div>
               <div>
-                <h1 className="text-xl font-bold text-surface-900 tracking-tight">{client.name}</h1>
-                <p className="text-xs text-surface-500">{client.industry || 'Corporate Account'}</p>
+                <p className="text-sm font-bold text-surface-900">{client.name}</p>
               </div>
             </div>
           </div>
@@ -133,73 +214,59 @@ export const ClientDetailPage: React.FC = () => {
               leftIcon={<KeyRound className="w-4 h-4 text-brand-600" />}
               onClick={() => setIsProvisionLoginOpen(true)}
             >
-              Provision Client Login
+              {client.email ? 'Set / Reset Password' : 'Provision Credentials'}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Plus className="w-4 h-4" />}
-              onClick={() => setIsAddContactOpen(true)}
-            >
-              Add Contact
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              leftIcon={<MessageSquare className="w-4 h-4" />}
-              onClick={() => setIsLogCommOpen(true)}
-            >
-              Log Interaction
-            </Button>
-            {canDelete && (
-              <Button
-                variant="danger"
-                size="sm"
-                leftIcon={<Trash2 className="w-4 h-4" />}
-                onClick={() => setIsDeleteOpen(true)}
-              >
-                Delete Profile
-              </Button>
-            )}
           </div>
         </div>
 
-        {/* Account Summary Banner */}
-        <Card padding="md">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <span className="text-xs font-medium text-surface-500 block">Account Tier</span>
-              <Badge variant="primary" className="mt-1 uppercase">
-                {client.tier}
-              </Badge>
+        {/* Client Dashboard Stat Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Card padding="sm" className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-50 text-amber-600 shrink-0">
+              <Clock className="w-4 h-4" />
             </div>
-
             <div>
-              <span className="text-xs font-medium text-surface-500 block">Account Status</span>
-              <Badge variant={client.status === 'active' ? 'success' : 'warning'} className="mt-1 capitalize">
-                {client.status}
-              </Badge>
+              <span className="text-[10px] font-semibold text-surface-500 uppercase tracking-wider block">Total Agendas</span>
+              <span className="text-lg font-bold text-surface-900">{clientProjects.length}</span>
             </div>
+          </Card>
 
+          <Card padding="sm" className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-50 text-blue-600 shrink-0">
+              <ClipboardCheck className="w-4 h-4" />
+            </div>
             <div>
-              <span className="text-xs font-medium text-surface-500 block">Account Manager</span>
-              <span className="text-sm font-semibold text-surface-900 mt-1 block">
-                {client.account_manager
-                  ? `${client.account_manager.first_name} ${client.account_manager.last_name}`
-                  : 'Unassigned'}
-              </span>
+              <span className="text-[10px] font-semibold text-surface-500 uppercase tracking-wider block">Total Tasks</span>
+              <span className="text-lg font-bold text-surface-900">{clientTasks.length}</span>
             </div>
+          </Card>
 
+          <Card padding="sm" className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-50 text-purple-600 shrink-0">
+              <FileText className="w-4 h-4" />
+            </div>
             <div>
-              <span className="text-xs font-medium text-surface-500 block">Annual Revenue</span>
-              <span className="text-sm font-bold text-surface-900 mt-1 block">
-                {client.annual_revenue ? formatCurrency(client.annual_revenue) : '—'}
-              </span>
+              <span className="text-[10px] font-semibold text-surface-500 uppercase tracking-wider block">Unpaid Invoices</span>
+              <span className="text-lg font-bold text-surface-900">{unpaidInvoices.length}</span>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        {/* Portal Access & Credentials Card */}
+          <Card padding="sm" className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-semibold text-surface-500 uppercase tracking-wider block">Next Meeting</span>
+              {nextMeeting ? (
+                <span className="text-xs font-bold text-surface-900 block truncate">{formatDate(nextMeeting.start_time)}</span>
+              ) : (
+                <span className="text-xs text-surface-400 block">None scheduled</span>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Portal Access & Credentials Card — Collapsible */}
         {(() => {
           const clientUsername = client.email || (client.contacts && client.contacts[0]?.email) || '';
           
@@ -214,84 +281,75 @@ export const ClientDetailPage: React.FC = () => {
           };
 
           return (
-            <Card padding="md" className="space-y-4 border border-brand-300 bg-gradient-to-r from-brand-50/60 via-white to-emerald-50/40 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <Card padding="none" className="overflow-hidden border border-brand-200/60 bg-gradient-to-r from-brand-50/40 via-white to-emerald-50/30">
+              {/* Collapsible header */}
+              <button
+                type="button"
+                onClick={() => setIsCredentialsExpanded(!isCredentialsExpanded)}
+                className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-brand-50/30 transition-colors"
+              >
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-brand-600 text-white rounded-xl shadow-xs">
-                    <KeyRound className="w-5 h-5" />
+                  <div className="p-2 bg-brand-600 text-white rounded-xl shadow-xs">
+                    <KeyRound className="w-4 h-4" />
                   </div>
-                  <div>
+                  <div className="text-left">
                     <h3 className="text-sm font-bold text-surface-900 flex items-center gap-2">
                       <span>Client Portal Account & Credentials</span>
                       <Badge variant="success" className="text-[10px]">Super Admin Managed</Badge>
                     </h3>
-                    <p className="text-xs text-surface-500">Sign-in credentials and access controls for {client.name}</p>
+                    <p className="text-[11px] text-surface-500">Sign-in credentials and access controls for {client.name}</p>
                   </div>
                 </div>
+                <ChevronDown className={`w-4 h-4 text-surface-400 transition-transform duration-200 ${isCredentialsExpanded ? 'rotate-180' : ''}`} />
+              </button>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    leftIcon={<Copy className="w-4 h-4 text-brand-600" />}
-                    onClick={handleCopyPortalInfo}
-                  >
-                    Copy Login Details
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    leftIcon={<KeyRound className="w-4 h-4" />}
-                    onClick={() => setIsProvisionLoginOpen(true)}
-                  >
-                    {clientUsername ? 'Set / Reset Password' : 'Provision Credentials'}
-                  </Button>
-                </div>
-              </div>
+              {isCredentialsExpanded && (
+                <div className="px-5 pb-5 space-y-4 border-t border-brand-100 pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div className="bg-white p-3 rounded-xl border border-surface-200 shadow-2xs space-y-1.5">
+                      <span className="text-surface-500 font-semibold uppercase tracking-wider text-[10px] block">
+                        Login Username / Email
+                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-bold text-sm text-brand-700 truncate">
+                          {clientUsername || 'Not Provisioned Yet'}
+                        </span>
+                        {clientUsername && <Badge variant="primary">Username</Badge>}
+                      </div>
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-brand-100 text-xs">
-                <div className="bg-white p-3 rounded-xl border border-surface-200 shadow-2xs space-y-1.5">
-                  <span className="text-surface-500 font-semibold uppercase tracking-wider text-[10px] block">
-                    Login Username / Email
-                  </span>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono font-bold text-sm text-brand-700 truncate">
-                      {clientUsername || 'Not Provisioned Yet'}
-                    </span>
-                    {clientUsername && <Badge variant="primary">Username</Badge>}
+                    <div className="bg-white p-3 rounded-xl border border-surface-200 shadow-2xs space-y-1.5">
+                      <span className="text-surface-500 font-semibold uppercase tracking-wider text-[10px] block">
+                        Portal Password
+                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono font-bold text-surface-800">
+                          •••••••• (Bcrypt Encrypted)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsProvisionLoginOpen(true)}
+                          className="text-[11px] text-brand-600 hover:text-brand-700 font-semibold underline focus:outline-none"
+                        >
+                          Set Password
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl border border-surface-200 shadow-2xs space-y-1.5">
+                      <span className="text-surface-500 font-semibold uppercase tracking-wider text-[10px] block">
+                        Client Sign-In URL
+                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-surface-700 truncate">
+                          {window.location.origin}/login
+                        </span>
+                        <Badge variant="info">Active</Badge>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div className="bg-white p-3 rounded-xl border border-surface-200 shadow-2xs space-y-1.5">
-                  <span className="text-surface-500 font-semibold uppercase tracking-wider text-[10px] block">
-                    Portal Password
-                  </span>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono font-bold text-surface-800">
-                      •••••••• (Bcrypt Encrypted)
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsProvisionLoginOpen(true)}
-                      className="text-[11px] text-brand-600 hover:text-brand-700 font-semibold underline focus:outline-none"
-                    >
-                      Set Password
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-white p-3 rounded-xl border border-surface-200 shadow-2xs space-y-1.5">
-                  <span className="text-surface-500 font-semibold uppercase tracking-wider text-[10px] block">
-                    Client Sign-In URL
-                  </span>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-xs text-surface-700 truncate">
-                      {window.location.origin}/login
-                    </span>
-                    <Badge variant="info">Active</Badge>
-                  </div>
-                </div>
-              </div>
+              )}
             </Card>
           );
         })()}
@@ -299,110 +357,170 @@ export const ClientDetailPage: React.FC = () => {
         {/* Tab Navigation */}
         <div className="flex border-b border-surface-200 gap-4 sm:gap-6 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => setActiveTab('projects')}
             className={`pb-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'overview'
+              activeTab === 'projects'
                 ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-surface-500 hover:text-surface-900'
             }`}
           >
-            Overview & Details
+            Agenda & Task ({clientProjects.length})
           </button>
           <button
-            onClick={() => setActiveTab('contacts')}
+            onClick={() => setActiveTab('tasks')}
             className={`pb-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'contacts'
+              activeTab === 'tasks'
                 ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-surface-500 hover:text-surface-900'
             }`}
           >
-            Key Stakeholders ({client.contacts.length})
+            Tasks ({clientTasks.length})
           </button>
           <button
-            onClick={() => setActiveTab('activity')}
+            onClick={() => setActiveTab('consents')}
             className={`pb-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'activity'
+              activeTab === 'consents'
                 ? 'border-brand-600 text-brand-600'
                 : 'border-transparent text-surface-500 hover:text-surface-900'
             }`}
           >
-            Interaction History ({client.communication_logs.length})
+            Consents ({clientConsents.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('meetings')}
+            className={`pb-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
+              activeTab === 'meetings'
+                ? 'border-brand-600 text-brand-600'
+                : 'border-transparent text-surface-500 hover:text-surface-900'
+            }`}
+          >
+            Meetings ({clientMeetings.length})
           </button>
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'overview' && (
-          <Card padding="md" className="space-y-4">
-            <h3 className="text-sm font-bold text-surface-900">Company Overview</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-surface-500 font-medium">Website:</span>
-                <span className="text-surface-900 ml-2 font-semibold">{client.website || 'N/A'}</span>
+        {activeTab === 'projects' && (
+          <Card padding="none" className="overflow-hidden">
+            {loadingProjects ? (
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
               </div>
-              <div>
-                <span className="text-surface-500 font-medium">Company Size:</span>
-                <span className="text-surface-900 ml-2 font-semibold">{client.company_size || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-surface-500 font-medium">HQ Address:</span>
-                <span className="text-surface-900 ml-2 font-semibold">{client.billing_address || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-surface-500 font-medium">Created Date:</span>
-                <span className="text-surface-900 ml-2 font-semibold">{formatDate(client.created_at)}</span>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {activeTab === 'contacts' && (
-          <Card padding="none">
-            {client.contacts.length === 0 ? (
+            ) : clientProjects.length === 0 ? (
               <EmptyState
-                title="No Contacts Registered"
-                description="Add executive decision makers for this client company."
-                actionLabel="Add Contact Stakeholder"
-                onAction={() => setIsAddContactOpen(true)}
+                title="No Agendas"
+                description="This client has no agendas assigned yet."
               />
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Stakeholder Name</TableHead>
-                    <TableHead>Title & Department</TableHead>
-                    <TableHead>Contact Channels</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Agenda Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Deadline</TableHead>
+                    <TableHead>Progress</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {client.contacts.map((contact) => (
-                    <TableRow key={contact.id}>
-                      <TableCell>
-                        <div className="font-semibold text-surface-900">
-                          {contact.first_name} {contact.last_name}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>{contact.job_title || 'Executive'}</div>
-                        <div className="text-[11px] text-surface-500">{contact.department || 'Management'}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 text-surface-700">
-                          <Mail className="w-3.5 h-3.5 text-surface-400" />
-                          <span>{contact.email}</span>
-                        </div>
-                        {contact.phone && (
-                          <div className="flex items-center gap-1.5 text-surface-500 text-[11px] mt-0.5">
-                            <Phone className="w-3 h-3 text-surface-400" />
-                            <span>{contact.phone}</span>
+                  {clientProjects.map((p: any) => {
+                    const tasks = p.tasks || [];
+                    const done = tasks.filter((t: any) => t.status === 'completed').length;
+                    const pct = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : (p.progress || 0);
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <div className="font-semibold text-surface-900">{p.name}</div>
+                          {p.description && <div className="text-[11px] text-surface-500 truncate max-w-[240px]">{p.description}</div>}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={p.status === 'completed' ? 'success' : p.status === 'in_progress' ? 'primary' : 'default'}>
+                            {p.status?.replace('_', ' ') || 'Active'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={p.priority === 'critical' ? 'danger' : p.priority === 'high' ? 'warning' : 'default'}>
+                            {p.priority || 'Medium'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-surface-700">{formatDate(p.deadline)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-1.5 bg-surface-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-brand-600 rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-[11px] font-semibold text-surface-700">{pct}%</span>
                           </div>
-                        )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        )}
+
+        {activeTab === 'tasks' && (
+          <Card padding="none" className="overflow-hidden">
+            {loadingTasks ? (
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : clientTasks.length === 0 ? (
+              <EmptyState
+                title="No Tasks"
+                description="No tasks are assigned to this client yet."
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Agenda</TableHead>
+                    <TableHead>Recurrence</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clientTasks.map((t: any) => (
+                    <TableRow key={t.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {t.status === 'completed' ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          ) : (
+                            <Clock className="w-4 h-4 text-surface-400 shrink-0" />
+                          )}
+                          <span className={`font-semibold text-surface-900 ${t.status === 'completed' ? 'line-through text-surface-500' : ''}`}>
+                            {t.title}
+                          </span>
+                        </div>
+                        {t.description && <div className="text-[11px] text-surface-500 truncate max-w-[280px] ml-6">{t.description}</div>}
                       </TableCell>
                       <TableCell>
-                        {contact.is_primary_contact ? (
-                          <Badge variant="primary">Primary Stakeholder</Badge>
+                        <Badge variant={t.status === 'completed' ? 'success' : t.status === 'in_progress' ? 'primary' : 'default'}>
+                          {t.status?.replace('_', ' ') || 'To Do'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={t.priority === 'critical' || t.priority === 'high' ? 'danger' : t.priority === 'medium' ? 'warning' : 'default'}>
+                          {t.priority || 'Medium'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-surface-700">{t.project?.name || '—'}</TableCell>
+                      <TableCell>
+                        {t.recurrence_type && t.recurrence_type !== 'none' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-700 bg-brand-50 border border-brand-200 rounded-full px-2 py-0.5">
+                            <RotateCcw className="w-3 h-3" />
+                            {t.recurrence_type}
+                          </span>
                         ) : (
-                          <Badge variant="default">Contact</Badge>
+                          <span className="text-xs text-surface-400">—</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -413,69 +531,108 @@ export const ClientDetailPage: React.FC = () => {
           </Card>
         )}
 
-        {activeTab === 'activity' && (
-          <div className="space-y-4">
-            {client.communication_logs.length === 0 ? (
+        {activeTab === 'consents' && (
+          <Card padding="none" className="overflow-hidden">
+            {loadingConsents ? (
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : clientConsents.length === 0 ? (
               <EmptyState
-                title="No Interaction History"
-                description="No meeting minutes or phone call logs recorded for this account."
-                actionLabel="Log Interaction Touchpoint"
-                onAction={() => setIsLogCommOpen(true)}
+                title="No Consents"
+                description="No consent requests have been created for this client."
               />
             ) : (
-              client.communication_logs.map((log) => (
-                <Card key={log.id} padding="sm" className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Badge variant="info" className="uppercase text-[10px] shrink-0">
-                        {log.type}
-                      </Badge>
-                      <h4 className="text-sm font-semibold text-surface-900 truncate">{log.subject}</h4>
-                    </div>
-                    <span className="text-[11px] text-surface-500 shrink-0">{formatDate(log.interaction_date)}</span>
-                  </div>
-
-                  <p className="text-xs text-surface-700 whitespace-pre-line bg-surface-50 p-3 rounded-lg border border-surface-100">
-                    {log.notes}
-                  </p>
-
-                  <div className="flex items-center justify-between gap-x-3 gap-y-1 flex-wrap text-[11px] text-surface-500 pt-1">
-                    <span>
-                      Logged by:{' '}
-                      <strong className="text-surface-800">
-                        {log.logged_by.first_name} {log.logged_by.last_name}
-                      </strong>
-                    </span>
-                    {log.contact && (
-                      <span>
-                        With stakeholder:{' '}
-                        <strong className="text-surface-800">
-                          {log.contact.first_name} {log.contact.last_name}
-                        </strong>
-                      </span>
-                    )}
-                  </div>
-                </Card>
-              ))
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Attachment</TableHead>
+                    <TableHead>Responded</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clientConsents.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell>
+                        <div className="font-semibold text-surface-900">{c.title}</div>
+                        {c.description && <div className="text-[11px] text-surface-500 truncate max-w-[280px]">{c.description}</div>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={c.status === 'allowed' ? 'success' : c.status === 'denied' ? 'danger' : 'warning'}>
+                          {c.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-surface-700">{c.file_name || '—'}</TableCell>
+                      <TableCell className="text-xs text-surface-700">{formatDate(c.responded_at)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-          </div>
+          </Card>
+        )}
+
+        {activeTab === 'meetings' && (
+          <Card padding="none" className="overflow-hidden">
+            {loadingMeetings ? (
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+              </div>
+            ) : clientMeetings.length === 0 ? (
+              <EmptyState
+                title="No Meetings"
+                description="No meetings have been scheduled for this client."
+              />
+            ) : (
+              <div className="divide-y divide-surface-100">
+                {clientMeetings.map((m: any) => (
+                  <div key={m.id} className="px-5 py-4 flex items-start gap-3 hover:bg-surface-50 transition-colors">
+                    <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-surface-900">{m.title}</span>
+                        <Badge variant={m.status === 'cancelled' ? 'danger' : 'default'}>
+                          {m.status?.replace('_', ' ')}
+                        </Badge>
+                        <Badge variant="info" className="uppercase text-[10px]">
+                          {m.meeting_type?.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-surface-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {formatDate(m.start_time)} — {formatDate(m.end_time)}
+                        </span>
+                        {m.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPinIcon className="w-3 h-3" />
+                            {m.location}
+                          </span>
+                        )}
+                        {m.project?.name && (
+                          <span className="flex items-center gap-1 text-brand-600 font-semibold">
+                            <FolderKanban className="w-3 h-3" />
+                            {m.project.name}
+                          </span>
+                        )}
+                      </div>
+                      {m.description && <p className="text-xs text-surface-600 mt-1 line-clamp-2">{m.description}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         )}
       </div>
-
-      <CreateContactModal
-        clientId={client.id}
-        isOpen={isAddContactOpen}
-        onClose={() => setIsAddContactOpen(false)}
-        onSuccess={fetchClientDetails}
-      />
-
-      <LogCommunicationModal
-        clientId={client.id}
-        contacts={client.contacts}
-        isOpen={isLogCommOpen}
-        onClose={() => setIsLogCommOpen(false)}
-        onSuccess={fetchClientDetails}
-      />
 
       <DeleteClientModal
         isOpen={isDeleteOpen}

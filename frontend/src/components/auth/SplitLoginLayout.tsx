@@ -54,7 +54,7 @@ const IconEye = () => (
 
 const FEATURES = [
   { Icon: IconUsers, title: 'Client Management', desc: 'Organize client data and track every interaction in one place.' },
-  { Icon: IconClipboard, title: 'Project & Task Tracking', desc: 'Plan, assign and monitor tasks to keep your projects on track.' },
+  { Icon: IconClipboard, title: 'Agenda & Task Tracking', desc: 'Plan, assign and monitor tasks to keep your agendas on track.' },
   { Icon: IconFile, title: 'Billing & Invoices', desc: 'Create, send and track invoices with real-time payment status.' },
   { Icon: IconMsg, title: 'Team Communication', desc: 'Collaborate with your team and clients seamlessly.' },
 ];
@@ -90,7 +90,7 @@ const DashboardMockup: React.FC = () => (
           {[
             { label: 'Dashboard', active: true, icon: <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg> },
             { label: 'Clients', active: false, icon: <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg> },
-            { label: 'Projects', active: false, icon: <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg> },
+            { label: 'Agendas', active: false, icon: <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg> },
             { label: 'Tasks', active: false, icon: <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><circle cx="3" cy="6" r="1" fill="currentColor" /><circle cx="3" cy="12" r="1" fill="currentColor" /><circle cx="3" cy="18" r="1" fill="currentColor" /></svg> },
             { label: 'Invoices', active: false, icon: <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg> },
             { label: 'Documents', active: false, icon: <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg> },
@@ -120,7 +120,7 @@ const DashboardMockup: React.FC = () => (
         <div style={{ flex: 1, padding: '14px 14px 10px', display: 'flex', flexDirection: 'column', gap: '12px', overflow: 'hidden', background: '#fff' }}>
           {/* KPIs */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            {[{ lbl: 'Total Clients', val: '248', pct: '+12%' }, { lbl: 'Total Projects', val: '36', pct: '+8%' }].map(k => (
+              {[{ lbl: 'Total Clients', val: '248', pct: '+12%' }, { lbl: 'Total Agendas', val: '36', pct: '+8%' }].map(k => (
               <div key={k.lbl} style={{ background: '#f7fbf8', border: '1px solid #e4ede6', borderRadius: '12px', padding: '11px 13px' }}>
                 <div style={{ fontSize: '10px', color: '#9aa4a6', marginBottom: '5px', fontWeight: 500 }}>{k.lbl}</div>
                 <div style={{ fontSize: '26px', fontWeight: 800, color: '#12181a', display: 'flex', alignItems: 'center', gap: '6px', lineHeight: 1 }}>
@@ -168,7 +168,7 @@ const DashboardMockup: React.FC = () => (
             {[
               { name: 'New client onboarded', time: '2 min ago' },
               { name: 'Invoice #INV-2456 paid', time: '1 hour ago' },
-              { name: 'Project "Website Redesign" updated', time: '3 hours ago' },
+              { name: 'Agenda "Website Redesign" updated', time: '3 hours ago' },
             ].map(a => (
               <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                 <div style={{ width: '30px', height: '30px', minWidth: '30px', borderRadius: '50%', background: '#1c6b3a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -251,7 +251,7 @@ export const SplitLoginLayout: React.FC<SplitLoginLayoutProps> = ({ brandBadge: 
 
           {/* Lede */}
           <p className="split-login-left-lede">
-            Your all-in-one CRM to manage clients, projects, tasks,<br />
+            Your all-in-one CRM to manage clients, agendas, tasks,<br />
             billing and communication — designed to help you<br />
             work smarter and grow faster.
           </p>
@@ -313,7 +313,7 @@ export const SplitLoginLayout: React.FC<SplitLoginLayoutProps> = ({ brandBadge: 
               Stronger Business.
             </h1>
             <p className="split-login-mobile-hero-lede">
-              Your all-in-one CRM to manage clients, projects, tasks, billing and communication — designed to help you work smarter and grow faster.
+              Your all-in-one CRM to manage clients, agendas, tasks, billing and communication — designed to help you work smarter and grow faster.
             </p>
 
             {/* Feature cards 2×2 grid */}
@@ -336,7 +336,7 @@ export const SplitLoginLayout: React.FC<SplitLoginLayoutProps> = ({ brandBadge: 
               </div>
               <div className="split-login-mobile-stat">
                 <div className="split-login-mobile-stat-val">36+</div>
-                <div className="split-login-mobile-stat-label">Projects</div>
+                <div className="split-login-mobile-stat-label">Agendas</div>
               </div>
               <div className="split-login-mobile-stat">
                 <div className="split-login-mobile-stat-val">98%</div>
@@ -381,7 +381,7 @@ export const SplitLoginLayout: React.FC<SplitLoginLayoutProps> = ({ brandBadge: 
               {[
                 { name: 'New client onboarded', time: '2 min ago' },
                 { name: 'Invoice #INV-2456 paid', time: '1 hour ago' },
-                { name: 'Project "Website Redesign" updated', time: '3 hours ago' },
+              { name: 'Agenda "Website Redesign" updated', time: '3 hours ago' },
               ].map(a => (
                 <div key={a.name} className="split-login-mobile-activity-item">
                   <div className="split-login-mobile-activity-dot">

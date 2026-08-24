@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/axios';
+import { formatName } from '@/lib/utils';
 
 interface CreateClientUserModalProps {
   isOpen: boolean;
@@ -74,7 +75,7 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
         toast('Client Account Provisioned', 'Account created successfully. Hand over these credentials to the client.', 'success');
         setProvisionedData({
           clientName: data.client_name,
-          stakeholderName: `${data.first_name} ${data.last_name}`,
+          stakeholderName: formatName(data.first_name, data.last_name),
           username: data.username_or_email,
           password: data.password,
         });
@@ -201,10 +202,10 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
               {...register('first_name', { required: 'First name is required' })}
             />
             <Input
-              label="Stakeholder Last Name"
+              label="Stakeholder Last Name (Optional)"
               placeholder="e.g. Jenkins"
               error={errors.last_name?.message}
-              {...register('last_name', { required: 'Last name is required' })}
+              {...register('last_name')}
             />
             <Input
               label="Login Username or Email"

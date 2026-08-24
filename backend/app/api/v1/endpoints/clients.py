@@ -16,6 +16,7 @@ from app.models.tasks import Task
 from app.models.audit import AuditLog
 from app.models.role import Role, UserRoleEnum
 from app.models.user import User
+from app.models.assignments import ClientRM
 from app.schemas.common import ResponseEnvelope, PaginatedResponse, PaginationMeta, build_paginated_response
 from app.schemas.clients import (
     ClientRead,
@@ -27,10 +28,19 @@ from app.schemas.clients import (
 )
 from app.schemas.user import UserRead
 from app.schemas.audit import AuditLogRead
+from app.schemas.assignments import ClientRMRead
 from app.repositories import client_repository
 from app.services.audit_service import log_audit_event
 
 router = APIRouter()
+
+
+def _safe_name(first: str, last: Optional[str] = None) -> str:
+    """Join first and last name, treating None/blank last_name gracefully."""
+    parts = [first.strip()] if first and first.strip() else []
+    if last and last.strip():
+        parts.append(last.strip())
+    return " ".join(parts) or "User"
 
 
 def client_options_loader():
@@ -56,8 +66,8 @@ async def get_my_client_profile(
     if not client_id:
         # Create a dedicated Client record for this client user
         new_client = Client(
-            name=f"{current_user.first_name} {current_user.last_name} Company",
-            primary_contact_name=f"{current_user.first_name} {current_user.last_name}",
+            name=f"{_safe_name(current_user.first_name, current_user.last_name)} Company",
+            primary_contact_name=_safe_name(current_user.first_name, current_user.last_name),
             email=current_user.email,
             status=ClientStatusEnum.ACTIVE,
             created_by_id=current_user.id,
@@ -436,6 +446,35 @@ async def get_client_audit_logs(
     )
 
 
+@router.get("/{client_id}/rms", response_model=ResponseEnvelope[List[ClientRMRead]])
+async def list_client_rms(
+    client_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    stmt_client = select(Client).where(Client.id == client_id, Client.is_deleted == False)
+    res_client = await db.execute(stmt_client)
+    if not res_client.scalar_one_or_none():
+        raise NotFoundException(detail="Client not found")
+
+    stmt = (
+        select(ClientRM)
+        .options(
+            selectinload(ClientRM.user).selectinload(User.role),
+            selectinload(ClientRM.assigned_by).selectinload(User.role),
+        )
+        .where(ClientRM.client_id == client_id)
+        .order_by(ClientRM.assigned_at.desc())
+    )
+    result = await db.execute(stmt)
+    rms = result.scalars().all()
+
+    return ResponseEnvelope(
+        success=True,
+        data=[ClientRMRead.model_validate(rm) for rm in rms],
+    )
+
+
 @router.post("/provision-account", response_model=ResponseEnvelope[ProvisionClientAccountResponse], status_code=status.HTTP_201_CREATED)
 async def provision_client_account(
     payload: ProvisionClientAccountRequest,
@@ -475,7 +514,7 @@ async def provision_client_account(
             industry=payload.industry,
             tier=payload.tier,
             status=ClientStatusEnum.ACTIVE,
-            primary_contact_name=f"{payload.first_name.strip()} {payload.last_name.strip()}",
+            primary_contact_name=_safe_name(payload.first_name, payload.last_name),
             email=payload.username_or_email.strip(),
             created_by_id=current_user.id,
         )
@@ -486,7 +525,7 @@ async def provision_client_account(
         if not client_obj.email:
             client_obj.email = payload.username_or_email.strip()
         if not client_obj.primary_contact_name:
-            client_obj.primary_contact_name = f"{payload.first_name.strip()} {payload.last_name.strip()}"
+            client_obj.primary_contact_name = _safe_name(payload.first_name, payload.last_name)
 
     # Check if contact already exists
     from app.models.clients import Contact
@@ -496,7 +535,7 @@ async def provision_client_account(
         new_contact = Contact(
             client_id=client_obj.id,
             first_name=payload.first_name.strip(),
-            last_name=payload.last_name.strip(),
+            last_name=(payload.last_name or "").strip(),
             email=payload.username_or_email.strip(),
             job_title=payload.job_title or "Client Stakeholder",
             is_primary_contact=True,
@@ -513,7 +552,7 @@ async def provision_client_account(
         email=user_email,
         hashed_password=get_password_hash(payload.password),
         first_name=payload.first_name.strip(),
-        last_name=payload.last_name.strip(),
+        last_name=(payload.last_name or "").strip(),
         job_title=payload.job_title or "Client Stakeholder",
         organization_id=None,
         role_id=client_role.id,

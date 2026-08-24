@@ -94,6 +94,7 @@ class Client(BaseCRMModel):
     account_manager = relationship("User", foreign_keys=[account_manager_id])
     contacts = relationship("Contact", back_populates="client", cascade="all, delete-orphan")
     communication_logs = relationship("CommunicationLog", back_populates="client", cascade="all, delete-orphan")
+    client_rms = relationship("ClientRM", back_populates="client", cascade="all, delete-orphan")
 
 
 class Contact(BaseCRMModel):

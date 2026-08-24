@@ -22,6 +22,7 @@ export interface Consent {
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
+  assignees?: { id: string; user_id: string; user?: { id: string; first_name: string; last_name: string } }[];
 }
 
 export interface ConsentResponsePayload {

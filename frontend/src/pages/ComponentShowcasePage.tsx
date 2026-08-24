@@ -159,7 +159,7 @@ export const ComponentShowcasePage: React.FC = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           title="Create New Consulting Engagement"
-          description="Fill out the project scope details below to initialize the contract."
+          description="Fill out the agenda scope details below to initialize the contract."
           footer={
             <>
               <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>

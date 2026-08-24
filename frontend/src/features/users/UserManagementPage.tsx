@@ -14,7 +14,7 @@ import { CreateUserModal } from './CreateUserModal';
 import { EditUserDrawer } from './EditUserDrawer';
 import { CreateClientUserModal } from '@/features/clients/CreateClientUserModal';
 import { User, PaginatedResponse } from '@/types';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatName, getInitials } from '@/lib/utils';
 import { api } from '@/lib/axios';
 
 export const UserManagementPage: React.FC = () => {
@@ -53,7 +53,7 @@ export const UserManagementPage: React.FC = () => {
   }, [fetchUsers, search]);
 
   const handleDeleteUser = async (userToDelete: User) => {
-    if (!window.confirm(`Are you sure you want to delete ${userToDelete.first_name} ${userToDelete.last_name}?`)) {
+    if (!              window.confirm(`Are you sure you want to delete ${formatName(userToDelete.first_name, userToDelete.last_name)}?`)) {
       return;
     }
     try {
@@ -71,10 +71,6 @@ export const UserManagementPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-brand-600" />
-              <h1 className="text-xl font-bold text-surface-900 tracking-tight">Team Directory & Access</h1>
-            </div>
             <p className="text-xs text-surface-500 mt-0.5">
               Manage firm consultants, administrative roles, and organization accounts
             </p>
@@ -154,12 +150,11 @@ export const UserManagementPage: React.FC = () => {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-semibold text-xs flex items-center justify-center border border-brand-200">
-                          {u.first_name[0]}
-                          {u.last_name[0]}
+                          {getInitials(u.first_name, u.last_name)}
                         </div>
                         <div>
                           <div className="font-semibold text-surface-900">
-                            {u.first_name} {u.last_name}
+                            {formatName(u.first_name, u.last_name)}
                           </div>
                           <div className="text-[11px] text-surface-500">{u.email}</div>
                         </div>

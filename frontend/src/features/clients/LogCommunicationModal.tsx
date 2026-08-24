@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { CommunicationType, Contact } from '@/types/client';
 import { api } from '@/lib/axios';
+import { formatName } from '@/lib/utils';
 
 interface LogCommunicationModalProps {
   clientId: string;
@@ -86,7 +87,7 @@ export const LogCommunicationModal: React.FC<LogCommunicationModalProps> = ({
               <option value="">Select stakeholder...</option>
               {contacts.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.first_name} {c.last_name} ({c.job_title || 'Contact'})
+                  {formatName(c.first_name, c.last_name)} ({c.job_title || 'Contact'})
                 </option>
               ))}
             </select>

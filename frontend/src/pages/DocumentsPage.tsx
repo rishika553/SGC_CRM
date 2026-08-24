@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
-import { formatDate, cn } from '@/lib/utils';
+import { formatDate, cn, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { useAuth } from '@/features/auth/AuthContext';
 import { resolveClientIdForCurrentUser } from '@/features/clients/clientQueries';
@@ -90,7 +90,7 @@ export const DocumentsPage: React.FC = () => {
             fileSize: d.file_size_bytes ? `${(d.file_size_bytes / (1024 * 1024)).toFixed(1)} MB` : '1.2 MB',
             sizeBytes: d.file_size_bytes || 1200000,
             uploadedAt: formatDate(d.created_at),
-            uploadedBy: d.uploaded_by ? `${d.uploaded_by.first_name} ${d.uploaded_by.last_name || ''}`.trim() : 'Admin',
+            uploadedBy: d.uploaded_by ? formatName(d.uploaded_by.first_name, d.uploaded_by.last_name) : 'Admin',
             encrypted: true,
             contentSnippet: d.description || `DOCUMENT RECORD: ${d.title || d.file_name}`,
           }));
@@ -247,13 +247,12 @@ export const DocumentsPage: React.FC = () => {
         {/* Module Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#27332B] tracking-tight flex items-center gap-2.5 flex-wrap">
-              Secure Document Vault
+            <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-[#5E8C61] bg-[#DCE9DE] px-3 py-1 rounded-full border border-[#5E8C61]/20 flex items-center gap-1">
                 <Lock className="w-3 h-3" />
                 256-bit AES Encrypted
               </span>
-            </h1>
+            </div>
             <p className="text-sm font-medium text-[#6B7280] mt-1">
               Encrypted Corporate Document Repository, Statutory Tax Filings & Audit Vault
             </p>

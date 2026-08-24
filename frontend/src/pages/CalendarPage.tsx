@@ -24,11 +24,15 @@ import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
-import { formatDate, cn } from '@/lib/utils';
+import { formatDate, cn, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
+import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
+import { clientQueryKeys, fetchMyClient, useMyClient } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
+import { MultiUserSelect } from '@/components/ui/MultiUserSelect';
+import { ClientRMSelect } from '@/components/ui/ClientRMSelect';
 
 interface Meeting {
   id: string;
@@ -36,7 +40,7 @@ interface Meeting {
   description?: string;
   location?: string;
   meeting_type: 'in_person' | 'video_call' | 'phone_call' | 'other';
-  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'rescheduled';
+  status: 'scheduled' | 'cancelled' | 'rescheduled';
   start_time: string;
   end_time: string;
   timezone: string;
@@ -47,6 +51,7 @@ interface Meeting {
   project?: { id: string; name: string };
   created_by?: { id: string; first_name: string; last_name: string };
   created_at: string;
+  assignees?: { id: string; user_id: string; user?: { id: string; first_name: string; last_name: string } }[];
 }
 
 interface Note {
@@ -63,7 +68,6 @@ interface Note {
   created_at: string;
 }
 
-type CalendarView = 'month' | 'week' | 'day';
 
 const MEETING_TYPE_ICONS: Record<string, React.ReactNode> = {
   in_person: <Users className="w-3.5 h-3.5" />,
@@ -74,13 +78,9 @@ const MEETING_TYPE_ICONS: Record<string, React.ReactNode> = {
 
 const STATUS_STYLES: Record<string, string> = {
   scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
-  in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
-  completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   cancelled: 'bg-slate-100 text-slate-500 border-slate-200',
   rescheduled: 'bg-purple-50 text-purple-700 border-purple-200',
 };
-
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7am - 8pm
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -105,33 +105,25 @@ function isSameDay(a: string, b: Date) {
   return d.getFullYear() === b.getFullYear() && d.getMonth() === b.getMonth() && d.getDate() === b.getDate();
 }
 
-function getWeekDates(date: Date): Date[] {
-  const start = new Date(date);
-  start.setDate(start.getDate() - start.getDay());
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-}
 
 export const CalendarPage: React.FC = () => {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const roleNameStr = String(currentUser?.role?.name || '').toLowerCase();
   const isClientRole = roleNameStr === 'client' || roleNameStr === 'client_viewer';
+  const { data: myClient } = useMyClient(isClientRole);
 
   const [isLoading, setIsLoading] = useState(true);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [clientList, setClientList] = useState<Client[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarView, setCalendarView] = useState<CalendarView>('month');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'calendar' | 'notes'>('calendar');
 
   // Meeting modal
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [isSubmittingMeeting, setIsSubmittingMeeting] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [meetingForm, setMeetingForm] = useState({
     title: '',
@@ -143,6 +135,7 @@ export const CalendarPage: React.FC = () => {
     client_id: '',
     project_id: '',
     status: 'scheduled',
+    assignee_ids: [] as string[],
   });
 
   // Note modal
@@ -158,6 +151,10 @@ export const CalendarPage: React.FC = () => {
 
   // Detail modal
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
+
+  // Client RM selection (per-meeting)
+  const [selectedRMUserId, setSelectedRMUserId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -186,7 +183,20 @@ export const CalendarPage: React.FC = () => {
   }, [currentDate]);
 
   const fetchClientList = useCallback(async () => {
-    if (isClientRole) return;
+    if (isClientRole) {
+      try {
+        const myClient = await queryClient.fetchQuery({
+          queryKey: clientQueryKeys.mine,
+          queryFn: fetchMyClient,
+        });
+        if (myClient) {
+          setClientList([myClient]);
+        }
+      } catch {
+        console.error('Failed to fetch own client');
+      }
+      return;
+    }
     try {
       const res = await api.get('/clients', { params: { page: 1, page_size: 100 } });
       if (res.data?.success && Array.isArray(res.data.data)) {
@@ -216,6 +226,7 @@ export const CalendarPage: React.FC = () => {
     start.setHours(9, 0, 0, 0);
     const end = new Date(start);
     end.setHours(10, 0, 0, 0);
+    const defaultClientId = isClientRole && myClient?.id ? myClient.id : '';
     setMeetingForm({
       title: '',
       description: '',
@@ -223,11 +234,13 @@ export const CalendarPage: React.FC = () => {
       meeting_type: 'in_person',
       start_time: start.toISOString().slice(0, 16),
       end_time: end.toISOString().slice(0, 16),
-      client_id: '',
+      client_id: defaultClientId,
       project_id: '',
       status: 'scheduled',
+      assignee_ids: [],
     });
     setIsMeetingModalOpen(true);
+    setSelectedRMUserId(null);
   };
 
   const openEditMeeting = (meeting: Meeting) => {
@@ -242,23 +255,54 @@ export const CalendarPage: React.FC = () => {
       client_id: meeting.client_id,
       project_id: meeting.project_id || '',
       status: meeting.status,
+      assignee_ids: (meeting.assignees || []).map((a) => a.user_id),
     });
     setIsMeetingModalOpen(true);
     setSelectedMeeting(null);
+    const existingAssignees = (meeting.assignees || []).map((a) => a.user_id);
+    setSelectedRMUserId(existingAssignees.length > 0 ? existingAssignees[0] : null);
   };
 
   const handleSaveMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const payload = {
-        ...meetingForm,
-        start_time: meetingForm.start_time ? new Date(meetingForm.start_time).toISOString() : undefined,
-        end_time: meetingForm.end_time ? new Date(meetingForm.end_time).toISOString() : undefined,
-        client_id: meetingForm.client_id || undefined,
-        project_id: meetingForm.project_id || undefined,
-      };
+    if (isSubmittingMeeting) return;
 
+    if (meetingForm.start_time && meetingForm.end_time) {
+      const newStart = new Date(meetingForm.start_time);
+      const newEnd = new Date(meetingForm.end_time);
+      const conflict = meetings.find((m) => {
+        if (editingMeeting && m.id === editingMeeting.id) return false;
+        if (!isSameDay(m.start_time, newStart)) return false;
+        const existStart = new Date(m.start_time);
+        const existEnd = new Date(m.end_time);
+        return newStart < existEnd && newEnd > existStart;
+      });
+      if (conflict) {
+        toast('Meeting Already Scheduled', `A meeting "${conflict.title}" already exists during this time slot.`, 'error');
+        setIsSubmittingMeeting(false);
+        return;
+      }
+    }
+
+    setIsSubmittingMeeting(true);
+    try {
       if (editingMeeting) {
+        if (isClientRole) {
+          toast('Error', 'You do not have permission to edit meetings.', 'error');
+          return;
+        }
+        const payload = {
+          ...meetingForm,
+          client_id: meetingForm.client_id || undefined,
+          start_time: meetingForm.start_time ? new Date(meetingForm.start_time).toISOString() : undefined,
+          end_time: meetingForm.end_time ? new Date(meetingForm.end_time).toISOString() : undefined,
+          project_id: meetingForm.project_id || undefined,
+          assignee_ids: (() => {
+            const base = new Set(meetingForm.assignee_ids);
+            if (selectedRMUserId) base.add(selectedRMUserId);
+            return base.size > 0 ? Array.from(base) : undefined;
+          })(),
+        };
         const res = await api.put(`/meetings/${editingMeeting.id}`, payload);
         if (res.data?.success) {
           toast('Meeting Updated', 'Meeting has been updated.', 'success');
@@ -266,15 +310,51 @@ export const CalendarPage: React.FC = () => {
           fetchData();
         }
       } else {
-        const res = await api.post('/meetings', payload);
-        if (res.data?.success) {
-          toast('Meeting Created', 'Meeting has been scheduled.', 'success');
-          setIsMeetingModalOpen(false);
-          fetchData();
+        if (isClientRole) {
+          const clientPayload = {
+            title: meetingForm.title,
+            description: meetingForm.description || undefined,
+            location: meetingForm.location || undefined,
+            meeting_type: meetingForm.meeting_type,
+            start_time: meetingForm.start_time ? new Date(meetingForm.start_time).toISOString() : undefined,
+            end_time: meetingForm.end_time ? new Date(meetingForm.end_time).toISOString() : undefined,
+          };
+          const res = await api.post('/meetings/client-schedule', clientPayload);
+          if (res.data?.success) {
+            toast('Meeting Created', 'Meeting has been scheduled.', 'success');
+            setIsMeetingModalOpen(false);
+            fetchData();
+          }
+        } else {
+          const clientId = meetingForm.client_id;
+          if (!clientId) {
+            toast('Error', 'Please select a client.', 'error');
+            return;
+          }
+          const payload = {
+            ...meetingForm,
+            client_id: clientId,
+            start_time: meetingForm.start_time ? new Date(meetingForm.start_time).toISOString() : undefined,
+            end_time: meetingForm.end_time ? new Date(meetingForm.end_time).toISOString() : undefined,
+            project_id: meetingForm.project_id || undefined,
+            assignee_ids: (() => {
+              const base = new Set(meetingForm.assignee_ids);
+              if (selectedRMUserId) base.add(selectedRMUserId);
+              return base.size > 0 ? Array.from(base) : undefined;
+            })(),
+          };
+          const res = await api.post('/meetings', payload);
+          if (res.data?.success) {
+            toast('Meeting Created', 'Meeting has been scheduled.', 'success');
+            setIsMeetingModalOpen(false);
+            fetchData();
+          }
         }
       }
     } catch (err: any) {
       toast('Error', err.response?.data?.error?.message || err.response?.data?.detail || 'Failed to save meeting', 'error');
+    } finally {
+      setIsSubmittingMeeting(false);
     }
   };
 
@@ -374,22 +454,15 @@ export const CalendarPage: React.FC = () => {
 
   const navigate = (dir: number) => {
     const d = new Date(currentDate);
-    if (calendarView === 'month') d.setMonth(d.getMonth() + dir);
-    else if (calendarView === 'week') d.setDate(d.getDate() + dir * 7);
-    else d.setDate(d.getDate() + dir);
+    d.setMonth(d.getMonth() + dir);
     setCurrentDate(d);
   };
 
   const goToToday = () => setCurrentDate(new Date());
 
   const headerLabel = useMemo(() => {
-    if (calendarView === 'month') return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    if (calendarView === 'week') {
-      const weekDates = getWeekDates(currentDate);
-      return `${formatDateShort(weekDates[0].toISOString())} – ${formatDateShort(weekDates[6].toISOString())}, ${currentDate.getFullYear()}`;
-    }
-    return currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  }, [currentDate, calendarView]);
+    return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }, [currentDate]);
 
   // ─── MONTH VIEW ───
   const renderMonthView = () => {
@@ -413,7 +486,7 @@ export const CalendarPage: React.FC = () => {
             'min-h-[100px] p-1.5 border border-[#E3E8E3] cursor-pointer hover:bg-[#EEF5EF] transition-colors',
             isToday && 'bg-[#EEF5EF]'
           )}
-          onClick={() => openCreateMeeting(date)}
+          onClick={() => setSelectedDayDate(date)}
         >
           <div className={cn('text-xs font-bold mb-1', isToday ? 'text-[#2F4F3A]' : 'text-[#6B7280]')}>
             {isToday ? (
@@ -451,132 +524,26 @@ export const CalendarPage: React.FC = () => {
     );
   };
 
-  // ─── WEEK VIEW ───
-  const renderWeekView = () => {
-    const weekDates = getWeekDates(currentDate);
-    const today = new Date();
-
-    return (
-      <div className="grid grid-cols-8 gap-0">
-        <div className="bg-[#F1F5F1] border border-[#E3E8E3]" />
-        {weekDates.map((d, i) => (
-          <div
-            key={i}
-            className={cn(
-              'text-center text-xs font-bold py-2 bg-[#F1F5F1] border border-[#E3E8E3]',
-              d.toDateString() === today.toDateString() && 'bg-[#DCE9DE] text-[#2F4F3A]'
-            )}
-          >
-            {d.toLocaleDateString('en-US', { weekday: 'short' })} {d.getDate()}
-          </div>
-        ))}
-        {HOURS.map((hour) => (
-          <React.Fragment key={hour}>
-            <div className="text-[10px] font-medium text-[#6B7280] h-12 flex items-center justify-end pr-2 border border-[#E3E8E3] bg-[#F7F9F6]">
-              {hour > 12 ? hour - 12 : hour}{hour >= 12 ? 'pm' : 'am'}
-            </div>
-            {weekDates.map((d, di) => {
-              const dayMeetings = filteredMeetings.filter((m) => {
-                const md = new Date(m.start_time);
-                return isSameDay(m.start_time, d) && md.getHours() === hour;
-              });
-              return (
-                <div
-                  key={di}
-                  className="h-12 border border-[#E3E8E3] p-0.5 cursor-pointer hover:bg-[#EEF5EF]"
-                  onClick={() => {
-                    const clickDate = new Date(d);
-                    clickDate.setHours(hour, 0, 0, 0);
-                    openCreateMeeting(clickDate);
-                  }}
-                >
-                  {dayMeetings.map((m) => (
-                    <div
-                      key={m.id}
-                      onClick={(e) => { e.stopPropagation(); setSelectedMeeting(m); }}
-                      className={cn('text-[9px] font-bold px-1 py-0.5 rounded truncate cursor-pointer', STATUS_STYLES[m.status])}
-                    >
-                      {m.title}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </div>
-    );
-  };
-
-  // ─── DAY VIEW ───
-  const renderDayView = () => {
-    const dayMeetings = getMeetingsForDay(currentDate);
-
-    return (
-      <div className="space-y-0">
-        {HOURS.map((hour) => {
-          const hourMeetings = dayMeetings.filter((m) => new Date(m.start_time).getHours() === hour);
-          return (
-            <div key={hour} className="flex border-b border-[#E3E8E3] min-h-[60px]">
-              <div className="w-20 shrink-0 text-[11px] font-medium text-[#6B7280] py-2 pr-3 text-right bg-[#F7F9F6] border-r border-[#E3E8E3]">
-                {hour > 12 ? hour - 12 : hour}:00 {hour >= 12 ? 'PM' : 'AM'}
-              </div>
-              <div
-                className="flex-1 p-1 cursor-pointer hover:bg-[#EEF5EF]"
-                onClick={() => {
-                  const clickDate = new Date(currentDate);
-                  clickDate.setHours(hour, 0, 0, 0);
-                  openCreateMeeting(clickDate);
-                }}
-              >
-                {hourMeetings.map((m) => (
-                  <div
-                    key={m.id}
-                    onClick={(e) => { e.stopPropagation(); setSelectedMeeting(m); }}
-                    className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer mb-1',
-                      STATUS_STYLES[m.status]
-                    )}
-                  >
-                    {MEETING_TYPE_ICONS[m.meeting_type]}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold truncate">{m.title}</div>
-                      <div className="text-[10px] opacity-75">{formatTime(m.start_time)} – {formatTime(m.end_time)}</div>
-                    </div>
-                    {m.client && <span className="text-[10px] font-medium opacity-75">{m.client.name}</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
     <MainLayout clientName="Client Desk" pageTitle="Calendar & Notes">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
           <div>
-            <h1 className="text-3xl font-extrabold text-[#27332B] tracking-tight">Calendar & Notes</h1>
             <p className="text-sm font-medium text-[#6B7280] mt-1">
               Schedule meetings, manage appointments, and keep track of notes
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            {!isClientRole && (
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => activeTab === 'calendar' ? openCreateMeeting() : openCreateNote()}
-                leftIcon={<Plus className="w-5 h-5" />}
-                className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-[16px] shadow-xs text-sm font-bold"
-              >
-                {activeTab === 'calendar' ? 'New Meeting' : 'New Note'}
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => activeTab === 'calendar' ? openCreateMeeting() : openCreateNote()}
+              leftIcon={<Plus className="w-5 h-5" />}
+              className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-[16px] shadow-xs text-sm font-bold"
+            >
+              {activeTab === 'calendar' ? 'New Meeting' : 'New Note'}
+            </Button>
           </div>
         </div>
 
@@ -622,21 +589,6 @@ export const CalendarPage: React.FC = () => {
               <span className="text-sm font-bold text-[#27332B] ml-2">{headerLabel}</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex gap-0.5 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl p-0.5">
-                {(['month', 'week', 'day'] as CalendarView[]).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setCalendarView(v)}
-                    className={cn(
-                      'px-3 py-1.5 text-xs font-bold rounded-lg transition-all capitalize',
-                      calendarView === v ? 'bg-[#2F4F3A] text-white' : 'text-[#6B7280] hover:text-[#27332B]'
-                    )}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
               <div className="flex items-center gap-1.5 bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-2.5 py-2 text-xs">
                 <Filter className="w-3.5 h-3.5 text-[#5E8C61]" />
                 <select
@@ -646,8 +598,6 @@ export const CalendarPage: React.FC = () => {
                 >
                   <option value="all">All Status</option>
                   <option value="scheduled">Scheduled</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="completed">Completed</option>
                   <option value="cancelled">Cancelled</option>
                   <option value="rescheduled">Rescheduled</option>
                 </select>
@@ -663,7 +613,7 @@ export const CalendarPage: React.FC = () => {
               <div className="p-8 space-y-4">
                 <Skeleton className="h-64 w-full rounded-xl" />
               </div>
-            ) : filteredMeetings.length === 0 && calendarView === 'month' ? (
+            ) : filteredMeetings.length === 0 ? (
               <div className="py-14">
                 <EmptyState
                   icon={<CalendarIcon className="w-12 h-12 text-[#5E8C61]" />}
@@ -671,12 +621,8 @@ export const CalendarPage: React.FC = () => {
                   description="Click on a date or 'New Meeting' to schedule your first appointment."
                 />
               </div>
-            ) : calendarView === 'month' ? (
-              renderMonthView()
-            ) : calendarView === 'week' ? (
-              renderWeekView()
             ) : (
-              renderDayView()
+              renderMonthView()
             )}
           </div>
         )}
@@ -694,7 +640,7 @@ export const CalendarPage: React.FC = () => {
                 <EmptyState
                   icon={<StickyNote className="w-12 h-12 text-[#5E8C61]" />}
                   title="No Notes Yet"
-                  description="Create notes linked to clients, projects, or meetings."
+                  description="Create notes linked to clients, agendas, or meetings."
                 />
               </div>
             ) : (
@@ -716,7 +662,7 @@ export const CalendarPage: React.FC = () => {
                         )}
                         <span className="text-[10px] text-[#6B7280]">{formatDate(new Date(note.created_at))}</span>
                         {note.created_by && (
-                          <span className="text-[10px] text-[#6B7280]">by {note.created_by.first_name} {note.created_by.last_name}</span>
+                           <span className="text-[10px] text-[#6B7280]">by {formatName(note.created_by.first_name, note.created_by.last_name)}</span>
                         )}
                       </div>
                     </div>
@@ -796,7 +742,7 @@ export const CalendarPage: React.FC = () => {
 
                 {selectedMeeting.project && (
                   <div className="text-xs">
-                    <span className="font-bold text-[#6B7280]">Project: </span>
+                    <span className="font-bold text-[#6B7280]">Agenda: </span>
                     <span className="font-semibold text-[#27332B]">{selectedMeeting.project.name}</span>
                   </div>
                 )}
@@ -822,8 +768,6 @@ export const CalendarPage: React.FC = () => {
                       className="text-xs font-bold bg-[#F7F9F6] border border-[#E3E8E3] rounded-lg px-2 py-1.5 focus:outline-none"
                     >
                       <option value="scheduled">Scheduled</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>
                       <option value="rescheduled">Rescheduled</option>
                     </select>
@@ -838,6 +782,68 @@ export const CalendarPage: React.FC = () => {
                     </Button>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Day Click Popup */}
+        {selectedDayDate && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setSelectedDayDate(null)} />
+            <div className="relative z-10 bg-white rounded-t-[20px] sm:rounded-[20px] p-5 sm:p-6 max-w-md w-full max-h-[80vh] overflow-y-auto shadow-2xl border border-[#E3E8E3]">
+              <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-[#27332B]">
+                    {selectedDayDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                  </h3>
+                  <p className="text-xs text-[#6B7280] mt-0.5">
+                    {getMeetingsForDay(selectedDayDate).length} meeting{getMeetingsForDay(selectedDayDate).length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <button type="button" onClick={() => setSelectedDayDate(null)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {getMeetingsForDay(selectedDayDate).length === 0 ? (
+                <div className="py-8 text-center">
+                  <CalendarIcon className="w-10 h-10 text-[#5E8C61] mx-auto mb-3 opacity-40" />
+                  <p className="text-sm font-medium text-[#6B7280]">No meetings scheduled</p>
+                  <p className="text-xs text-[#9CA3AF] mt-1">Create a new meeting for this day</p>
+                </div>
+              ) : (
+                <div className="space-y-2 mb-4">
+                  {getMeetingsForDay(selectedDayDate).map((m) => (
+                    <div
+                      key={m.id}
+                      onClick={() => { setSelectedMeeting(m); setSelectedDayDate(null); }}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer hover:shadow-sm transition-shadow',
+                        STATUS_STYLES[m.status]
+                      )}
+                    >
+                      {MEETING_TYPE_ICONS[m.meeting_type]}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold truncate">{m.title}</div>
+                        <div className="text-[10px] opacity-75">{formatTime(m.start_time)} – {formatTime(m.end_time)}</div>
+                      </div>
+                      {m.client && <span className="text-[10px] font-medium opacity-75">{m.client.name}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-end border-t border-[#E3E8E3] pt-4">
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => { openCreateMeeting(selectedDayDate); setSelectedDayDate(null); }}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                  className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-4 py-2 text-xs font-semibold rounded-xl"
+                >
+                  New Meeting
+                </Button>
               </div>
             </div>
           </div>
@@ -867,20 +873,25 @@ export const CalendarPage: React.FC = () => {
                   required
                 />
 
-                <div>
-                  <label className="block text-xs font-bold text-[#27332B] mb-1.5">Client *</label>
-                  <select
-                    value={meetingForm.client_id}
-                    onChange={(e) => setMeetingForm({ ...meetingForm, client_id: e.target.value })}
-                    className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-3 py-2 text-xs font-bold text-[#27332B] focus:outline-none focus:border-[#5E8C61]"
-                    required
-                  >
-                    <option value="">Select a client...</option>
-                    {clientList.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
+                {!isClientRole && (
+                  <div>
+                    <label className="block text-xs font-bold text-[#27332B] mb-1.5">Client *</label>
+                    <select
+                      value={meetingForm.client_id}
+                      onChange={(e) => {
+                        setMeetingForm({ ...meetingForm, client_id: e.target.value });
+                        setSelectedRMUserId(null);
+                      }}
+                      className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-3 py-2 text-xs font-bold text-[#27332B] focus:outline-none focus:border-[#5E8C61]"
+                      required
+                    >
+                      <option value="">Select a client...</option>
+                      {clientList.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
@@ -921,8 +932,6 @@ export const CalendarPage: React.FC = () => {
                       className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-3 py-2 text-xs font-bold text-[#27332B] focus:outline-none focus:border-[#5E8C61]"
                     >
                       <option value="scheduled">Scheduled</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>
                       <option value="rescheduled">Rescheduled</option>
                     </select>
@@ -947,12 +956,28 @@ export const CalendarPage: React.FC = () => {
                   />
                 </div>
 
+                {!isClientRole && (
+                  <>
+                    <ClientRMSelect
+                      clientId={meetingForm.client_id || null}
+                      selectedUserId={selectedRMUserId}
+                      onChange={setSelectedRMUserId}
+                    />
+
+                    <MultiUserSelect
+                      selectedIds={meetingForm.assignee_ids}
+                      onChange={(ids) => setMeetingForm({ ...meetingForm, assignee_ids: ids })}
+                      placeholder="Assign additional RMs..."
+                    />
+                  </>
+                )}
+
                 <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#E3E8E3]">
                   <Button type="button" variant="outline" onClick={() => setIsMeetingModalOpen(false)} className="px-4 py-2 text-xs">
                     Cancel
                   </Button>
-                  <Button type="submit" variant="primary" className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-5 py-2 text-xs font-semibold">
-                    {editingMeeting ? 'Update Meeting' : 'Create Meeting'}
+                  <Button type="submit" variant="primary" disabled={isSubmittingMeeting} className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-5 py-2 text-xs font-semibold">
+                    {isSubmittingMeeting ? 'Creating...' : (editingMeeting ? 'Update Meeting' : 'Create Meeting')}
                   </Button>
                 </div>
               </form>

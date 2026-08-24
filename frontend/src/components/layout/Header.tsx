@@ -5,6 +5,7 @@ import { Input } from '../ui/Input';
 import { Dropdown } from '../ui/Dropdown';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useMyClient } from '@/features/clients/clientQueries';
+import { formatName, getInitials } from '@/lib/utils';
 
 export interface HeaderProps {
   user?: {
@@ -15,6 +16,7 @@ export interface HeaderProps {
   };
   clientName?: string;
   pageTitle?: string;
+  showBreadcrumb?: boolean;
   onLogout?: () => void;
   onMenuToggle?: () => void;
 }
@@ -23,13 +25,14 @@ export const Header: React.FC<HeaderProps> = ({
   user: userProp,
   clientName = 'Client Desk',
   pageTitle = 'Profile',
+  showBreadcrumb = false,
   onLogout,
   onMenuToggle,
 }) => {
   const navigate = useNavigate();
   const { user: authUser, logout } = useAuth();
   const user = userProp || authUser;
-  const userInitials = user ? `${user.first_name[0]}${user.last_name[0]}` : 'U';
+  const userInitials = user ? getInitials(user.first_name, user.last_name) : 'U';
   const [isMobileSearchOpen, setIsMobileSearchOpen] = React.useState(false);
 
   const roleName = user?.role?.name ? String(user.role.name).toLowerCase() : '';
@@ -76,10 +79,12 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <div className="min-w-0 min-w-[120px]">
-          <div className="text-[10px] sm:text-[11px] font-semibold text-[#6B7280] tracking-wide truncate max-w-[40vw] sm:max-w-xs md:max-w-none">
-            <span>{isClientRole ? clientProfileName : clientName}</span> &nbsp;/&nbsp;{' '}
-            <b className="text-[#27332B] font-bold">{pageTitle}</b>
-          </div>
+          {showBreadcrumb && (
+            <div className="text-[10px] sm:text-[11px] font-semibold text-[#6B7280] tracking-wide truncate max-w-[40vw] sm:max-w-xs md:max-w-none">
+              <span>{isClientRole ? clientProfileName : clientName}</span> &nbsp;/&nbsp;{' '}
+              <b className="text-[#27332B] font-bold">{pageTitle}</b>
+            </div>
+          )}
           <h1 className="text-lg sm:text-xl md:text-2xl font-extrabold text-[#27332B] tracking-tight truncate leading-tight mt-0.5">
             {pageTitle}
           </h1>
@@ -145,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <div className="hidden md:flex flex-col text-left">
                 <span className="text-xs font-bold text-[#27332B] leading-tight">
-                  {user ? `${user.first_name} ${user.last_name}` : 'Account User'}
+                  {user ? formatName(user.first_name, user.last_name) : 'Account User'}
                 </span>
                 <span className="text-[10px] font-medium text-[#6B7280]">
                   {user?.role?.display_name || 'Principal Virtual CFO'}

@@ -8,6 +8,7 @@ export interface MainLayoutProps {
   user?: User;
   clientName?: string;
   pageTitle?: string;
+  showBreadcrumb?: boolean;
   onLogout?: () => void;
   activeClient?: { id: string; name: string } | null;
   onSelectClient?: (client: { id: string; name: string }) => void;
@@ -18,6 +19,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   user,
   clientName = 'Client Desk',
   pageTitle = 'Profile',
+  showBreadcrumb = false,
   onLogout,
   activeClient,
   onSelectClient,
@@ -40,6 +42,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           user={user}
           clientName={clientName}
           pageTitle={pageTitle}
+          showBreadcrumb={showBreadcrumb}
           onLogout={onLogout}
           onMenuToggle={() => setIsMobileSidebarOpen((prev) => !prev)}
         />

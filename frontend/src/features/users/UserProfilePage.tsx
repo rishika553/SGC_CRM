@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/features/auth/AuthContext';
 import { api } from '@/lib/axios';
+import { getInitials, formatName } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
 interface ProfileFormData {
@@ -92,12 +93,9 @@ export const UserProfilePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-brand-100 text-brand-700 font-bold text-xl flex items-center justify-center border-2 border-brand-200 shadow-subtle shrink-0">
-                {user ? `${user.first_name[0]}${user.last_name[0]}` : 'U'}
+                {user ? getInitials(user.first_name, user.last_name) : 'U'}
               </div>
               <div>
-                <h1 className="text-lg font-bold text-surface-900 tracking-tight">
-                  {user ? `${user.first_name} ${user.last_name}` : 'User Profile'}
-                </h1>
                 <p className="text-xs text-surface-500">{user?.email}</p>
                 <div className="flex items-center gap-2 mt-1.5">
                   <Badge variant="primary">{user?.role?.display_name || user?.role?.name || 'Consultant'}</Badge>

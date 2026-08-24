@@ -38,6 +38,11 @@ class User(BaseCRMModel):
     # Relationships
     organization = relationship("Organization", back_populates="users")
     role = relationship("Role", back_populates="users")
+    task_assignments = relationship("TaskAssignment", foreign_keys="TaskAssignment.user_id", back_populates="user")
+    project_assignments = relationship("ProjectAssignment", foreign_keys="ProjectAssignment.user_id", back_populates="user")
+    consent_assignments = relationship("ConsentAssignment", foreign_keys="ConsentAssignment.user_id", back_populates="user")
+    meeting_assignments = relationship("MeetingAssignment", foreign_keys="MeetingAssignment.user_id", back_populates="user")
+    client_rms = relationship("ClientRM", foreign_keys="ClientRM.user_id", back_populates="user")
 
     @property
     def full_name(self) -> str:

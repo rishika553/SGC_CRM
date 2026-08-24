@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/axios';
+import { formatName } from '@/lib/utils';
 
 interface CreateContactModalProps {
   clientId: string;
@@ -38,7 +39,7 @@ export const CreateContactModal: React.FC<CreateContactModalProps> = ({
     setIsLoading(true);
     try {
       await api.post('/contacts', { ...data, client_id: clientId });
-      toast('Success', `Contact ${data.first_name} ${data.last_name} added`, 'success');
+      toast('Success', `Contact ${formatName(data.first_name, data.last_name)} added`, 'success');
       reset();
       onSuccess();
       onClose();
@@ -65,10 +66,10 @@ export const CreateContactModal: React.FC<CreateContactModalProps> = ({
             {...register('first_name', { required: 'First name is required' })}
           />
           <Input
-            label="Last Name"
+            label="Last Name (Optional)"
             placeholder="Smith"
             error={errors.last_name?.message}
-            {...register('last_name', { required: 'Last name is required' })}
+            {...register('last_name')}
           />
           <Input
             label="Direct Email"

@@ -5,6 +5,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function formatName(firstName?: string | null, lastName?: string | null): string {
+  const parts = [firstName?.trim(), lastName?.trim()].filter(Boolean);
+  return parts.join(' ') || 'User';
+}
+
+export function getInitials(firstName?: string | null, lastName?: string | null): string {
+  const a = firstName?.trim()?.[0] || '';
+  const b = lastName?.trim()?.[0] || '';
+  return (a + b).toUpperCase() || 'U';
+}
+
 export function formatDate(dateString?: string | Date | null): string {
   if (!dateString) return 'N/A';
   const d = new Date(dateString);

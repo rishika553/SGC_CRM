@@ -31,7 +31,7 @@ api_router.include_router(clients.router, prefix="/clients", tags=["Client Accou
 api_router.include_router(contacts.router, prefix="/contacts", tags=["Contact Stakeholders"])
 api_router.include_router(communications.router, prefix="/communications", tags=["Communication Logs"])
 api_router.include_router(agreements.router, prefix="/agreements", tags=["Agreements Management"])
-api_router.include_router(projects.router, prefix="/projects", tags=["Projects Management"])
+api_router.include_router(projects.router, prefix="/agendas", tags=["Agendas Management"])
 api_router.include_router(tasks.router, prefix="/tasks", tags=["Task Management"])
 api_router.include_router(invoices.router, prefix="/invoices", tags=["Billing & Invoices Management"])
 api_router.include_router(documents.router, prefix="/documents", tags=["Document Management"])

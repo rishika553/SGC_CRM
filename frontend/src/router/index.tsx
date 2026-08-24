@@ -87,7 +87,7 @@ export const AppRouter: React.FC = () => {
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/agreement" element={<ProtectedRoute><AgreementPage /></ProtectedRoute>} />
             <Route path="/consent" element={<ProtectedRoute><ConsentPage /></ProtectedRoute>} />
-            <Route path="/projects" element={<ProtectedRoute><ProjectsTasksPage /></ProtectedRoute>} />
+            <Route path="/agendas" element={<ProtectedRoute><ProjectsTasksPage /></ProtectedRoute>} />
             <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

@@ -52,6 +52,13 @@ from app.models.consents import (
 from app.models.push_subscription import PushSubscription
 from app.models.meetings import Meeting, MeetingStatusEnum, MeetingTypeEnum
 from app.models.notes import Note
+from app.models.assignments import (
+    TaskAssignment,
+    ProjectAssignment,
+    ConsentAssignment,
+    MeetingAssignment,
+    ClientRM,
+)
 
 __all__ = [
     "Base",
@@ -94,4 +101,9 @@ __all__ = [
     "MeetingStatusEnum",
     "MeetingTypeEnum",
     "Note",
+    "TaskAssignment",
+    "ProjectAssignment",
+    "ConsentAssignment",
+    "MeetingAssignment",
+    "ClientRM",
 ]

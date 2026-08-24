@@ -24,10 +24,12 @@ from app.api.deps import (
 from app.models.consents import Consent, ConsentRequestStatusEnum
 from app.models.clients import Client
 from app.models.user import User
+from app.models.assignments import ConsentAssignment
 from app.schemas.common import ResponseEnvelope, PaginatedResponse, build_paginated_response
 from app.schemas.consents import ConsentRead, ConsentUpdate, ConsentResponsePayload
 from app.repositories import consent_repository
 from app.services.audit_service import log_audit_event
+from app.services.assignment_service import sync_consent_assignments
 
 router = APIRouter()
 
@@ -46,6 +48,7 @@ def consent_options_loader():
         selectinload(Consent.client).selectinload(Client.contacts),
         selectinload(Consent.responded_by).selectinload(User.role),
         selectinload(Consent.responded_by).selectinload(User.organization),
+        selectinload(Consent.assignments).selectinload(ConsentAssignment.user).selectinload(User.role),
     ]
 
 
@@ -228,6 +231,7 @@ async def update_consent(
 
     changes = {}
     update_data = payload.model_dump(exclude_unset=True)
+    assignee_ids = update_data.pop("assignee_ids", None)
 
     for field, new_val in update_data.items():
         if hasattr(consent, field):
@@ -241,6 +245,10 @@ async def update_consent(
 
     if changes:
         consent.updated_by_id = current_user.id
+
+    await sync_consent_assignments(db, consent.id, assignee_ids, current_user.id)
+
+    if changes:
         await log_audit_event(
             db=db,
             action="CONSENT_UPDATED",
@@ -251,13 +259,16 @@ async def update_consent(
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent"),
         )
-        await db.commit()
-        await db.refresh(consent)
+    await db.commit()
+
+    stmt_reload = select(Consent).options(*consent_options_loader()).where(Consent.id == consent.id)
+    res_reload = await db.execute(stmt_reload)
+    reloaded = res_reload.scalar_one()
 
     return ResponseEnvelope(
         success=True,
         message="Consent request updated successfully",
-        data=ConsentRead.model_validate(consent)
+        data=ConsentRead.model_validate(reloaded)
     )
 
 

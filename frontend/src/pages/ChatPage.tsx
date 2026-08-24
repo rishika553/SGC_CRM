@@ -31,7 +31,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
-import { cn } from '@/lib/utils';
+import { cn, formatName, getInitials } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -192,8 +192,8 @@ export const ChatPage: React.FC = () => {
                 id: m.id,
                 senderId: m.sender_id,
                 sender: isMe ? 'user' : 'partner',
-                senderName: m.sender ? `${m.sender.first_name} ${m.sender.last_name}` : 'User',
-                senderInitials: m.sender ? `${m.sender.first_name[0]}${m.sender.last_name[0]}`.toUpperCase() : 'US',
+                senderName: m.sender ? formatName(m.sender.first_name, m.sender.last_name) : 'User',
+                senderInitials: m.sender ? getInitials(m.sender.first_name, m.sender.last_name) : 'US',
                 text: m.content || '',
                 timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 readStatus: m.is_read ? 'read' : 'delivered',
@@ -318,8 +318,8 @@ export const ChatPage: React.FC = () => {
             }
           } catch (e) {}
 
-          const adminName = superAdminUser ? `${superAdminUser.first_name} ${superAdminUser.last_name}` : 'SGC Super Admin';
-          const adminInitials = superAdminUser ? `${superAdminUser.first_name[0]}${superAdminUser.last_name[0]}`.toUpperCase() : 'SA';
+          const adminName = superAdminUser ? formatName(superAdminUser.first_name, superAdminUser.last_name) : 'SGC Super Admin';
+          const adminInitials = superAdminUser ? getInitials(superAdminUser.first_name, superAdminUser.last_name) : 'SA';
           const adminId = superAdminUser?.id || 'admin-channel';
 
           const singleConv: Conversation = {
@@ -347,8 +347,8 @@ export const ChatPage: React.FC = () => {
             if (convRes.data.success && Array.isArray(convRes.data.data)) {
               convList = convRes.data.data.map((c: any) => {
                 const other = c.other_user || {};
-                const partnerName = `${other.first_name || ''} ${other.last_name || ''}`.trim() || 'Client User';
-                const initials = `${other.first_name?.[0] || 'C'}${other.last_name?.[0] || 'U'}`.toUpperCase();
+                const partnerName = formatName(other.first_name, other.last_name) || 'Client User';
+                const initials = getInitials(other.first_name, other.last_name);
                 return {
                   id: other.id,
                   name: partnerName,
@@ -377,8 +377,8 @@ export const ChatPage: React.FC = () => {
               clientUsers.forEach((u) => {
                 const existing = convList.find((c) => c.id === u.id);
                 if (!existing) {
-                  const partnerName = `${u.first_name} ${u.last_name}`;
-                  const initials = `${u.first_name[0]}${u.last_name[0]}`.toUpperCase();
+                   const partnerName = formatName(u.first_name, u.last_name);
+                   const initials = getInitials(u.first_name, u.last_name);
                   convList.push({
                     id: u.id,
                     name: partnerName,
@@ -426,8 +426,8 @@ export const ChatPage: React.FC = () => {
             id: m.id,
             senderId: m.sender_id,
             sender: m.sender_id === currentUser?.id ? 'user' : 'partner',
-            senderName: m.sender ? `${m.sender.first_name} ${m.sender.last_name}` : 'User',
-            senderInitials: m.sender ? `${m.sender.first_name[0]}${m.sender.last_name[0]}`.toUpperCase() : 'US',
+            senderName: m.sender ? formatName(m.sender.first_name, m.sender.last_name) : 'User',
+            senderInitials: m.sender ? getInitials(m.sender.first_name, m.sender.last_name) : 'US',
             text: m.content || '',
             timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             readStatus: m.is_read ? 'read' : 'delivered',
@@ -485,8 +485,8 @@ export const ChatPage: React.FC = () => {
     const optimisticMsg: ChatMessage = {
       id: tempId,
       sender: 'user',
-      senderName: currentUser ? `${currentUser.first_name} ${currentUser.last_name}` : 'Super Admin',
-      senderInitials: currentUser ? `${currentUser.first_name[0]}${currentUser.last_name[0]}`.toUpperCase() : 'SA',
+      senderName: currentUser ? formatName(currentUser.first_name, currentUser.last_name) : 'Super Admin',
+      senderInitials: currentUser ? getInitials(currentUser.first_name, currentUser.last_name) : 'SA',
       text: textToSend,
       timestamp: timestampStr,
       readStatus: 'sent',

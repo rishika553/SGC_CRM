@@ -19,7 +19,7 @@ import { DeleteClientModal } from './DeleteClientModal';
 import { CreateClientUserModal } from './CreateClientUserModal';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -127,10 +127,6 @@ export const ClientListPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-brand-600" />
-              <h1 className="text-xl font-bold text-surface-900 tracking-tight">Corporate Clients & Accounts</h1>
-            </div>
             <p className="text-xs text-surface-500 mt-0.5">
               Manage enterprise accounts, key decision-makers, and strategic client tiers
             </p>
@@ -236,8 +232,13 @@ export const ClientListPage: React.FC = () => {
                   {clients.map((c) => (
                     <TableRow key={c.id}>
                       <TableCell>
-                        <div className="font-semibold text-surface-900">{c.name}</div>
-                        <div className="text-[11px] text-surface-500">{c.industry || 'General Services'}</div>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/clients/${c.id}`)}
+                          className="text-left group"
+                        >
+                          <div className="font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">{c.name}</div>
+                        </button>
                       </TableCell>
                       <TableCell>
                         <div className="text-xs text-surface-700">{c.email || '—'}</div>
@@ -250,7 +251,7 @@ export const ClientListPage: React.FC = () => {
                       <TableCell>{getTierBadge(c.tier)}</TableCell>
                       <TableCell>{getStatusBadge(c.status)}</TableCell>
                       <TableCell>
-                        {c.account_manager ? `${c.account_manager.first_name} ${c.account_manager.last_name}` : 'Unassigned'}
+                        {c.account_manager ? formatName(c.account_manager.first_name, c.account_manager.last_name) : 'Unassigned'}
                       </TableCell>
                       <TableCell className="font-medium text-surface-900">
                         {c.annual_revenue ? formatCurrency(c.annual_revenue) : '—'}

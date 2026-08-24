@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { queryClient } from './query-client';
+import { supabase } from './supabase';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
@@ -10,11 +11,17 @@ export const api = axios.create({
 });
 
 // Request interceptor to attach JWT token
+// Pull the token directly from the Supabase client so it is always
+// the freshest value (Supabase auto-refreshes in the background).
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('crm_access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        config.headers.Authorization = `Bearer ${session.access_token}`;
+      }
+    } catch {
+      // Swallow — request will proceed without token and backend will 401
     }
     return config;
   },

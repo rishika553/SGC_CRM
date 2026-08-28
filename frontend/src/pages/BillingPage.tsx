@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { api } from '@/lib/axios';
@@ -61,6 +62,7 @@ export const BillingPage: React.FC = () => {
 
   // Create Manual Invoice Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<{ id: string; number: string } | null>(null);
   const [newInvoiceForm, setNewInvoiceForm] = useState({
     client_id: '',
     dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -204,14 +206,15 @@ export const BillingPage: React.FC = () => {
   };
 
   const handleDeleteInvoice = async (invId: string, invNumber: string) => {
-    if (!window.confirm(`Are you sure you want to delete invoice #${invNumber}?`)) return;
     try {
       const res = await api.delete(`/invoices/${invId}`);
       if (res.data?.success) {
         toast('Invoice Deleted', `Invoice #${invNumber} has been deleted.`, 'success');
+        setInvoiceToDelete(null);
         setInvoices((prev) => prev.filter((inv) => inv.id !== invId));
       }
     } catch (err: any) {
+      setInvoiceToDelete(null);
       toast('Error', err.response?.data?.error?.message || err.response?.data?.detail || 'Failed to delete invoice', 'error');
     }
   };
@@ -436,7 +439,7 @@ export const BillingPage: React.FC = () => {
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => handleDeleteInvoice(inv.id, inv.invoiceNumber)}
+                            onClick={() => setInvoiceToDelete({ id: inv.id, number: inv.invoiceNumber })}
                             leftIcon={<Trash2 className="w-3.5 h-3.5" />}
                             className="border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold px-2.5 py-1.5 rounded-lg"
                           >
@@ -562,6 +565,18 @@ export const BillingPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(invoiceToDelete)}
+        onClose={() => setInvoiceToDelete(null)}
+        title="Delete invoice?"
+        message={
+          <>
+            Invoice <span className="font-semibold">#{invoiceToDelete?.number}</span> will be deleted.
+          </>
+        }
+        onConfirm={() => invoiceToDelete && handleDeleteInvoice(invoiceToDelete.id, invoiceToDelete.number)}
+      />
     </MainLayout>
   );
 };

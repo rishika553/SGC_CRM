@@ -36,7 +36,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      const loginPaths = ['/login', '/superadmin/login', '/client/login'];
+      const loginPaths = ['/login', '/superadmin/login', '/client/login', '/superadmin/forgot-password', '/client/forgot-password'];
       if (!loginPaths.includes(window.location.pathname)) {
         localStorage.removeItem('crm_access_token');
         localStorage.removeItem('crm_refresh_token');

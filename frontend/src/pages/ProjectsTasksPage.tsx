@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { cn, formatDate } from '@/lib/utils';
 import { api } from '@/lib/axios';
@@ -102,6 +103,15 @@ export const ProjectsTasksPage: React.FC = () => {
   // Create Agenda Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [isSubmittingAgenda, setIsSubmittingAgenda] = useState<boolean>(false);
+
+  // Delete Confirmation State
+  const [deleteTarget, setDeleteTarget] = useState<
+    | { kind: 'agenda'; agendaId: string; title: string }
+    | { kind: 'task'; agendaId: string; taskId: string; title: string }
+    | { kind: 'subtask'; agendaId: string; taskId: string; subTaskId: string; title: string }
+    | null
+  >(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   // Form fields for new agenda
   const [formClientId, setFormClientId] = useState<string>('');
@@ -334,6 +344,7 @@ export const ProjectsTasksPage: React.FC = () => {
         setFormName('');
         setFormDescription('');
         setFormDeadline('');
+        setFormClientId('');
         setFormAssigneeIds([]);
         await fetchAgendasData();
       }
@@ -346,15 +357,18 @@ export const ProjectsTasksPage: React.FC = () => {
 
   // Delete Agenda
   const handleDeleteAgenda = async (agendaId: string, agendaTitle: string) => {
-    if (!confirm(`Are you sure you want to delete agenda "${agendaTitle}"?`)) return;
-
+    setIsDeleting(true);
     try {
       await api.delete(`/agendas/${agendaId}`);
       setAgendas((prev) => prev.filter((a) => a.id !== agendaId));
       setExpandedAgendas((prev) => { const next = new Set(prev); next.delete(agendaId); return next; });
+      setDeleteTarget(null);
       toast('Agenda Deleted', `Agenda "${agendaTitle}" removed successfully.`, 'success');
     } catch (err: any) {
+      setDeleteTarget(null);
       toast('Error', err.response?.data?.error?.message || 'Failed to delete agenda.', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -452,6 +466,7 @@ export const ProjectsTasksPage: React.FC = () => {
 
   // Delete Task
   const handleDeleteTask = async (agendaId: string, taskId: string) => {
+    setIsDeleting(true);
     try {
       await api.delete(`/tasks/${taskId}`);
       setAgendas((prev) =>
@@ -461,14 +476,19 @@ export const ProjectsTasksPage: React.FC = () => {
           return { ...a, tasks: updatedTasks };
         })
       );
+      setDeleteTarget(null);
       toast('Task Deleted', 'Task removed successfully.', 'success');
     } catch (err: any) {
+      setDeleteTarget(null);
       toast('Error', 'Failed to delete task.', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   // Delete Sub-Task
   const handleDeleteSubTask = async (agendaId: string, taskId: string, subTaskId: string) => {
+    setIsDeleting(true);
     try {
       await api.delete(`/tasks/${subTaskId}`);
       setAgendas((prev) =>
@@ -481,8 +501,13 @@ export const ProjectsTasksPage: React.FC = () => {
           return { ...a, tasks: updatedTasks };
         })
       );
+      setDeleteTarget(null);
+      toast('Sub-task Deleted', 'Sub-task removed successfully.', 'success');
     } catch (err: any) {
+      setDeleteTarget(null);
       toast('Error', 'Failed to delete sub-task.', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -681,7 +706,7 @@ export const ProjectsTasksPage: React.FC = () => {
                   </span>
                 )}
                 <button
-                  onClick={() => handleDeleteTask(agenda.id, task.id)}
+                  onClick={() => setDeleteTarget({ kind: 'task', agendaId: agenda.id, taskId: task.id, title: task.title })}
                   className="text-slate-300 hover:text-rose-600 transition-colors p-0.5 shrink-0"
                   title="Delete task"
                 >
@@ -716,7 +741,7 @@ export const ProjectsTasksPage: React.FC = () => {
                         {sub.title}
                       </span>
                       <button
-                        onClick={() => handleDeleteSubTask(agenda.id, task.id, sub.id)}
+                        onClick={() => setDeleteTarget({ kind: 'subtask', agendaId: agenda.id, taskId: task.id, subTaskId: sub.id, title: sub.title })}
                         className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
                         title="Delete sub-task"
                       >
@@ -1057,7 +1082,7 @@ export const ProjectsTasksPage: React.FC = () => {
                                 Add Task
                               </Button>
                               <button
-                                onClick={() => handleDeleteAgenda(agenda.id, agenda.title)}
+                                onClick={() => setDeleteTarget({ kind: 'agenda', agendaId: agenda.id, title: agenda.title })}
                                 className="text-slate-300 hover:text-rose-600 transition-colors p-1.5 rounded-lg hover:bg-rose-50"
                                 title="Delete agenda"
                               >
@@ -1104,7 +1129,7 @@ export const ProjectsTasksPage: React.FC = () => {
                         <div className="text-sm font-bold text-slate-900 truncate">{agenda.title}</div>
                       </div>
                       <button
-                        onClick={() => handleDeleteAgenda(agenda.id, agenda.title)}
+                        onClick={() => setDeleteTarget({ kind: 'agenda', agendaId: agenda.id, title: agenda.title })}
                         className="text-slate-300 hover:text-rose-600 transition-colors p-1 rounded-lg shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1297,6 +1322,7 @@ export const ProjectsTasksPage: React.FC = () => {
                   onChange={(e) => setFormClientId(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 focus:border-[#5E8C61] focus:bg-white rounded-xl text-xs px-3 py-2 font-medium text-slate-800 outline-none"
                 >
+                  <option value="">Select a client...</option>
                   {clientsList.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -1365,6 +1391,30 @@ export const ProjectsTasksPage: React.FC = () => {
           />
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title={
+          deleteTarget?.kind === 'agenda' ? 'Delete this agenda?' :
+          deleteTarget?.kind === 'task' ? 'Delete this task?' : 'Delete this sub-task?'
+        }
+        message={
+          <>
+            <span className="font-semibold">
+              "{deleteTarget?.title}"
+            </span>{' '}
+            will be deleted.
+          </>
+        }
+        isLoading={isDeleting}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          if (deleteTarget.kind === 'agenda') handleDeleteAgenda(deleteTarget.agendaId, deleteTarget.title);
+          else if (deleteTarget.kind === 'task') handleDeleteTask(deleteTarget.agendaId, deleteTarget.taskId);
+          else handleDeleteSubTask(deleteTarget.agendaId, deleteTarget.taskId, deleteTarget.subTaskId);
+        }}
+      />
     </MainLayout>
   );
 };

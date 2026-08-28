@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate } from '@/lib/utils';
 import { api } from '@/lib/axios';
@@ -52,6 +53,7 @@ export const AgreementPage: React.FC = () => {
   const [formType, setFormType] = useState('service_agreement');
   const [formNotes, setFormNotes] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [agreementToDelete, setAgreementToDelete] = useState<{ id: string; title: string } | null>(null);
 
   const roleNameStr = String(currentUser?.role?.name || '').toLowerCase();
   const isClientRole = roleNameStr === 'client' || roleNameStr === 'client_viewer' || roleNameStr.includes('client');
@@ -211,12 +213,13 @@ export const AgreementPage: React.FC = () => {
   };
 
   const handleDelete = async (agreementId: string, title: string) => {
-    if (!window.confirm(`Delete "${title}"? This action cannot be undone.`)) return;
     try {
       await api.delete(`/agreements/${agreementId}`);
       toast('Deleted', `"${title}" has been removed.`, 'success');
+      setAgreementToDelete(null);
       fetchAgreements();
     } catch (err: any) {
+      setAgreementToDelete(null);
       toast('Delete Failed', err.response?.data?.error?.message || 'Failed to delete agreement.', 'error');
     }
   };
@@ -381,7 +384,7 @@ export const AgreementPage: React.FC = () => {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(agr.id, agr.title)}
+                      onClick={() => setAgreementToDelete({ id: agr.id, title: agr.title })}
                       title="Delete agreement"
                       className="p-1.5 rounded-lg border-red-200 hover:bg-red-50 text-red-500"
                     >
@@ -534,6 +537,18 @@ export const AgreementPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(agreementToDelete)}
+        onClose={() => setAgreementToDelete(null)}
+        title="Delete this agreement?"
+        message={
+          <>
+            <span className="font-semibold">"{agreementToDelete?.title}"</span> will be removed.
+          </>
+        }
+        onConfirm={() => agreementToDelete && handleDelete(agreementToDelete.id, agreementToDelete.title)}
+      />
     </MainLayout>
   );
 };

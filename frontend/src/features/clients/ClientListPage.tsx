@@ -21,6 +21,8 @@ import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
 import { formatCurrency, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
+import { queryClient } from '@/lib/query-client';
+import { clientQueryKeys } from './clientQueries';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -77,6 +79,15 @@ export const ClientListPage: React.FC = () => {
   }, [debouncedSearch, tierFilter, statusFilter, pageSize, toast]);
 
   useEffect(() => {
+    fetchClients(1);
+  }, [fetchClients]);
+
+  const handleProvisionSuccess = useCallback(() => {
+    setSearchInput('');
+    setDebouncedSearch('');
+    setTierFilter('');
+    setStatusFilter('');
+    queryClient.invalidateQueries({ queryKey: clientQueryKeys.directory });
     fetchClients(1);
   }, [fetchClients]);
 
@@ -354,7 +365,7 @@ export const ClientListPage: React.FC = () => {
       <CreateClientUserModal
         isOpen={isProvisionOpen}
         onClose={() => setIsProvisionOpen(false)}
-        onSuccess={() => fetchClients(meta.page)}
+        onSuccess={handleProvisionSuccess}
       />
 
       <DeleteClientModal

@@ -1,1 +1,1046 @@
-
+CCORS ORIGINS: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174', 'https://crm.example.com']
+[STARTUP] Alembic migrations applied successfully
+2026-08-28 11:10:42,205 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-08-28 11:10:42,205 INFO sqlalchemy.engine.Engine [raw sql] ()22026-08-28 11:10:42,295 INFO sqlalchemy.engine.Engine select current_schema()
+2026-08-28 11:10:42,297 INFO sqlalchemy.engine.Engine [raw sql] ()22026-08-28 11:10:42,419 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-08-28 11:10:42,420 INFO sqlalchemy.engine.Engine [raw sql] ()22026-08-28 11:10:42,507 INFO sqlalchemy.engine.Engine BEGIN (implicit)22026-08-28 11:10:42,657 INFO sqlalchemy.engine.Engine SELECT roles.name, roles.display_name, roles.description, roles.id, roles.created_at, roles.updated_at, roles.deleted_at, roles.is_deleted, roles.created_by_id, roles.updated_by_id 
+FROM roles 
+WHERE roles.name = $1::VARCHAR
+2026-08-28 11:10:42,658 INFO sqlalchemy.engine.Engine [generated in 0.00051s] (<UserRoleEnum.SUPER_ADMIN: 'super_admin'>,)22026-08-28 11:10:42,743 INFO sqlalchemy.engine.Engine SELECT roles.name, roles.display_name, roles.description, roles.id, roles.created_at, roles.updated_at, roles.deleted_at, roles.is_deleted, roles.created_by_id, roles.updated_by_id 
+FROM roles 
+WHERE roles.name = $1::VARCHAR
+2026-08-28 11:10:42,744 INFO sqlalchemy.engine.Engine [cached since 0.08672s ago] (<UserRoleEnum.CLIENT: 'client'>,)202026-08-28 11:10:42,805 INFO sqlalchemy.engine.Engine COMMIT [STARTUP] Roles seeded
+Starting SGC CRM Platform backend service...
+Shutting down SGC CRM Platform backend service...
+CORS ORIGINS: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174', 'https://crm.example.com']
+[STARTUP] Alembic migrations applied successfully
+2026-08-28 11:20:33,772 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-08-28 11:20:33,773 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-28 11:20:33,874 INFO sqlalchemy.engine.Engine select current_schema()
+2026-08-28 11:20:33,876 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-28 11:20:34,013 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-08-28 11:20:34,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-28 11:20:34,121 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:20:34,260 INFO sqlalchemy.engine.Engine SELECT roles.name, roles.display_name, roles.description, roles.id, roles.created_at, roles.updated_at, roles.deleted_at, roles.is_deleted, roles.created_by_id, roles.updated_by_id 
+FROM roles 
+WHERE roles.name = $1::VARCHAR
+2026-08-28 11:20:34,261 INFO sqlalchemy.engine.Engine [generated in 0.00147s] (<UserRoleEnum.SUPER_ADMIN: 'super_admin'>,)
+2026-08-28 11:20:34,365 INFO sqlalchemy.engine.Engine SELECT roles.name, roles.display_name, roles.description, roles.id, roles.created_at, roles.updated_at, roles.deleted_at, roles.is_deleted, roles.created_by_id, roles.updated_by_id 
+FROM roles 
+WHERE roles.name = $1::VARCHAR
+2026-08-28 11:20:34,366 INFO sqlalchemy.engine.Engine [cached since 0.1068s ago] (<UserRoleEnum.CLIENT: 'client'>,)
+2026-08-28 11:20:34,432 INFO sqlalchemy.engine.Engine COMMIT
+es_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:01,724 INFO sqlalchemy.engine.Engine [generated in 0.00116s] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+[ME] USER QUERY (incl ROLE/ORG): 146.0 ms
+[ME] AUTH DEP TOTAL: 352.9 ms
+[ME] RESPONSE: 0.4 ms
+INFO:     127.0.0.1:54121 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+2026-08-28 11:11:01,786 INFO sqlalchemy.engine.Engine COMMIT
+INFO:     127.0.0.1:54121 - "OPTIONS /api/v1/clients?page=1&page_size=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51477 - "OPTIONS /api/v1/agendas?page=1&page_size=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54121 - "OPTIONS /api/v1/tasks?page=1&page_size=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51477 - "OPTIONS /api/v1/consents?page=1&page_size=1&status=pending HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54121 - "OPTIONS /api/v1/invoices?page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51477 - "OPTIONS /api/v1/meetings?page=1&page_size=5&status=scheduled HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54121 - "OPTIONS /api/v1/agendas?page=1&page_size=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51477 - "OPTIONS /api/v1/tasks?page=1&page_size=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54121 - "OPTIONS /api/v1/consents?page=1&page_size=1&status=pending HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51477 - "OPTIONS /api/v1/invoices?page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54121 - "OPTIONS /api/v1/meetings?page=1&page_size=5&status=scheduled HTTP/1.1" 200 OK
+2026-08-28 11:11:02,077 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:02,079 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:02,080 INFO sqlalchemy.engine.Engine [cached since 0.4357s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:02,168 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:02,169 INFO sqlalchemy.engine.Engine [cached since 0.4468s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,468 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT clients.name AS name, clients.legal_name AS legal_name, clients.company_type AS company_type, clients.industry AS industry, clients.company_size AS company_size, clients.website AS website, clients.annual_revenue AS annual_revenue, clients.currency AS currency, clients.gst_number AS gst_number, clients.pan_number AS pan_number, clients.primary_contact_name AS primary_contact_name, clients.email AS email, clients.phone AS phone, clients.address_line1 AS address_line1, clients.address_line2 AS address_line2, clients.city AS city, clients.state AS state, clients.postal_code AS postal_code, clients.country AS country, clients.billing_address AS billing_address, clients.tier AS tier, clients.status AS status, clients.assigned_admin_id AS assigned_admin_id, clients.account_manager_id AS account_manager_id, clients.id AS id, clients.created_at AS created_at, clients.updated_at AS updated_at, clients.deleted_at AS deleted_at, clients.is_deleted AS is_deleted, clients.created_by_id AS created_by_id, clients.updated_by_id AS updated_by_id 
+FROM clients 
+WHERE clients.is_deleted = false) AS anon_1
+2026-08-28 11:11:02,469 INFO sqlalchemy.engine.Engine [generated in 0.00084s] ()
+2026-08-28 11:11:02,545 INFO sqlalchemy.engine.Engine SELECT clients.name, clients.legal_name, clients.company_type, clients.industry, clients.company_size, clients.website, clients.annual_revenue, clients.currency, clients.gst_number, clients.pan_number, clients.primary_contact_name, clients.email, clients.phone, clients.address_line1, clients.address_line2, clients.city, clients.state, clients.postal_code, clients.country, clients.billing_address, clients.tier, clients.status, clients.assigned_admin_id, clients.account_manager_id, clients.id, clients.created_at, clients.updated_at, clients.deleted_at, clients.is_deleted, clients.created_by_id, clients.updated_by_id 
+FROM clients 
+WHERE clients.is_deleted = false ORDER BY clients.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:02,546 INFO sqlalchemy.engine.Engine [generated in 0.00159s] (100, 0)
+2026-08-28 11:11:02,687 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID)
+2026-08-28 11:11:02,689 INFO sqlalchemy.engine.Engine [generated in 0.00135s] (UUID('4dc1f38c-fb7a-47e6-8869-1c6a2a032e83'), UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'), UUID('78dc9853-9ae7-41bb-b3a4-e8d2409e3572'), UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'), UUID('869f57ef-1e21-4ca1-80e2-5a3dbae9f7a7'), UUID('c36fb846-facb-43b8-a8af-54934c751415'))
+2026-08-28 11:11:02,772 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:02,773 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:02,773 INFO sqlalchemy.engine.Engine [cached since 1.129s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:02,775 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:02,776 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:02,777 INFO sqlalchemy.engine.Engine [cached since 1.133s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:02,778 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:02,779 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:02,780 INFO sqlalchemy.engine.Engine [cached since 1.136s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:02,842 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:02,844 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:02,844 INFO sqlalchemy.engine.Engine [cached since 1.2s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+INFO:     127.0.0.1:51477 - "GET /api/v1/clients?page=1&page_size=100 HTTP/1.1" 200 OK
+2026-08-28 11:11:02,850 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:02,873 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:02,874 INFO sqlalchemy.engine.Engine [cached since 1.152s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,879 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:02,880 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:02,881 INFO sqlalchemy.engine.Engine [cached since 1.237s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:02,913 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:02,914 INFO sqlalchemy.engine.Engine [cached since 1.191s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,915 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:02,916 INFO sqlalchemy.engine.Engine [cached since 1.193s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,935 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:02,936 INFO sqlalchemy.engine.Engine [generated in 0.00052s] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,942 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:02,942 INFO sqlalchemy.engine.Engine [cached since 1.22s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,973 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:02,975 INFO sqlalchemy.engine.Engine [cached since 0.03958s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,978 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:02,979 INFO sqlalchemy.engine.Engine [cached since 1.256s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,982 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:02,983 INFO sqlalchemy.engine.Engine [cached since 0.04802s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:02,993 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT tasks.title AS title, tasks.task_code AS task_code, tasks.description AS description, tasks.status AS status, tasks.priority AS priority, tasks.due_date AS due_date, tasks.completed_at AS completed_at, tasks.recurrence_type AS recurrence_type, tasks.recurrence_interval AS recurrence_interval, tasks.recurrence_end_date AS recurrence_end_date, tasks.recurrence_parent_id AS recurrence_parent_id, tasks.assigned_to_id AS assigned_to_id, tasks.project_id AS project_id, tasks.client_id AS client_id, tasks.parent_task_id AS parent_task_id, tasks.id AS id, tasks.created_at AS created_at, tasks.updated_at AS updated_at, tasks.deleted_at AS deleted_at, tasks.is_deleted AS is_deleted, tasks.created_by_id AS created_by_id, tasks.updated_by_id AS updated_by_id 
+FROM tasks 
+WHERE tasks.is_deleted = false) AS anon_1
+2026-08-28 11:11:02,994 INFO sqlalchemy.engine.Engine [generated in 0.00067s] ()
+2026-08-28 11:11:03,011 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:03,012 INFO sqlalchemy.engine.Engine [cached since 0.0768s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,046 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT consents.title AS title, consents.description AS description, consents.status AS status, consents.file_name AS file_name, consents.file_path AS file_path, consents.file_size AS file_size, consents.mime_type AS mime_type, consents.file_checksum AS file_checksum, consents.responded_at AS responded_at, consents.denial_reason AS denial_reason, consents.response_notes AS response_notes, consents.client_id AS client_id, consents.responded_by_id AS responded_by_id, consents.id AS id, consents.created_at AS created_at, consents.updated_at AS updated_at, consents.deleted_at AS deleted_at, consents.is_deleted AS is_deleted, consents.created_by_id AS created_by_id, consents.updated_by_id AS updated_by_id 
+FROM consents 
+WHERE consents.is_deleted = false AND consents.status = $1) AS anon_1
+2026-08-28 11:11:03,047 INFO sqlalchemy.engine.Engine [generated in 0.00180s] ('PENDING',)
+2026-08-28 11:11:03,050 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:03,050 INFO sqlalchemy.engine.Engine [cached since 0.1152s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,054 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT projects.name AS name, projects.project_code AS project_code, projects.description AS description, projects.notes AS notes, projects.status AS status, projects.priority AS priority, projects.progress AS progress, projects.budget AS budget, projects.currency AS currency, projects.start_date AS start_date, projects.end_date AS end_date, projects.deadline AS deadline, projects.actual_completion_date AS actual_completion_date, projects.client_id AS client_id, projects.assigned_admin_id AS assigned_admin_id, projects.id AS id, projects.created_at AS created_at, projects.updated_at AS updated_at, projects.deleted_at AS deleted_at, projects.is_deleted AS is_deleted, projects.created_by_id AS created_by_id, projects.updated_by_id AS updated_by_id 
+FROM projects 
+WHERE projects.is_deleted = false) AS anon_1
+2026-08-28 11:11:03,054 INFO sqlalchemy.engine.Engine [generated in 0.00058s] ()
+2026-08-28 11:11:03,069 INFO sqlalchemy.engine.Engine SELECT tasks.title, tasks.task_code, tasks.description, tasks.status, tasks.priority, tasks.due_date, tasks.completed_at, tasks.recurrence_type, tasks.recurrence_interval, tasks.recurrence_end_date, tasks.recurrence_parent_id, tasks.assigned_to_id, tasks.project_id, tasks.client_id, tasks.parent_task_id, tasks.id, tasks.created_at, tasks.updated_at, tasks.deleted_at, tasks.is_deleted, tasks.created_by_id, tasks.updated_by_id 
+FROM tasks 
+WHERE tasks.is_deleted = false ORDER BY tasks.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:03,069 INFO sqlalchemy.engine.Engine [generated in 0.00056s] (10, 0)
+2026-08-28 11:11:03,090 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT invoices.invoice_number AS invoice_number, invoices.issue_date AS issue_date, invoices.due_date AS due_date, invoices.paid_at AS paid_at, invoices.currency AS currency, invoices.subtotal AS subtotal, invoices.tax_rate AS tax_rate, invoices.tax_amount AS tax_amount, invoices.total_amount AS total_amount, invoices.paid_amount AS paid_amount, invoices.outstanding_amount AS outstanding_amount, invoices.status AS status, invoices.notes AS notes, invoices.pdf_file_path AS pdf_file_path, invoices.client_id AS client_id, invoices.project_id AS project_id, invoices.assigned_admin_id AS assigned_admin_id, invoices.id AS id, invoices.created_at AS created_at, invoices.updated_at AS updated_at, invoices.deleted_at AS deleted_at, invoices.is_deleted AS is_deleted, invoices.created_by_id AS created_by_id, invoices.updated_by_id AS updated_by_id 
+FROM invoices JOIN clients ON clients.id = invoices.client_id 
+WHERE invoices.is_deleted = false AND clients.is_deleted = false) AS anon_1
+2026-08-28 11:11:03,090 INFO sqlalchemy.engine.Engine [generated in 0.00065s] ()
+2026-08-28 11:11:03,115 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT meetings.title AS title, meetings.description AS description, meetings.location AS location, meetings.meeting_type AS meeting_type, meetings.status AS status, meetings.start_time AS start_time, meetings.end_time AS end_time, meetings.timezone AS timezone, meetings.client_id AS client_id, meetings.project_id AS project_id, meetings.created_by_id AS created_by_id, meetings.id AS id, meetings.created_at AS created_at, meetings.updated_at AS updated_at, meetings.deleted_at AS deleted_at, meetings.is_deleted AS is_deleted, meetings.updated_by_id AS updated_by_id 
+FROM meetings LEFT OUTER JOIN clients ON meetings.client_id = clients.id 
+WHERE meetings.is_deleted = false AND meetings.status = $1) AS anon_1
+2026-08-28 11:11:03,115 INFO sqlalchemy.engine.Engine [generated in 0.00078s] ('SCHEDULED',)
+2026-08-28 11:11:03,126 INFO sqlalchemy.engine.Engine SELECT consents.title, consents.description, consents.status, consents.file_name, consents.file_path, consents.file_size, consents.mime_type, consents.file_checksum, consents.responded_at, consents.denial_reason, consents.response_notes, consents.client_id, consents.responded_by_id, consents.id, consents.created_at, consents.updated_at, consents.deleted_at, consents.is_deleted, consents.created_by_id, consents.updated_by_id 
+FROM consents 
+WHERE consents.is_deleted = false AND consents.status = $1 ORDER BY consents.created_at DESC 
+ LIMIT $2::INTEGER OFFSET $3::INTEGER
+2026-08-28 11:11:03,127 INFO sqlalchemy.engine.Engine [generated in 0.00122s] ('PENDING', 1, 0)
+2026-08-28 11:11:03,133 INFO sqlalchemy.engine.Engine SELECT projects.name, projects.project_code, projects.description, projects.notes, projects.status, projects.priority, projects.progress, projects.budget, projects.currency, projects.start_date, projects.end_date, projects.deadline, projects.actual_completion_date, projects.client_id, projects.assigned_admin_id, projects.id, projects.created_at, projects.updated_at, projects.deleted_at, projects.is_deleted, projects.created_by_id, projects.updated_by_id 
+FROM projects 
+WHERE projects.is_deleted = false ORDER BY projects.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:03,134 INFO sqlalchemy.engine.Engine [generated in 0.00076s] (10, 0)
+2026-08-28 11:11:03,139 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID, $2::UUID)
+2026-08-28 11:11:03,140 INFO sqlalchemy.engine.Engine [generated in 0.00101s] (UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'), UUID('c36fb846-facb-43b8-a8af-54934c751415'))
+2026-08-28 11:11:03,185 INFO sqlalchemy.engine.Engine SELECT invoices.invoice_number, invoices.issue_date, invoices.due_date, invoices.paid_at, invoices.currency, invoices.subtotal, invoices.tax_rate, invoices.tax_amount, invoices.total_amount, invoices.paid_amount, invoices.outstanding_amount, invoices.status, invoices.notes, invoices.pdf_file_path, invoices.client_id, invoices.project_id, invoices.assigned_admin_id, invoices.id, invoices.created_at, invoices.updated_at, invoices.deleted_at, invoices.is_deleted, invoices.created_by_id, invoices.updated_by_id 
+FROM invoices JOIN clients ON clients.id = invoices.client_id 
+WHERE invoices.is_deleted = false AND clients.is_deleted = false ORDER BY invoices.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:03,186 INFO sqlalchemy.engine.Engine [generated in 0.00164s] (20, 0)
+2026-08-28 11:11:03,193 INFO sqlalchemy.engine.Engine SELECT meetings.title, meetings.description, meetings.location, meetings.meeting_type, meetings.status, meetings.start_time, meetings.end_time, meetings.timezone, meetings.client_id, meetings.project_id, meetings.created_by_id, meetings.id, meetings.created_at, meetings.updated_at, meetings.deleted_at, meetings.is_deleted, meetings.updated_by_id 
+FROM meetings LEFT OUTER JOIN clients ON meetings.client_id = clients.id 
+WHERE meetings.is_deleted = false AND meetings.status = $1 ORDER BY meetings.start_time ASC 
+ LIMIT $2::INTEGER OFFSET $3::INTEGER
+2026-08-28 11:11:03,193 INFO sqlalchemy.engine.Engine [generated in 0.00050s] ('SCHEDULED', 5, 0)
+2026-08-28 11:11:03,197 INFO sqlalchemy.engine.Engine SELECT consent_assignments.consent_id AS consent_assignments_consent_id, consent_assignments.id AS consent_assignments_id, consent_assignments.user_id AS consent_assignments_user_id, consent_assignments.assigned_by_id AS consent_assignments_assigned_by_id, consent_assignments.assigned_at AS consent_assignments_assigned_at 
+FROM consent_assignments 
+WHERE consent_assignments.consent_id IN ($1::UUID)
+2026-08-28 11:11:03,197 INFO sqlalchemy.engine.Engine [generated in 0.00077s] (UUID('515f2e9e-5a2e-4df6-a7da-5ff79773d65a'),)
+2026-08-28 11:11:03,206 INFO sqlalchemy.engine.Engine SELECT project_assignments.project_id AS project_assignments_project_id, project_assignments.id AS project_assignments_id, project_assignments.user_id AS project_assignments_user_id, project_assignments.assigned_by_id AS project_assignments_assigned_by_id, project_assignments.assigned_at AS project_assignments_assigned_at 
+FROM project_assignments 
+WHERE project_assignments.project_id IN ($1::UUID)
+2026-08-28 11:11:03,207 INFO sqlalchemy.engine.Engine [generated in 0.00074s] (UUID('dcac2ee0-d4b4-4f3e-8639-06eb95275bdb'),)
+2026-08-28 11:11:03,210 INFO sqlalchemy.engine.Engine SELECT tasks.parent_task_id AS tasks_parent_task_id, tasks.title AS tasks_title, tasks.task_code AS tasks_task_code, tasks.description AS tasks_description, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.due_date AS tasks_due_date, tasks.completed_at AS tasks_completed_at, tasks.recurrence_type AS tasks_recurrence_type, tasks.recurrence_interval AS tasks_recurrence_interval, tasks.recurrence_end_date AS tasks_recurrence_end_date, tasks.recurrence_parent_id AS tasks_recurrence_parent_id, tasks.assigned_to_id AS tasks_assigned_to_id, tasks.project_id AS tasks_project_id, tasks.client_id AS tasks_client_id, tasks.id AS tasks_id, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at, tasks.deleted_at AS tasks_deleted_at, tasks.is_deleted AS tasks_is_deleted, tasks.created_by_id AS tasks_created_by_id, tasks.updated_by_id AS tasks_updated_by_id 
+FROM tasks 
+WHERE tasks.parent_task_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID)
+2026-08-28 11:11:03,211 INFO sqlalchemy.engine.Engine [generated in 0.00088s] (UUID('ad214bc0-c1d9-4520-b21b-6c408bff9bad'), UUID('0e1c1bd6-130d-4a44-97c2-e47b171f6f9e'), UUID('3c5be321-e939-453c-bd78-b74d24e9cea1'), UUID('239a7ddf-045d-49fc-948e-471284a514cf'), UUID('17278b0b-3f7c-4cc6-8788-58c75e607a81'), UUID('3acafd33-b1be-46c8-a471-7d777dcdcae1'), UUID('9b6d0f16-9fbc-40bf-855b-678bca424f8e'), UUID('70547aff-b314-44a5-9dac-b3e4c58eedea'), UUID('a269f486-c718-4426-b2e8-cf27771a8b7b'))
+2026-08-28 11:11:03,251 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:03,252 INFO sqlalchemy.engine.Engine [generated in 0.00135s] (UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'),)
+INFO:     127.0.0.1:51651 - "GET /api/v1/meetings?page=1&page_size=5&status=scheduled HTTP/1.1" 200 OK
+2026-08-28 11:11:03,256 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:03,261 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:03,262 INFO sqlalchemy.engine.Engine [generated in 0.00118s] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:03,271 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:03,272 INFO sqlalchemy.engine.Engine [generated in 0.00061s] (UUID('7703d919-c299-4649-85bc-23121e6da99a'),)
+2026-08-28 11:11:03,276 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:03,277 INFO sqlalchemy.engine.Engine [generated in 0.00116s] (UUID('655ffce3-117b-4278-a329-78030d945b38'),)
+2026-08-28 11:11:03,319 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:03,321 INFO sqlalchemy.engine.Engine [generated in 0.00168s] (UUID('7703d919-c299-4649-85bc-23121e6da99a'),)
+2026-08-28 11:11:03,330 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:03,330 INFO sqlalchemy.engine.Engine [generated in 0.00085s] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:03,340 INFO sqlalchemy.engine.Engine SELECT task_assignments.task_id AS task_assignments_task_id, task_assignments.id AS task_assignments_id, task_assignments.user_id AS task_assignments_user_id, task_assignments.assigned_by_id AS task_assignments_assigned_by_id, task_assignments.assigned_at AS task_assignments_assigned_at 
+FROM task_assignments 
+WHERE task_assignments.task_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID)
+2026-08-28 11:11:03,340 INFO sqlalchemy.engine.Engine [generated in 0.00091s] (UUID('ad214bc0-c1d9-4520-b21b-6c408bff9bad'), UUID('0e1c1bd6-130d-4a44-97c2-e47b171f6f9e'), UUID('3c5be321-e939-453c-bd78-b74d24e9cea1'), UUID('239a7ddf-045d-49fc-948e-471284a514cf'), UUID('17278b0b-3f7c-4cc6-8788-58c75e607a81'), UUID('3acafd33-b1be-46c8-a471-7d777dcdcae1'), UUID('9b6d0f16-9fbc-40bf-855b-678bca424f8e'), UUID('70547aff-b314-44a5-9dac-b3e4c58eedea'), UUID('a269f486-c718-4426-b2e8-cf27771a8b7b'))
+2026-08-28 11:11:03,347 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:03,348 INFO sqlalchemy.engine.Engine [generated in 0.00150s] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:03,378 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:03,379 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:03,380 INFO sqlalchemy.engine.Engine [cached since 1.736s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:03,383 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:03,384 INFO sqlalchemy.engine.Engine [generated in 0.00072s] (UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'),)
+INFO:     127.0.0.1:60122 - "GET /api/v1/consents?page=1&page_size=1&status=pending HTTP/1.1" 200 OK
+2026-08-28 11:11:03,392 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:03,412 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID, $2::UUID)
+2026-08-28 11:11:03,413 INFO sqlalchemy.engine.Engine [generated in 0.00084s] (UUID('c36fb846-facb-43b8-a8af-54934c751415'), UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'))
+2026-08-28 11:11:03,424 INFO sqlalchemy.engine.Engine SELECT tasks.project_id AS tasks_project_id, tasks.title AS tasks_title, tasks.task_code AS tasks_task_code, tasks.description AS tasks_description, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.due_date AS tasks_due_date, tasks.completed_at AS tasks_completed_at, tasks.recurrence_type AS tasks_recurrence_type, tasks.recurrence_interval AS tasks_recurrence_interval, tasks.recurrence_end_date AS tasks_recurrence_end_date, tasks.recurrence_parent_id AS tasks_recurrence_parent_id, tasks.assigned_to_id AS tasks_assigned_to_id, tasks.client_id AS tasks_client_id, tasks.parent_task_id AS tasks_parent_task_id, tasks.id AS tasks_id, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at, tasks.deleted_at AS tasks_deleted_at, tasks.is_deleted AS tasks_is_deleted, tasks.created_by_id AS tasks_created_by_id, tasks.updated_by_id AS tasks_updated_by_id 
+FROM tasks 
+WHERE tasks.project_id IN ($1::UUID) AND tasks.is_deleted = false
+2026-08-28 11:11:03,425 INFO sqlalchemy.engine.Engine [generated in 0.00098s] (UUID('dcac2ee0-d4b4-4f3e-8639-06eb95275bdb'),)
+2026-08-28 11:11:03,461 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:03,463 INFO sqlalchemy.engine.Engine [generated in 0.00176s] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,477 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:03,478 INFO sqlalchemy.engine.Engine [cached since 1.755s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,482 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:03,483 INFO sqlalchemy.engine.Engine [generated in 0.00106s] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,498 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:03,499 INFO sqlalchemy.engine.Engine [generated in 0.00066s] (UUID('655ffce3-117b-4278-a329-78030d945b38'),)
+2026-08-28 11:11:03,524 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:03,525 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:03,526 INFO sqlalchemy.engine.Engine [cached since 1.882s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+INFO:     127.0.0.1:58509 - "GET /api/v1/invoices?page=1&page_size=20 HTTP/1.1" 200 OK
+2026-08-28 11:11:03,531 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:03,539 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:03,539 INFO sqlalchemy.engine.Engine [cached since 0.6043s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,547 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID)
+2026-08-28 11:11:03,548 INFO sqlalchemy.engine.Engine [generated in 0.00160s] (UUID('5c7411cc-26ff-4e24-a6de-e4100639fb4e'), UUID('655ffce3-117b-4278-a329-78030d945b38'), UUID('7703d919-c299-4649-85bc-23121e6da99a'), UUID('bc455529-e287-4325-b551-8e064624aa17'))
+2026-08-28 11:11:03,565 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:03,565 INFO sqlalchemy.engine.Engine [generated in 0.00057s] (UUID('7a182362-3186-493a-b4b3-3df400a9cc28'),)
+2026-08-28 11:11:03,596 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT meetings.title AS title, meetings.description AS description, meetings.location AS location, meetings.meeting_type AS meeting_type, meetings.status AS status, meetings.start_time AS start_time, meetings.end_time AS end_time, meetings.timezone AS timezone, meetings.client_id AS client_id, meetings.project_id AS project_id, meetings.created_by_id AS created_by_id, meetings.id AS id, meetings.created_at AS created_at, meetings.updated_at AS updated_at, meetings.deleted_at AS deleted_at, meetings.is_deleted AS is_deleted, meetings.updated_by_id AS updated_by_id 
+FROM meetings LEFT OUTER JOIN clients ON meetings.client_id = clients.id 
+WHERE meetings.is_deleted = false AND meetings.status = $1) AS anon_1
+2026-08-28 11:11:03,597 INFO sqlalchemy.engine.Engine [cached since 0.4829s ago] ('SCHEDULED',)
+2026-08-28 11:11:03,611 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID, $2::UUID, $3::UUID)
+2026-08-28 11:11:03,611 INFO sqlalchemy.engine.Engine [generated in 0.00088s] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'), UUID('7a182362-3186-493a-b4b3-3df400a9cc28'), UUID('a64e2926-c17f-4fbd-a66d-1ee3fc41adb0'))
+2026-08-28 11:11:03,617 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:03,618 INFO sqlalchemy.engine.Engine [cached since 1.895s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,631 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:03,632 INFO sqlalchemy.engine.Engine [generated in 0.00136s] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:03,654 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:03,655 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:03,656 INFO sqlalchemy.engine.Engine [cached since 2.012s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:03,660 INFO sqlalchemy.engine.Engine SELECT meetings.title, meetings.description, meetings.location, meetings.meeting_type, meetings.status, meetings.start_time, meetings.end_time, meetings.timezone, meetings.client_id, meetings.project_id, meetings.created_by_id, meetings.id, meetings.created_at, meetings.updated_at, meetings.deleted_at, meetings.is_deleted, meetings.updated_by_id 
+FROM meetings LEFT OUTER JOIN clients ON meetings.client_id = clients.id 
+WHERE meetings.is_deleted = false AND meetings.status = $1 ORDER BY meetings.start_time ASC 
+ LIMIT $2::INTEGER OFFSET $3::INTEGER
+2026-08-28 11:11:03,661 INFO sqlalchemy.engine.Engine [generated in 0.00082s] ('SCHEDULED', 5, 0)
+INFO:     127.0.0.1:56831 - "GET /api/v1/tasks?page=1&page_size=10 HTTP/1.1" 200 OK
+2026-08-28 11:11:03,674 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:03,682 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:03,683 INFO sqlalchemy.engine.Engine [cached since 0.7481s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,702 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:03,702 INFO sqlalchemy.engine.Engine [generated in 0.00065s] (UUID('7a182362-3186-493a-b4b3-3df400a9cc28'),)
+INFO:     127.0.0.1:51477 - "GET /api/v1/meetings?page=1&page_size=5&status=scheduled HTTP/1.1" 200 OK
+2026-08-28 11:11:03,729 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:03,754 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:03,755 INFO sqlalchemy.engine.Engine [cached since 2.033s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,757 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT consents.title AS title, consents.description AS description, consents.status AS status, consents.file_name AS file_name, consents.file_path AS file_path, consents.file_size AS file_size, consents.mime_type AS mime_type, consents.file_checksum AS file_checksum, consents.responded_at AS responded_at, consents.denial_reason AS denial_reason, consents.response_notes AS response_notes, consents.client_id AS client_id, consents.responded_by_id AS responded_by_id, consents.id AS id, consents.created_at AS created_at, consents.updated_at AS updated_at, consents.deleted_at AS deleted_at, consents.is_deleted AS is_deleted, consents.created_by_id AS created_by_id, consents.updated_by_id AS updated_by_id 
+FROM consents 
+WHERE consents.is_deleted = false AND consents.status = $1) AS anon_1
+2026-08-28 11:11:03,758 INFO sqlalchemy.engine.Engine [cached since 0.7123s ago] ('PENDING',)
+INFO:     127.0.0.1:65151 - "GET /api/v1/agendas?page=1&page_size=10 HTTP/1.1" 200 OK
+2026-08-28 11:11:03,766 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:03,802 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:03,803 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:03,803 INFO sqlalchemy.engine.Engine [cached since 2.159s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:03,814 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:03,815 INFO sqlalchemy.engine.Engine [cached since 0.8799s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,820 INFO sqlalchemy.engine.Engine SELECT consents.title, consents.description, consents.status, consents.file_name, consents.file_path, consents.file_size, consents.mime_type, consents.file_checksum, consents.responded_at, consents.denial_reason, consents.response_notes, consents.client_id, consents.responded_by_id, consents.id, consents.created_at, consents.updated_at, consents.deleted_at, consents.is_deleted, consents.created_by_id, consents.updated_by_id 
+FROM consents 
+WHERE consents.is_deleted = false AND consents.status = $1 ORDER BY consents.created_at DESC 
+ LIMIT $2::INTEGER OFFSET $3::INTEGER
+2026-08-28 11:11:03,820 INFO sqlalchemy.engine.Engine [generated in 0.00070s] ('PENDING', 1, 0)
+2026-08-28 11:11:03,873 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT invoices.invoice_number AS invoice_number, invoices.issue_date AS issue_date, invoices.due_date AS due_date, invoices.paid_at AS paid_at, invoices.currency AS currency, invoices.subtotal AS subtotal, invoices.tax_rate AS tax_rate, invoices.tax_amount AS tax_amount, invoices.total_amount AS total_amount, invoices.paid_amount AS paid_amount, invoices.outstanding_amount AS outstanding_amount, invoices.status AS status, invoices.notes AS notes, invoices.pdf_file_path AS pdf_file_path, invoices.client_id AS client_id, invoices.project_id AS project_id, invoices.assigned_admin_id AS assigned_admin_id, invoices.id AS id, invoices.created_at AS created_at, invoices.updated_at AS updated_at, invoices.deleted_at AS deleted_at, invoices.is_deleted AS is_deleted, invoices.created_by_id AS created_by_id, invoices.updated_by_id AS updated_by_id 
+FROM invoices JOIN clients ON clients.id = invoices.client_id 
+WHERE invoices.is_deleted = false AND clients.is_deleted = false) AS anon_1
+2026-08-28 11:11:03,873 INFO sqlalchemy.engine.Engine [cached since 0.7838s ago] ()
+2026-08-28 11:11:03,880 INFO sqlalchemy.engine.Engine SELECT consent_assignments.consent_id AS consent_assignments_consent_id, consent_assignments.id AS consent_assignments_id, consent_assignments.user_id AS consent_assignments_user_id, consent_assignments.assigned_by_id AS consent_assignments_assigned_by_id, consent_assignments.assigned_at AS consent_assignments_assigned_at 
+FROM consent_assignments 
+WHERE consent_assignments.consent_id IN ($1::UUID)
+2026-08-28 11:11:03,881 INFO sqlalchemy.engine.Engine [cached since 0.6845s ago] (UUID('515f2e9e-5a2e-4df6-a7da-5ff79773d65a'),)
+2026-08-28 11:11:03,883 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:03,883 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:03,884 INFO sqlalchemy.engine.Engine [cached since 2.24s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:03,901 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:03,901 INFO sqlalchemy.engine.Engine [cached since 2.179s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:03,991 INFO sqlalchemy.engine.Engine SELECT invoices.invoice_number, invoices.issue_date, invoices.due_date, invoices.paid_at, invoices.currency, invoices.subtotal, invoices.tax_rate, invoices.tax_amount, invoices.total_amount, invoices.paid_amount, invoices.outstanding_amount, invoices.status, invoices.notes, invoices.pdf_file_path, invoices.client_id, invoices.project_id, invoices.assigned_admin_id, invoices.id, invoices.created_at, invoices.updated_at, invoices.deleted_at, invoices.is_deleted, invoices.created_by_id, invoices.updated_by_id 
+FROM invoices JOIN clients ON clients.id = invoices.client_id 
+WHERE invoices.is_deleted = false AND clients.is_deleted = false ORDER BY invoices.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:03,992 INFO sqlalchemy.engine.Engine [generated in 0.00161s] (20, 0)
+2026-08-28 11:11:03,995 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:03,996 INFO sqlalchemy.engine.Engine [cached since 0.7354s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:04,090 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:04,092 INFO sqlalchemy.engine.Engine [cached since 1.157s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:04,096 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:04,097 INFO sqlalchemy.engine.Engine [cached since 2.374s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:04,169 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:04,171 INFO sqlalchemy.engine.Engine [cached since 0.9198s ago] (UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'),)
+2026-08-28 11:11:04,174 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:04,174 INFO sqlalchemy.engine.Engine [cached since 0.8449s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:04,214 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT tasks.title AS title, tasks.task_code AS task_code, tasks.description AS description, tasks.status AS status, tasks.priority AS priority, tasks.due_date AS due_date, tasks.completed_at AS completed_at, tasks.recurrence_type AS recurrence_type, tasks.recurrence_interval AS recurrence_interval, tasks.recurrence_end_date AS recurrence_end_date, tasks.recurrence_parent_id AS recurrence_parent_id, tasks.assigned_to_id AS assigned_to_id, tasks.project_id AS project_id, tasks.client_id AS client_id, tasks.parent_task_id AS parent_task_id, tasks.id AS id, tasks.created_at AS created_at, tasks.updated_at AS updated_at, tasks.deleted_at AS deleted_at, tasks.is_deleted AS is_deleted, tasks.created_by_id AS created_by_id, tasks.updated_by_id AS updated_by_id 
+FROM tasks 
+WHERE tasks.is_deleted = false) AS anon_1
+2026-08-28 11:11:04,215 INFO sqlalchemy.engine.Engine [cached since 1.222s ago] ()
+2026-08-28 11:11:04,219 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:04,220 INFO sqlalchemy.engine.Engine [cached since 1.285s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:04,295 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:04,297 INFO sqlalchemy.engine.Engine [cached since 0.9776s ago] (UUID('7703d919-c299-4649-85bc-23121e6da99a'),)
+INFO:     127.0.0.1:60122 - "GET /api/v1/consents?page=1&page_size=1&status=pending HTTP/1.1" 200 OK
+2026-08-28 11:11:04,302 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:04,398 INFO sqlalchemy.engine.Engine SELECT tasks.title, tasks.task_code, tasks.description, tasks.status, tasks.priority, tasks.due_date, tasks.completed_at, tasks.recurrence_type, tasks.recurrence_interval, tasks.recurrence_end_date, tasks.recurrence_parent_id, tasks.assigned_to_id, tasks.project_id, tasks.client_id, tasks.parent_task_id, tasks.id, tasks.created_at, tasks.updated_at, tasks.deleted_at, tasks.is_deleted, tasks.created_by_id, tasks.updated_by_id 
+FROM tasks 
+WHERE tasks.is_deleted = false ORDER BY tasks.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:04,400 INFO sqlalchemy.engine.Engine [generated in 0.00232s] (10, 0)
+2026-08-28 11:11:04,403 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT projects.name AS name, projects.project_code AS project_code, projects.description AS description, projects.notes AS notes, projects.status AS status, projects.priority AS priority, projects.progress AS progress, projects.budget AS budget, projects.currency AS currency, projects.start_date AS start_date, projects.end_date AS end_date, projects.deadline AS deadline, projects.actual_completion_date AS actual_completion_date, projects.client_id AS client_id, projects.assigned_admin_id AS assigned_admin_id, projects.id AS id, projects.created_at AS created_at, projects.updated_at AS updated_at, projects.deleted_at AS deleted_at, projects.is_deleted AS is_deleted, projects.created_by_id AS created_by_id, projects.updated_by_id AS updated_by_id 
+FROM projects 
+WHERE projects.is_deleted = false) AS anon_1
+2026-08-28 11:11:04,404 INFO sqlalchemy.engine.Engine [cached since 1.35s ago] ()
+2026-08-28 11:11:04,538 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:04,540 INFO sqlalchemy.engine.Engine [cached since 1.156s ago] (UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'),)
+2026-08-28 11:11:04,615 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID, $2::UUID)
+2026-08-28 11:11:04,616 INFO sqlalchemy.engine.Engine [cached since 1.477s ago] (UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'), UUID('c36fb846-facb-43b8-a8af-54934c751415'))
+2026-08-28 11:11:04,620 INFO sqlalchemy.engine.Engine SELECT projects.name, projects.project_code, projects.description, projects.notes, projects.status, projects.priority, projects.progress, projects.budget, projects.currency, projects.start_date, projects.end_date, projects.deadline, projects.actual_completion_date, projects.client_id, projects.assigned_admin_id, projects.id, projects.created_at, projects.updated_at, projects.deleted_at, projects.is_deleted, projects.created_by_id, projects.updated_by_id 
+FROM projects 
+WHERE projects.is_deleted = false ORDER BY projects.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:04,620 INFO sqlalchemy.engine.Engine [generated in 0.00067s] (10, 0)
+2026-08-28 11:11:04,715 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:04,717 INFO sqlalchemy.engine.Engine [cached since 1.256s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:04,787 INFO sqlalchemy.engine.Engine SELECT tasks.parent_task_id AS tasks_parent_task_id, tasks.title AS tasks_title, tasks.task_code AS tasks_task_code, tasks.description AS tasks_description, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.due_date AS tasks_due_date, tasks.completed_at AS tasks_completed_at, tasks.recurrence_type AS tasks_recurrence_type, tasks.recurrence_interval AS tasks_recurrence_interval, tasks.recurrence_end_date AS tasks_recurrence_end_date, tasks.recurrence_parent_id AS tasks_recurrence_parent_id, tasks.assigned_to_id AS tasks_assigned_to_id, tasks.project_id AS tasks_project_id, tasks.client_id AS tasks_client_id, tasks.id AS tasks_id, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at, tasks.deleted_at AS tasks_deleted_at, tasks.is_deleted AS tasks_is_deleted, tasks.created_by_id AS tasks_created_by_id, tasks.updated_by_id AS tasks_updated_by_id 
+FROM tasks 
+WHERE tasks.parent_task_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID)
+2026-08-28 11:11:04,789 INFO sqlalchemy.engine.Engine [cached since 1.579s ago] (UUID('ad214bc0-c1d9-4520-b21b-6c408bff9bad'), UUID('0e1c1bd6-130d-4a44-97c2-e47b171f6f9e'), UUID('3c5be321-e939-453c-bd78-b74d24e9cea1'), UUID('239a7ddf-045d-49fc-948e-471284a514cf'), UUID('17278b0b-3f7c-4cc6-8788-58c75e607a81'), UUID('3acafd33-b1be-46c8-a471-7d777dcdcae1'), UUID('9b6d0f16-9fbc-40bf-855b-678bca424f8e'), UUID('70547aff-b314-44a5-9dac-b3e4c58eedea'), UUID('a269f486-c718-4426-b2e8-cf27771a8b7b'))
+2026-08-28 11:11:04,791 INFO sqlalchemy.engine.Engine SELECT project_assignments.project_id AS project_assignments_project_id, project_assignments.id AS project_assignments_id, project_assignments.user_id AS project_assignments_user_id, project_assignments.assigned_by_id AS project_assignments_assigned_by_id, project_assignments.assigned_at AS project_assignments_assigned_at 
+FROM project_assignments 
+WHERE project_assignments.project_id IN ($1::UUID)
+2026-08-28 11:11:04,792 INFO sqlalchemy.engine.Engine [cached since 1.586s ago] (UUID('dcac2ee0-d4b4-4f3e-8639-06eb95275bdb'),)
+INFO:     127.0.0.1:51651 - "GET /api/v1/invoices?page=1&page_size=20 HTTP/1.1" 200 OK
+2026-08-28 11:11:04,842 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:04,886 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:04,888 INFO sqlalchemy.engine.Engine [cached since 1.617s ago] (UUID('7703d919-c299-4649-85bc-23121e6da99a'),)
+2026-08-28 11:11:04,890 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:04,890 INFO sqlalchemy.engine.Engine [cached since 1.614s ago] (UUID('655ffce3-117b-4278-a329-78030d945b38'),)
+2026-08-28 11:11:05,002 INFO sqlalchemy.engine.Engine SELECT task_assignments.task_id AS task_assignments_task_id, task_assignments.id AS task_assignments_id, task_assignments.user_id AS task_assignments_user_id, task_assignments.assigned_by_id AS task_assignments_assigned_by_id, task_assignments.assigned_at AS task_assignments_assigned_at 
+FROM task_assignments 
+WHERE task_assignments.task_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID)
+2026-08-28 11:11:05,003 INFO sqlalchemy.engine.Engine [cached since 1.663s ago] (UUID('ad214bc0-c1d9-4520-b21b-6c408bff9bad'), UUID('0e1c1bd6-130d-4a44-97c2-e47b171f6f9e'), UUID('3c5be321-e939-453c-bd78-b74d24e9cea1'), UUID('239a7ddf-045d-49fc-948e-471284a514cf'), UUID('17278b0b-3f7c-4cc6-8788-58c75e607a81'), UUID('3acafd33-b1be-46c8-a471-7d777dcdcae1'), UUID('9b6d0f16-9fbc-40bf-855b-678bca424f8e'), UUID('70547aff-b314-44a5-9dac-b3e4c58eedea'), UUID('a269f486-c718-4426-b2e8-cf27771a8b7b'))
+2026-08-28 11:11:05,006 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:05,007 INFO sqlalchemy.engine.Engine [cached since 1.66s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:05,119 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID, $2::UUID)
+2026-08-28 11:11:05,120 INFO sqlalchemy.engine.Engine [cached since 1.708s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'), UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'))
+2026-08-28 11:11:05,123 INFO sqlalchemy.engine.Engine SELECT tasks.project_id AS tasks_project_id, tasks.title AS tasks_title, tasks.task_code AS tasks_task_code, tasks.description AS tasks_description, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.due_date AS tasks_due_date, tasks.completed_at AS tasks_completed_at, tasks.recurrence_type AS tasks_recurrence_type, tasks.recurrence_interval AS tasks_recurrence_interval, tasks.recurrence_end_date AS tasks_recurrence_end_date, tasks.recurrence_parent_id AS tasks_recurrence_parent_id, tasks.assigned_to_id AS tasks_assigned_to_id, tasks.client_id AS tasks_client_id, tasks.parent_task_id AS tasks_parent_task_id, tasks.id AS tasks_id, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at, tasks.deleted_at AS tasks_deleted_at, tasks.is_deleted AS tasks_is_deleted, tasks.created_by_id AS tasks_created_by_id, tasks.updated_by_id AS tasks_updated_by_id 
+FROM tasks 
+WHERE tasks.project_id IN ($1::UUID) AND tasks.is_deleted = false
+2026-08-28 11:11:05,125 INFO sqlalchemy.engine.Engine [cached since 1.701s ago] (UUID('dcac2ee0-d4b4-4f3e-8639-06eb95275bdb'),)
+2026-08-28 11:11:05,244 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:05,246 INFO sqlalchemy.engine.Engine [cached since 1.764s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:05,250 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:05,250 INFO sqlalchemy.engine.Engine [cached since 1.752s ago] (UUID('655ffce3-117b-4278-a329-78030d945b38'),)
+2026-08-28 11:11:05,368 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID)
+2026-08-28 11:11:05,370 INFO sqlalchemy.engine.Engine [cached since 1.823s ago] (UUID('5c7411cc-26ff-4e24-a6de-e4100639fb4e'), UUID('655ffce3-117b-4278-a329-78030d945b38'), UUID('7703d919-c299-4649-85bc-23121e6da99a'), UUID('bc455529-e287-4325-b551-8e064624aa17'))
+2026-08-28 11:11:05,373 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:05,374 INFO sqlalchemy.engine.Engine [cached since 1.809s ago] (UUID('7a182362-3186-493a-b4b3-3df400a9cc28'),)
+2026-08-28 11:11:05,475 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID, $2::UUID, $3::UUID)
+2026-08-28 11:11:05,476 INFO sqlalchemy.engine.Engine [cached since 1.866s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'), UUID('7a182362-3186-493a-b4b3-3df400a9cc28'), UUID('a64e2926-c17f-4fbd-a66d-1ee3fc41adb0'))
+2026-08-28 11:11:05,479 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:05,479 INFO sqlalchemy.engine.Engine [cached since 1.849s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+INFO:     127.0.0.1:58509 - "GET /api/v1/tasks?page=1&page_size=10 HTTP/1.1" 200 OK
+2026-08-28 11:11:05,585 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:05,670 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:05,670 INFO sqlalchemy.engine.Engine [cached since 1.969s ago] (UUID('7a182362-3186-493a-b4b3-3df400a9cc28'),)
+INFO:     127.0.0.1:51477 - "GET /api/v1/agendas?page=1&page_size=10 HTTP/1.1" 200 OK
+2026-08-28 11:11:05,739 INFO sqlalchemy.engine.Engine COMMIT
+[ME] START
+[ME] AUTH: 0.4 ms
+2026-08-28 11:11:09,290 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:09,292 INFO sqlalchemy.engine.Engine SELECT 1
+2026-08-28 11:11:09,292 INFO sqlalchemy.engine.Engine [cached since 9.28s ago] ()
+[ME] DB CONNECTION: 199.2 ms
+2026-08-28 11:11:09,379 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:09,381 INFO sqlalchemy.engine.Engine [cached since 7.737s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:09,445 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:09,447 INFO sqlalchemy.engine.Engine [cached since 7.725s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+[ME] USER QUERY (incl ROLE/ORG): 128.1 ms
+[ME] AUTH DEP TOTAL: 328.4 ms
+[ME] RESPONSE: 0.1 ms
+INFO:     127.0.0.1:59613 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+2026-08-28 11:11:09,510 INFO sqlalchemy.engine.Engine COMMIT
+[ME] START
+[ME] AUTH: 0.3 ms
+2026-08-28 11:11:19,978 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:19,980 INFO sqlalchemy.engine.Engine SELECT 1
+2026-08-28 11:11:19,981 INFO sqlalchemy.engine.Engine [cached since 19.97s ago] ()
+[ME] DB CONNECTION: 232.8 ms
+2026-08-28 11:11:20,082 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:20,083 INFO sqlalchemy.engine.Engine [cached since 18.44s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:20,157 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:20,159 INFO sqlalchemy.engine.Engine [cached since 18.44s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+[ME] USER QUERY (incl ROLE/ORG): 144.4 ms
+[ME] AUTH DEP TOTAL: 377.9 ms
+[ME] RESPONSE: 0.1 ms
+INFO:     127.0.0.1:63612 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+2026-08-28 11:11:20,229 INFO sqlalchemy.engine.Engine COMMIT
+[ME] START
+[ME] AUTH: 0.5 ms
+2026-08-28 11:11:20,358 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:20,360 INFO sqlalchemy.engine.Engine SELECT 1
+2026-08-28 11:11:20,361 INFO sqlalchemy.engine.Engine [cached since 20.35s ago] ()
+[ME] DB CONNECTION: 222.2 ms
+2026-08-28 11:11:20,460 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:20,462 INFO sqlalchemy.engine.Engine [cached since 18.82s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:20,516 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:20,517 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:20,518 INFO sqlalchemy.engine.Engine [cached since 18.87s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:20,525 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:20,525 INFO sqlalchemy.engine.Engine [cached since 18.8s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+[ME] USER QUERY (incl ROLE/ORG): 136.2 ms
+[ME] AUTH DEP TOTAL: 359.4 ms
+[ME] RESPONSE: 0.3 ms
+INFO:     127.0.0.1:54341 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+2026-08-28 11:11:20,601 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:20,608 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:20,608 INFO sqlalchemy.engine.Engine [cached since 18.89s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:20,669 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT clients.name AS name, clients.legal_name AS legal_name, clients.company_type AS company_type, clients.industry AS industry, clients.company_size AS company_size, clients.website AS website, clients.annual_revenue AS annual_revenue, clients.currency AS currency, clients.gst_number AS gst_number, clients.pan_number AS pan_number, clients.primary_contact_name AS primary_contact_name, clients.email AS email, clients.phone AS phone, clients.address_line1 AS address_line1, clients.address_line2 AS address_line2, clients.city AS city, clients.state AS state, clients.postal_code AS postal_code, clients.country AS country, clients.billing_address AS billing_address, clients.tier AS tier, clients.status AS status, clients.assigned_admin_id AS assigned_admin_id, clients.account_manager_id AS account_manager_id, clients.id AS id, clients.created_at AS created_at, clients.updated_at AS updated_at, clients.deleted_at AS deleted_at, clients.is_deleted AS is_deleted, clients.created_by_id AS created_by_id, clients.updated_by_id AS updated_by_id 
+FROM clients 
+WHERE clients.is_deleted = false) AS anon_1
+2026-08-28 11:11:20,670 INFO sqlalchemy.engine.Engine [cached since 18.2s ago] ()
+2026-08-28 11:11:20,739 INFO sqlalchemy.engine.Engine SELECT clients.name, clients.legal_name, clients.company_type, clients.industry, clients.company_size, clients.website, clients.annual_revenue, clients.currency, clients.gst_number, clients.pan_number, clients.primary_contact_name, clients.email, clients.phone, clients.address_line1, clients.address_line2, clients.city, clients.state, clients.postal_code, clients.country, clients.billing_address, clients.tier, clients.status, clients.assigned_admin_id, clients.account_manager_id, clients.id, clients.created_at, clients.updated_at, clients.deleted_at, clients.is_deleted, clients.created_by_id, clients.updated_by_id 
+FROM clients 
+WHERE clients.is_deleted = false ORDER BY clients.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:20,740 INFO sqlalchemy.engine.Engine [generated in 0.00157s] (100, 0)
+2026-08-28 11:11:20,742 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:20,742 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:20,743 INFO sqlalchemy.engine.Engine [cached since 19.1s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:20,802 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID)
+2026-08-28 11:11:20,803 INFO sqlalchemy.engine.Engine [cached since 18.12s ago] (UUID('4dc1f38c-fb7a-47e6-8869-1c6a2a032e83'), UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'), UUID('78dc9853-9ae7-41bb-b3a4-e8d2409e3572'), UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'), UUID('869f57ef-1e21-4ca1-80e2-5a3dbae9f7a7'), UUID('c36fb846-facb-43b8-a8af-54934c751415'))
+2026-08-28 11:11:20,814 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:20,815 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:20,816 INFO sqlalchemy.engine.Engine [cached since 19.17s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:20,828 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:20,829 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:20,830 INFO sqlalchemy.engine.Engine [cached since 19.19s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:20,831 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:20,832 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:20,833 INFO sqlalchemy.engine.Engine [cached since 19.19s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:20,836 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:20,836 INFO sqlalchemy.engine.Engine [cached since 19.11s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+INFO:     127.0.0.1:63612 - "GET /api/v1/clients?page=1&page_size=100 HTTP/1.1" 200 OK
+2026-08-28 11:11:20,870 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:20,934 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:20,936 INFO sqlalchemy.engine.Engine [cached since 18s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:20,954 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:20,955 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:20,956 INFO sqlalchemy.engine.Engine [cached since 19.31s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:20,962 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:20,963 INFO sqlalchemy.engine.Engine [cached since 19.24s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:20,967 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:20,967 INFO sqlalchemy.engine.Engine [cached since 19.24s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:20,970 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:20,970 INFO sqlalchemy.engine.Engine [cached since 19.25s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,005 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT projects.name AS name, projects.project_code AS project_code, projects.description AS description, projects.notes AS notes, projects.status AS status, projects.priority AS priority, projects.progress AS progress, projects.budget AS budget, projects.currency AS currency, projects.start_date AS start_date, projects.end_date AS end_date, projects.deadline AS deadline, projects.actual_completion_date AS actual_completion_date, projects.client_id AS client_id, projects.assigned_admin_id AS assigned_admin_id, projects.id AS id, projects.created_at AS created_at, projects.updated_at AS updated_at, projects.deleted_at AS deleted_at, projects.is_deleted AS is_deleted, projects.created_by_id AS created_by_id, projects.updated_by_id AS updated_by_id 
+FROM projects 
+WHERE projects.is_deleted = false) AS anon_1
+2026-08-28 11:11:21,006 INFO sqlalchemy.engine.Engine [cached since 17.95s ago] ()
+2026-08-28 11:11:21,029 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:21,030 INFO sqlalchemy.engine.Engine [cached since 18.09s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,033 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:21,034 INFO sqlalchemy.engine.Engine [cached since 18.1s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,037 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:21,038 INFO sqlalchemy.engine.Engine [cached since 18.1s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,041 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,042 INFO sqlalchemy.engine.Engine [cached since 19.32s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,072 INFO sqlalchemy.engine.Engine SELECT projects.name, projects.project_code, projects.description, projects.notes, projects.status, projects.priority, projects.progress, projects.budget, projects.currency, projects.start_date, projects.end_date, projects.deadline, projects.actual_completion_date, projects.client_id, projects.assigned_admin_id, projects.id, projects.created_at, projects.updated_at, projects.deleted_at, projects.is_deleted, projects.created_by_id, projects.updated_by_id 
+FROM projects 
+WHERE projects.is_deleted = false ORDER BY projects.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:21,074 INFO sqlalchemy.engine.Engine [cached since 16.45s ago] (10, 0)
+2026-08-28 11:11:21,092 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT consents.title AS title, consents.description AS description, consents.status AS status, consents.file_name AS file_name, consents.file_path AS file_path, consents.file_size AS file_size, consents.mime_type AS mime_type, consents.file_checksum AS file_checksum, consents.responded_at AS responded_at, consents.denial_reason AS denial_reason, consents.response_notes AS response_notes, consents.client_id AS client_id, consents.responded_by_id AS responded_by_id, consents.id AS id, consents.created_at AS created_at, consents.updated_at AS updated_at, consents.deleted_at AS deleted_at, consents.is_deleted AS is_deleted, consents.created_by_id AS created_by_id, consents.updated_by_id AS updated_by_id 
+FROM consents 
+WHERE consents.is_deleted = false AND consents.status = $1) AS anon_1
+2026-08-28 11:11:21,093 INFO sqlalchemy.engine.Engine [cached since 18.05s ago] ('PENDING',)
+2026-08-28 11:11:21,095 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT meetings.title AS title, meetings.description AS description, meetings.location AS location, meetings.meeting_type AS meeting_type, meetings.status AS status, meetings.start_time AS start_time, meetings.end_time AS end_time, meetings.timezone AS timezone, meetings.client_id AS client_id, meetings.project_id AS project_id, meetings.created_by_id AS created_by_id, meetings.id AS id, meetings.created_at AS created_at, meetings.updated_at AS updated_at, meetings.deleted_at AS deleted_at, meetings.is_deleted AS is_deleted, meetings.updated_by_id AS updated_by_id 
+FROM meetings LEFT OUTER JOIN clients ON meetings.client_id = clients.id 
+WHERE meetings.is_deleted = false AND meetings.status = $1) AS anon_1
+2026-08-28 11:11:21,095 INFO sqlalchemy.engine.Engine [cached since 17.98s ago] ('SCHEDULED',)
+2026-08-28 11:11:21,099 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:21,100 INFO sqlalchemy.engine.Engine [cached since 18.16s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,102 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT invoices.invoice_number AS invoice_number, invoices.issue_date AS issue_date, invoices.due_date AS due_date, invoices.paid_at AS paid_at, invoices.currency AS currency, invoices.subtotal AS subtotal, invoices.tax_rate AS tax_rate, invoices.tax_amount AS tax_amount, invoices.total_amount AS total_amount, invoices.paid_amount AS paid_amount, invoices.outstanding_amount AS outstanding_amount, invoices.status AS status, invoices.notes AS notes, invoices.pdf_file_path AS pdf_file_path, invoices.client_id AS client_id, invoices.project_id AS project_id, invoices.assigned_admin_id AS assigned_admin_id, invoices.id AS id, invoices.created_at AS created_at, invoices.updated_at AS updated_at, invoices.deleted_at AS deleted_at, invoices.is_deleted AS is_deleted, invoices.created_by_id AS created_by_id, invoices.updated_by_id AS updated_by_id 
+FROM invoices JOIN clients ON clients.id = invoices.client_id 
+WHERE invoices.is_deleted = false AND clients.is_deleted = false) AS anon_1
+2026-08-28 11:11:21,102 INFO sqlalchemy.engine.Engine [cached since 18.01s ago] ()
+2026-08-28 11:11:21,141 INFO sqlalchemy.engine.Engine SELECT project_assignments.project_id AS project_assignments_project_id, project_assignments.id AS project_assignments_id, project_assignments.user_id AS project_assignments_user_id, project_assignments.assigned_by_id AS project_assignments_assigned_by_id, project_assignments.assigned_at AS project_assignments_assigned_at 
+FROM project_assignments 
+WHERE project_assignments.project_id IN ($1::UUID)
+2026-08-28 11:11:21,142 INFO sqlalchemy.engine.Engine [cached since 17.94s ago] (UUID('dcac2ee0-d4b4-4f3e-8639-06eb95275bdb'),)
+2026-08-28 11:11:21,151 INFO sqlalchemy.engine.Engine SELECT meetings.title, meetings.description, meetings.location, meetings.meeting_type, meetings.status, meetings.start_time, meetings.end_time, meetings.timezone, meetings.client_id, meetings.project_id, meetings.created_by_id, meetings.id, meetings.created_at, meetings.updated_at, meetings.deleted_at, meetings.is_deleted, meetings.updated_by_id 
+FROM meetings LEFT OUTER JOIN clients ON meetings.client_id = clients.id 
+WHERE meetings.is_deleted = false AND meetings.status = $1 ORDER BY meetings.start_time ASC 
+ LIMIT $2::INTEGER OFFSET $3::INTEGER
+2026-08-28 11:11:21,151 INFO sqlalchemy.engine.Engine [cached since 17.49s ago] ('SCHEDULED', 5, 0)
+2026-08-28 11:11:21,155 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT tasks.title AS title, tasks.task_code AS task_code, tasks.description AS description, tasks.status AS status, tasks.priority AS priority, tasks.due_date AS due_date, tasks.completed_at AS completed_at, tasks.recurrence_type AS recurrence_type, tasks.recurrence_interval AS recurrence_interval, tasks.recurrence_end_date AS recurrence_end_date, tasks.recurrence_parent_id AS recurrence_parent_id, tasks.assigned_to_id AS assigned_to_id, tasks.project_id AS project_id, tasks.client_id AS client_id, tasks.parent_task_id AS parent_task_id, tasks.id AS id, tasks.created_at AS created_at, tasks.updated_at AS updated_at, tasks.deleted_at AS deleted_at, tasks.is_deleted AS is_deleted, tasks.created_by_id AS created_by_id, tasks.updated_by_id AS updated_by_id 
+FROM tasks 
+WHERE tasks.is_deleted = false) AS anon_1
+2026-08-28 11:11:21,156 INFO sqlalchemy.engine.Engine [cached since 18.16s ago] ()
+2026-08-28 11:11:21,159 INFO sqlalchemy.engine.Engine SELECT consents.title, consents.description, consents.status, consents.file_name, consents.file_path, consents.file_size, consents.mime_type, consents.file_checksum, consents.responded_at, consents.denial_reason, consents.response_notes, consents.client_id, consents.responded_by_id, consents.id, consents.created_at, consents.updated_at, consents.deleted_at, consents.is_deleted, consents.created_by_id, consents.updated_by_id 
+FROM consents 
+WHERE consents.is_deleted = false AND consents.status = $1 ORDER BY consents.created_at DESC 
+ LIMIT $2::INTEGER OFFSET $3::INTEGER
+2026-08-28 11:11:21,160 INFO sqlalchemy.engine.Engine [cached since 17.34s ago] ('PENDING', 1, 0)
+2026-08-28 11:11:21,168 INFO sqlalchemy.engine.Engine SELECT invoices.invoice_number, invoices.issue_date, invoices.due_date, invoices.paid_at, invoices.currency, invoices.subtotal, invoices.tax_rate, invoices.tax_amount, invoices.total_amount, invoices.paid_amount, invoices.outstanding_amount, invoices.status, invoices.notes, invoices.pdf_file_path, invoices.client_id, invoices.project_id, invoices.assigned_admin_id, invoices.id, invoices.created_at, invoices.updated_at, invoices.deleted_at, invoices.is_deleted, invoices.created_by_id, invoices.updated_by_id 
+FROM invoices JOIN clients ON clients.id = invoices.client_id 
+WHERE invoices.is_deleted = false AND clients.is_deleted = false ORDER BY invoices.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:21,168 INFO sqlalchemy.engine.Engine [cached since 17.18s ago] (20, 0)
+2026-08-28 11:11:21,200 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:21,201 INFO sqlalchemy.engine.Engine [cached since 17.93s ago] (UUID('655ffce3-117b-4278-a329-78030d945b38'),)
+INFO:     127.0.0.1:58647 - "GET /api/v1/meetings?page=1&page_size=5&status=scheduled HTTP/1.1" 200 OK
+2026-08-28 11:11:21,214 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:21,216 INFO sqlalchemy.engine.Engine SELECT tasks.title, tasks.task_code, tasks.description, tasks.status, tasks.priority, tasks.due_date, tasks.completed_at, tasks.recurrence_type, tasks.recurrence_interval, tasks.recurrence_end_date, tasks.recurrence_parent_id, tasks.assigned_to_id, tasks.project_id, tasks.client_id, tasks.parent_task_id, tasks.id, tasks.created_at, tasks.updated_at, tasks.deleted_at, tasks.is_deleted, tasks.created_by_id, tasks.updated_by_id 
+FROM tasks 
+WHERE tasks.is_deleted = false ORDER BY tasks.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:21,217 INFO sqlalchemy.engine.Engine [cached since 16.82s ago] (10, 0)
+2026-08-28 11:11:21,224 INFO sqlalchemy.engine.Engine SELECT consent_assignments.consent_id AS consent_assignments_consent_id, consent_assignments.id AS consent_assignments_id, consent_assignments.user_id AS consent_assignments_user_id, consent_assignments.assigned_by_id AS consent_assignments_assigned_by_id, consent_assignments.assigned_at AS consent_assignments_assigned_at 
+FROM consent_assignments 
+WHERE consent_assignments.consent_id IN ($1::UUID)
+2026-08-28 11:11:21,225 INFO sqlalchemy.engine.Engine [cached since 18.03s ago] (UUID('515f2e9e-5a2e-4df6-a7da-5ff79773d65a'),)
+2026-08-28 11:11:21,229 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:21,229 INFO sqlalchemy.engine.Engine [cached since 17.98s ago] (UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'),)
+2026-08-28 11:11:21,264 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:21,265 INFO sqlalchemy.engine.Engine [cached since 17.92s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:21,272 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID, $2::UUID)
+2026-08-28 11:11:21,273 INFO sqlalchemy.engine.Engine [cached since 18.13s ago] (UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'), UUID('c36fb846-facb-43b8-a8af-54934c751415'))
+2026-08-28 11:11:21,290 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:21,291 INFO sqlalchemy.engine.Engine [cached since 18.03s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:21,298 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:21,299 INFO sqlalchemy.engine.Engine [cached since 17.98s ago] (UUID('7703d919-c299-4649-85bc-23121e6da99a'),)
+2026-08-28 11:11:21,330 INFO sqlalchemy.engine.Engine SELECT tasks.parent_task_id AS tasks_parent_task_id, tasks.title AS tasks_title, tasks.task_code AS tasks_task_code, tasks.description AS tasks_description, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.due_date AS tasks_due_date, tasks.completed_at AS tasks_completed_at, tasks.recurrence_type AS tasks_recurrence_type, tasks.recurrence_interval AS tasks_recurrence_interval, tasks.recurrence_end_date AS tasks_recurrence_end_date, tasks.recurrence_parent_id AS tasks_recurrence_parent_id, tasks.assigned_to_id AS tasks_assigned_to_id, tasks.project_id AS tasks_project_id, tasks.client_id AS tasks_client_id, tasks.id AS tasks_id, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at, tasks.deleted_at AS tasks_deleted_at, tasks.is_deleted AS tasks_is_deleted, tasks.created_by_id AS tasks_created_by_id, tasks.updated_by_id AS tasks_updated_by_id 
+FROM tasks 
+WHERE tasks.parent_task_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID)
+2026-08-28 11:11:21,331 INFO sqlalchemy.engine.Engine [cached since 18.12s ago] (UUID('ad214bc0-c1d9-4520-b21b-6c408bff9bad'), UUID('0e1c1bd6-130d-4a44-97c2-e47b171f6f9e'), UUID('3c5be321-e939-453c-bd78-b74d24e9cea1'), UUID('239a7ddf-045d-49fc-948e-471284a514cf'), UUID('17278b0b-3f7c-4cc6-8788-58c75e607a81'), UUID('3acafd33-b1be-46c8-a471-7d777dcdcae1'), UUID('9b6d0f16-9fbc-40bf-855b-678bca424f8e'), UUID('70547aff-b314-44a5-9dac-b3e4c58eedea'), UUID('a269f486-c718-4426-b2e8-cf27771a8b7b'))
+2026-08-28 11:11:21,333 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:21,334 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:21,334 INFO sqlalchemy.engine.Engine [cached since 19.69s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:21,337 INFO sqlalchemy.engine.Engine SELECT tasks.project_id AS tasks_project_id, tasks.title AS tasks_title, tasks.task_code AS tasks_task_code, tasks.description AS tasks_description, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.due_date AS tasks_due_date, tasks.completed_at AS tasks_completed_at, tasks.recurrence_type AS tasks_recurrence_type, tasks.recurrence_interval AS tasks_recurrence_interval, tasks.recurrence_end_date AS tasks_recurrence_end_date, tasks.recurrence_parent_id AS tasks_recurrence_parent_id, tasks.assigned_to_id AS tasks_assigned_to_id, tasks.client_id AS tasks_client_id, tasks.parent_task_id AS tasks_parent_task_id, tasks.id AS tasks_id, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at, tasks.deleted_at AS tasks_deleted_at, tasks.is_deleted AS tasks_is_deleted, tasks.created_by_id AS tasks_created_by_id, tasks.updated_by_id AS tasks_updated_by_id 
+FROM tasks 
+WHERE tasks.project_id IN ($1::UUID) AND tasks.is_deleted = false
+2026-08-28 11:11:21,338 INFO sqlalchemy.engine.Engine [cached since 17.91s ago] (UUID('dcac2ee0-d4b4-4f3e-8639-06eb95275bdb'),)
+2026-08-28 11:11:21,352 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:21,353 INFO sqlalchemy.engine.Engine [cached since 18.02s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:21,363 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:21,364 INFO sqlalchemy.engine.Engine [cached since 17.98s ago] (UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'),)
+2026-08-28 11:11:21,386 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:21,387 INFO sqlalchemy.engine.Engine [cached since 18.12s ago] (UUID('7703d919-c299-4649-85bc-23121e6da99a'),)
+2026-08-28 11:11:21,397 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:21,397 INFO sqlalchemy.engine.Engine [cached since 17.9s ago] (UUID('655ffce3-117b-4278-a329-78030d945b38'),)
+INFO:     127.0.0.1:55112 - "GET /api/v1/consents?page=1&page_size=1&status=pending HTTP/1.1" 200 OK
+2026-08-28 11:11:21,415 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:21,425 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,426 INFO sqlalchemy.engine.Engine [cached since 19.7s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,428 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,429 INFO sqlalchemy.engine.Engine [cached since 17.97s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,439 INFO sqlalchemy.engine.Engine SELECT task_assignments.task_id AS task_assignments_task_id, task_assignments.id AS task_assignments_id, task_assignments.user_id AS task_assignments_user_id, task_assignments.assigned_by_id AS task_assignments_assigned_by_id, task_assignments.assigned_at AS task_assignments_assigned_at 
+FROM task_assignments 
+WHERE task_assignments.task_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID)
+2026-08-28 11:11:21,440 INFO sqlalchemy.engine.Engine [cached since 18.1s ago] (UUID('ad214bc0-c1d9-4520-b21b-6c408bff9bad'), UUID('0e1c1bd6-130d-4a44-97c2-e47b171f6f9e'), UUID('3c5be321-e939-453c-bd78-b74d24e9cea1'), UUID('239a7ddf-045d-49fc-948e-471284a514cf'), UUID('17278b0b-3f7c-4cc6-8788-58c75e607a81'), UUID('3acafd33-b1be-46c8-a471-7d777dcdcae1'), UUID('9b6d0f16-9fbc-40bf-855b-678bca424f8e'), UUID('70547aff-b314-44a5-9dac-b3e4c58eedea'), UUID('a269f486-c718-4426-b2e8-cf27771a8b7b'))
+2026-08-28 11:11:21,465 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,466 INFO sqlalchemy.engine.Engine [cached since 17.9s ago] (UUID('7a182362-3186-493a-b4b3-3df400a9cc28'),)
+2026-08-28 11:11:21,488 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:21,489 INFO sqlalchemy.engine.Engine [cached since 18.55s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+INFO:     127.0.0.1:55120 - "GET /api/v1/invoices?page=1&page_size=20 HTTP/1.1" 200 OK
+2026-08-28 11:11:21,492 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:21,497 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID, $2::UUID)
+2026-08-28 11:11:21,498 INFO sqlalchemy.engine.Engine [cached since 18.09s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'), UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'))
+2026-08-28 11:11:21,530 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:21,530 INFO sqlalchemy.engine.Engine [cached since 17.9s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:21,548 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:21,549 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:21,550 INFO sqlalchemy.engine.Engine [cached since 19.91s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:21,553 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT meetings.title AS title, meetings.description AS description, meetings.location AS location, meetings.meeting_type AS meeting_type, meetings.status AS status, meetings.start_time AS start_time, meetings.end_time AS end_time, meetings.timezone AS timezone, meetings.client_id AS client_id, meetings.project_id AS project_id, meetings.created_by_id AS created_by_id, meetings.id AS id, meetings.created_at AS created_at, meetings.updated_at AS updated_at, meetings.deleted_at AS deleted_at, meetings.is_deleted AS is_deleted, meetings.updated_by_id AS updated_by_id 
+FROM meetings LEFT OUTER JOIN clients ON meetings.client_id = clients.id 
+WHERE meetings.is_deleted = false AND meetings.status = $1) AS anon_1
+2026-08-28 11:11:21,553 INFO sqlalchemy.engine.Engine [cached since 18.44s ago] ('SCHEDULED',)
+2026-08-28 11:11:21,557 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,558 INFO sqlalchemy.engine.Engine [cached since 18.08s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,592 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,594 INFO sqlalchemy.engine.Engine [cached since 17.89s ago] (UUID('7a182362-3186-493a-b4b3-3df400a9cc28'),)
+2026-08-28 11:11:21,612 INFO sqlalchemy.engine.Engine SELECT meetings.title, meetings.description, meetings.location, meetings.meeting_type, meetings.status, meetings.start_time, meetings.end_time, meetings.timezone, meetings.client_id, meetings.project_id, meetings.created_by_id, meetings.id, meetings.created_at, meetings.updated_at, meetings.deleted_at, meetings.is_deleted, meetings.updated_by_id 
+FROM meetings LEFT OUTER JOIN clients ON meetings.client_id = clients.id 
+WHERE meetings.is_deleted = false AND meetings.status = $1 ORDER BY meetings.start_time ASC 
+ LIMIT $2::INTEGER OFFSET $3::INTEGER
+2026-08-28 11:11:21,613 INFO sqlalchemy.engine.Engine [cached since 17.95s ago] ('SCHEDULED', 5, 0)
+2026-08-28 11:11:21,616 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID)
+2026-08-28 11:11:21,617 INFO sqlalchemy.engine.Engine [cached since 18.07s ago] (UUID('5c7411cc-26ff-4e24-a6de-e4100639fb4e'), UUID('655ffce3-117b-4278-a329-78030d945b38'), UUID('7703d919-c299-4649-85bc-23121e6da99a'), UUID('bc455529-e287-4325-b551-8e064624aa17'))
+2026-08-28 11:11:21,630 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:21,631 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:21,632 INFO sqlalchemy.engine.Engine [cached since 19.99s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:21,640 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,641 INFO sqlalchemy.engine.Engine [cached since 19.92s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+INFO:     127.0.0.1:54341 - "GET /api/v1/agendas?page=1&page_size=10 HTTP/1.1" 200 OK
+2026-08-28 11:11:21,664 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:21,672 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID, $2::UUID, $3::UUID)
+2026-08-28 11:11:21,673 INFO sqlalchemy.engine.Engine [cached since 18.06s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'), UUID('7a182362-3186-493a-b4b3-3df400a9cc28'), UUID('a64e2926-c17f-4fbd-a66d-1ee3fc41adb0'))
+INFO:     127.0.0.1:63612 - "GET /api/v1/meetings?page=1&page_size=5&status=scheduled HTTP/1.1" 200 OK
+2026-08-28 11:11:21,678 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:21,705 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:21,706 INFO sqlalchemy.engine.Engine [cached since 18.77s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,727 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,728 INFO sqlalchemy.engine.Engine [cached since 20.01s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+INFO:     127.0.0.1:54079 - "GET /api/v1/tasks?page=1&page_size=10 HTTP/1.1" 200 OK
+2026-08-28 11:11:21,732 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:21,773 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT consents.title AS title, consents.description AS description, consents.status AS status, consents.file_name AS file_name, consents.file_path AS file_path, consents.file_size AS file_size, consents.mime_type AS mime_type, consents.file_checksum AS file_checksum, consents.responded_at AS responded_at, consents.denial_reason AS denial_reason, consents.response_notes AS response_notes, consents.client_id AS client_id, consents.responded_by_id AS responded_by_id, consents.id AS id, consents.created_at AS created_at, consents.updated_at AS updated_at, consents.deleted_at AS deleted_at, consents.is_deleted AS is_deleted, consents.created_by_id AS created_by_id, consents.updated_by_id AS updated_by_id 
+FROM consents 
+WHERE consents.is_deleted = false AND consents.status = $1) AS anon_1
+2026-08-28 11:11:21,774 INFO sqlalchemy.engine.Engine [cached since 18.73s ago] ('PENDING',)
+2026-08-28 11:11:21,796 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:21,797 INFO sqlalchemy.engine.Engine [cached since 18.86s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,815 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:21,817 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:21,818 INFO sqlalchemy.engine.Engine [cached since 20.17s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:21,847 INFO sqlalchemy.engine.Engine SELECT consents.title, consents.description, consents.status, consents.file_name, consents.file_path, consents.file_size, consents.mime_type, consents.file_checksum, consents.responded_at, consents.denial_reason, consents.response_notes, consents.client_id, consents.responded_by_id, consents.id, consents.created_at, consents.updated_at, consents.deleted_at, consents.is_deleted, consents.created_by_id, consents.updated_by_id 
+FROM consents 
+WHERE consents.is_deleted = false AND consents.status = $1 ORDER BY consents.created_at DESC 
+ LIMIT $2::INTEGER OFFSET $3::INTEGER
+2026-08-28 11:11:21,848 INFO sqlalchemy.engine.Engine [cached since 18.03s ago] ('PENDING', 1, 0)
+2026-08-28 11:11:21,859 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT invoices.invoice_number AS invoice_number, invoices.issue_date AS issue_date, invoices.due_date AS due_date, invoices.paid_at AS paid_at, invoices.currency AS currency, invoices.subtotal AS subtotal, invoices.tax_rate AS tax_rate, invoices.tax_amount AS tax_amount, invoices.total_amount AS total_amount, invoices.paid_amount AS paid_amount, invoices.outstanding_amount AS outstanding_amount, invoices.status AS status, invoices.notes AS notes, invoices.pdf_file_path AS pdf_file_path, invoices.client_id AS client_id, invoices.project_id AS project_id, invoices.assigned_admin_id AS assigned_admin_id, invoices.id AS id, invoices.created_at AS created_at, invoices.updated_at AS updated_at, invoices.deleted_at AS deleted_at, invoices.is_deleted AS is_deleted, invoices.created_by_id AS created_by_id, invoices.updated_by_id AS updated_by_id 
+FROM invoices JOIN clients ON clients.id = invoices.client_id 
+WHERE invoices.is_deleted = false AND clients.is_deleted = false) AS anon_1
+2026-08-28 11:11:21,860 INFO sqlalchemy.engine.Engine [cached since 18.77s ago] ()
+2026-08-28 11:11:21,882 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:11:21,884 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 11:11:21,885 INFO sqlalchemy.engine.Engine [cached since 20.24s ago] (UUID('bab312c2-c651-4e04-935b-6d327f82634a'), 'admin@sgccrm.com')
+2026-08-28 11:11:21,917 INFO sqlalchemy.engine.Engine SELECT consent_assignments.consent_id AS consent_assignments_consent_id, consent_assignments.id AS consent_assignments_id, consent_assignments.user_id AS consent_assignments_user_id, consent_assignments.assigned_by_id AS consent_assignments_assigned_by_id, consent_assignments.assigned_at AS consent_assignments_assigned_at 
+FROM consent_assignments 
+WHERE consent_assignments.consent_id IN ($1::UUID)
+2026-08-28 11:11:21,918 INFO sqlalchemy.engine.Engine [cached since 18.72s ago] (UUID('515f2e9e-5a2e-4df6-a7da-5ff79773d65a'),)
+2026-08-28 11:11:21,922 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,923 INFO sqlalchemy.engine.Engine [cached since 20.2s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,928 INFO sqlalchemy.engine.Engine SELECT invoices.invoice_number, invoices.issue_date, invoices.due_date, invoices.paid_at, invoices.currency, invoices.subtotal, invoices.tax_rate, invoices.tax_amount, invoices.total_amount, invoices.paid_amount, invoices.outstanding_amount, invoices.status, invoices.notes, invoices.pdf_file_path, invoices.client_id, invoices.project_id, invoices.assigned_admin_id, invoices.id, invoices.created_at, invoices.updated_at, invoices.deleted_at, invoices.is_deleted, invoices.created_by_id, invoices.updated_by_id 
+FROM invoices JOIN clients ON clients.id = invoices.client_id 
+WHERE invoices.is_deleted = false AND clients.is_deleted = false ORDER BY invoices.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:21,929 INFO sqlalchemy.engine.Engine [cached since 17.94s ago] (20, 0)
+2026-08-28 11:11:21,982 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:21,984 INFO sqlalchemy.engine.Engine [cached since 18.72s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:21,987 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:21,988 INFO sqlalchemy.engine.Engine [cached since 19.05s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:21,995 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:21,996 INFO sqlalchemy.engine.Engine [cached since 18.75s ago] (UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'),)
+2026-08-28 11:11:21,999 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:21,999 INFO sqlalchemy.engine.Engine [cached since 20.28s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:22,048 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:22,050 INFO sqlalchemy.engine.Engine [cached since 18.72s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:22,053 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT projects.name AS name, projects.project_code AS project_code, projects.description AS description, projects.notes AS notes, projects.status AS status, projects.priority AS priority, projects.progress AS progress, projects.budget AS budget, projects.currency AS currency, projects.start_date AS start_date, projects.end_date AS end_date, projects.deadline AS deadline, projects.actual_completion_date AS actual_completion_date, projects.client_id AS client_id, projects.assigned_admin_id AS assigned_admin_id, projects.id AS id, projects.created_at AS created_at, projects.updated_at AS updated_at, projects.deleted_at AS deleted_at, projects.is_deleted AS is_deleted, projects.created_by_id AS created_by_id, projects.updated_by_id AS updated_by_id 
+FROM projects 
+WHERE projects.is_deleted = false) AS anon_1
+2026-08-28 11:11:22,054 INFO sqlalchemy.engine.Engine [cached since 19s ago] ()
+2026-08-28 11:11:22,059 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:22,060 INFO sqlalchemy.engine.Engine [cached since 18.74s ago] (UUID('7703d919-c299-4649-85bc-23121e6da99a'),)
+2026-08-28 11:11:22,064 INFO sqlalchemy.engine.Engine SELECT roles.name 
+FROM roles 
+WHERE roles.id = $1::UUID
+2026-08-28 11:11:22,065 INFO sqlalchemy.engine.Engine [cached since 19.13s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+INFO:     127.0.0.1:58647 - "GET /api/v1/consents?page=1&page_size=1&status=pending HTTP/1.1" 200 OK
+2026-08-28 11:11:22,112 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:22,116 INFO sqlalchemy.engine.Engine SELECT projects.name, projects.project_code, projects.description, projects.notes, projects.status, projects.priority, projects.progress, projects.budget, projects.currency, projects.start_date, projects.end_date, projects.deadline, projects.actual_completion_date, projects.client_id, projects.assigned_admin_id, projects.id, projects.created_at, projects.updated_at, projects.deleted_at, projects.is_deleted, projects.created_by_id, projects.updated_by_id 
+FROM projects 
+WHERE projects.is_deleted = false ORDER BY projects.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:22,117 INFO sqlalchemy.engine.Engine [cached since 17.5s ago] (10, 0)
+2026-08-28 11:11:22,120 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:22,121 INFO sqlalchemy.engine.Engine [cached since 18.74s ago] (UUID('e0d18895-c0e9-4728-b7fc-2c6e5abaa410'),)
+2026-08-28 11:11:22,127 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT tasks.title AS title, tasks.task_code AS task_code, tasks.description AS description, tasks.status AS status, tasks.priority AS priority, tasks.due_date AS due_date, tasks.completed_at AS completed_at, tasks.recurrence_type AS recurrence_type, tasks.recurrence_interval AS recurrence_interval, tasks.recurrence_end_date AS recurrence_end_date, tasks.recurrence_parent_id AS recurrence_parent_id, tasks.assigned_to_id AS assigned_to_id, tasks.project_id AS project_id, tasks.client_id AS client_id, tasks.parent_task_id AS parent_task_id, tasks.id AS id, tasks.created_at AS created_at, tasks.updated_at AS updated_at, tasks.deleted_at AS deleted_at, tasks.is_deleted AS is_deleted, tasks.created_by_id AS created_by_id, tasks.updated_by_id AS updated_by_id 
+FROM tasks 
+WHERE tasks.is_deleted = false) AS anon_1
+2026-08-28 11:11:22,127 INFO sqlalchemy.engine.Engine [cached since 19.13s ago] ()
+2026-08-28 11:11:22,176 INFO sqlalchemy.engine.Engine SELECT project_assignments.project_id AS project_assignments_project_id, project_assignments.id AS project_assignments_id, project_assignments.user_id AS project_assignments_user_id, project_assignments.assigned_by_id AS project_assignments_assigned_by_id, project_assignments.assigned_at AS project_assignments_assigned_at 
+FROM project_assignments 
+WHERE project_assignments.project_id IN ($1::UUID)
+2026-08-28 11:11:22,178 INFO sqlalchemy.engine.Engine [cached since 18.97s ago] (UUID('dcac2ee0-d4b4-4f3e-8639-06eb95275bdb'),)
+2026-08-28 11:11:22,180 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:22,181 INFO sqlalchemy.engine.Engine [cached since 18.72s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:22,188 INFO sqlalchemy.engine.Engine SELECT tasks.title, tasks.task_code, tasks.description, tasks.status, tasks.priority, tasks.due_date, tasks.completed_at, tasks.recurrence_type, tasks.recurrence_interval, tasks.recurrence_end_date, tasks.recurrence_parent_id, tasks.assigned_to_id, tasks.project_id, tasks.client_id, tasks.parent_task_id, tasks.id, tasks.created_at, tasks.updated_at, tasks.deleted_at, tasks.is_deleted, tasks.created_by_id, tasks.updated_by_id 
+FROM tasks 
+WHERE tasks.is_deleted = false ORDER BY tasks.created_at DESC 
+ LIMIT $1::INTEGER OFFSET $2::INTEGER
+2026-08-28 11:11:22,188 INFO sqlalchemy.engine.Engine [cached since 17.79s ago] (10, 0)
+INFO:     127.0.0.1:55112 - "GET /api/v1/invoices?page=1&page_size=20 HTTP/1.1" 200 OK
+2026-08-28 11:11:22,242 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:22,244 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:22,245 INFO sqlalchemy.engine.Engine [cached since 18.97s ago] (UUID('655ffce3-117b-4278-a329-78030d945b38'),)
+2026-08-28 11:11:22,251 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID, $2::UUID)
+2026-08-28 11:11:22,251 INFO sqlalchemy.engine.Engine [cached since 19.11s ago] (UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'), UUID('c36fb846-facb-43b8-a8af-54934c751415'))
+2026-08-28 11:11:22,309 INFO sqlalchemy.engine.Engine SELECT clients.id AS clients_id, clients.name AS clients_name, clients.legal_name AS clients_legal_name, clients.company_type AS clients_company_type, clients.industry AS clients_industry, clients.company_size AS clients_company_size, clients.website AS clients_website, clients.annual_revenue AS clients_annual_revenue, clients.currency AS clients_currency, clients.gst_number AS clients_gst_number, clients.pan_number AS clients_pan_number, clients.primary_contact_name AS clients_primary_contact_name, clients.email AS clients_email, clients.phone AS clients_phone, clients.address_line1 AS clients_address_line1, clients.address_line2 AS clients_address_line2, clients.city AS clients_city, clients.state AS clients_state, clients.postal_code AS clients_postal_code, clients.country AS clients_country, clients.billing_address AS clients_billing_address, clients.tier AS clients_tier, clients.status AS clients_status, clients.assigned_admin_id AS clients_assigned_admin_id, clients.account_manager_id AS clients_account_manager_id, clients.created_at AS clients_created_at, clients.updated_at AS clients_updated_at, clients.deleted_at AS clients_deleted_at, clients.is_deleted AS clients_is_deleted, clients.created_by_id AS clients_created_by_id, clients.updated_by_id AS clients_updated_by_id 
+FROM clients 
+WHERE clients.id IN ($1::UUID)
+2026-08-28 11:11:22,310 INFO sqlalchemy.engine.Engine [cached since 18.96s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:22,312 INFO sqlalchemy.engine.Engine SELECT tasks.parent_task_id AS tasks_parent_task_id, tasks.title AS tasks_title, tasks.task_code AS tasks_task_code, tasks.description AS tasks_description, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.due_date AS tasks_due_date, tasks.completed_at AS tasks_completed_at, tasks.recurrence_type AS tasks_recurrence_type, tasks.recurrence_interval AS tasks_recurrence_interval, tasks.recurrence_end_date AS tasks_recurrence_end_date, tasks.recurrence_parent_id AS tasks_recurrence_parent_id, tasks.assigned_to_id AS tasks_assigned_to_id, tasks.project_id AS tasks_project_id, tasks.client_id AS tasks_client_id, tasks.id AS tasks_id, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at, tasks.deleted_at AS tasks_deleted_at, tasks.is_deleted AS tasks_is_deleted, tasks.created_by_id AS tasks_created_by_id, tasks.updated_by_id AS tasks_updated_by_id 
+FROM tasks 
+WHERE tasks.parent_task_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID)
+2026-08-28 11:11:22,313 INFO sqlalchemy.engine.Engine [cached since 19.1s ago] (UUID('ad214bc0-c1d9-4520-b21b-6c408bff9bad'), UUID('0e1c1bd6-130d-4a44-97c2-e47b171f6f9e'), UUID('3c5be321-e939-453c-bd78-b74d24e9cea1'), UUID('239a7ddf-045d-49fc-948e-471284a514cf'), UUID('17278b0b-3f7c-4cc6-8788-58c75e607a81'), UUID('3acafd33-b1be-46c8-a471-7d777dcdcae1'), UUID('9b6d0f16-9fbc-40bf-855b-678bca424f8e'), UUID('70547aff-b314-44a5-9dac-b3e4c58eedea'), UUID('a269f486-c718-4426-b2e8-cf27771a8b7b'))
+2026-08-28 11:11:22,373 INFO sqlalchemy.engine.Engine SELECT tasks.project_id AS tasks_project_id, tasks.title AS tasks_title, tasks.task_code AS tasks_task_code, tasks.description AS tasks_description, tasks.status AS tasks_status, tasks.priority AS tasks_priority, tasks.due_date AS tasks_due_date, tasks.completed_at AS tasks_completed_at, tasks.recurrence_type AS tasks_recurrence_type, tasks.recurrence_interval AS tasks_recurrence_interval, tasks.recurrence_end_date AS tasks_recurrence_end_date, tasks.recurrence_parent_id AS tasks_recurrence_parent_id, tasks.assigned_to_id AS tasks_assigned_to_id, tasks.client_id AS tasks_client_id, tasks.parent_task_id AS tasks_parent_task_id, tasks.id AS tasks_id, tasks.created_at AS tasks_created_at, tasks.updated_at AS tasks_updated_at, tasks.deleted_at AS tasks_deleted_at, tasks.is_deleted AS tasks_is_deleted, tasks.created_by_id AS tasks_created_by_id, tasks.updated_by_id AS tasks_updated_by_id 
+FROM tasks 
+WHERE tasks.project_id IN ($1::UUID) AND tasks.is_deleted = false
+2026-08-28 11:11:22,374 INFO sqlalchemy.engine.Engine [cached since 18.95s ago] (UUID('dcac2ee0-d4b4-4f3e-8639-06eb95275bdb'),)
+2026-08-28 11:11:22,377 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:22,378 INFO sqlalchemy.engine.Engine [cached since 19.11s ago] (UUID('7703d919-c299-4649-85bc-23121e6da99a'),)
+2026-08-28 11:11:22,437 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID)
+2026-08-28 11:11:22,438 INFO sqlalchemy.engine.Engine [cached since 18.94s ago] (UUID('655ffce3-117b-4278-a329-78030d945b38'),)
+2026-08-28 11:11:22,441 INFO sqlalchemy.engine.Engine SELECT task_assignments.task_id AS task_assignments_task_id, task_assignments.id AS task_assignments_id, task_assignments.user_id AS task_assignments_user_id, task_assignments.assigned_by_id AS task_assignments_assigned_by_id, task_assignments.assigned_at AS task_assignments_assigned_at 
+FROM task_assignments 
+WHERE task_assignments.task_id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID, $5::UUID, $6::UUID, $7::UUID, $8::UUID, $9::UUID)
+2026-08-28 11:11:22,442 INFO sqlalchemy.engine.Engine [cached since 19.1s ago] (UUID('ad214bc0-c1d9-4520-b21b-6c408bff9bad'), UUID('0e1c1bd6-130d-4a44-97c2-e47b171f6f9e'), UUID('3c5be321-e939-453c-bd78-b74d24e9cea1'), UUID('239a7ddf-045d-49fc-948e-471284a514cf'), UUID('17278b0b-3f7c-4cc6-8788-58c75e607a81'), UUID('3acafd33-b1be-46c8-a471-7d777dcdcae1'), UUID('9b6d0f16-9fbc-40bf-855b-678bca424f8e'), UUID('70547aff-b314-44a5-9dac-b3e4c58eedea'), UUID('a269f486-c718-4426-b2e8-cf27771a8b7b'))
+2026-08-28 11:11:22,501 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:22,502 INFO sqlalchemy.engine.Engine [cached since 18.94s ago] (UUID('7a182362-3186-493a-b4b3-3df400a9cc28'),)
+2026-08-28 11:11:22,506 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID, $2::UUID)
+2026-08-28 11:11:22,507 INFO sqlalchemy.engine.Engine [cached since 19.09s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'), UUID('39749d4e-47bd-47ff-aea7-6d2e9db97ffb'))
+2026-08-28 11:11:22,571 INFO sqlalchemy.engine.Engine SELECT contacts.client_id AS contacts_client_id, contacts.first_name AS contacts_first_name, contacts.last_name AS contacts_last_name, contacts.email AS contacts_email, contacts.phone AS contacts_phone, contacts.job_title AS contacts_job_title, contacts.department AS contacts_department, contacts.is_primary_contact AS contacts_is_primary_contact, contacts.id AS contacts_id, contacts.created_at AS contacts_created_at, contacts.updated_at AS contacts_updated_at, contacts.deleted_at AS contacts_deleted_at, contacts.is_deleted AS contacts_is_deleted, contacts.created_by_id AS contacts_created_by_id, contacts.updated_by_id AS contacts_updated_by_id 
+FROM contacts 
+WHERE contacts.client_id IN ($1::UUID)
+2026-08-28 11:11:22,573 INFO sqlalchemy.engine.Engine [cached since 18.94s ago] (UUID('c36fb846-facb-43b8-a8af-54934c751415'),)
+2026-08-28 11:11:22,575 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:22,576 INFO sqlalchemy.engine.Engine [cached since 19.09s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+2026-08-28 11:11:22,633 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 11:11:22,634 INFO sqlalchemy.engine.Engine [cached since 18.93s ago] (UUID('7a182362-3186-493a-b4b3-3df400a9cc28'),)
+2026-08-28 11:11:22,638 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.hashed_password AS users_hashed_password, users.first_name AS users_first_name, users.last_name AS users_last_name, users.phone_number AS users_phone_number, users.job_title AS users_job_title, users.avatar_url AS users_avatar_url, users.is_active AS users_is_active, users.is_verified AS users_is_verified, users.last_login_at AS users_last_login_at, users.organization_id AS users_organization_id, users.role_id AS users_role_id, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.deleted_at AS users_deleted_at, users.is_deleted AS users_is_deleted, users.created_by_id AS users_created_by_id, users.updated_by_id AS users_updated_by_id 
+FROM users 
+WHERE users.id IN ($1::UUID, $2::UUID, $3::UUID, $4::UUID)
+2026-08-28 11:11:22,639 INFO sqlalchemy.engine.Engine [cached since 19.09s ago] (UUID('5c7411cc-26ff-4e24-a6de-e4100639fb4e'), UUID('655ffce3-117b-4278-a329-78030d945b38'), UUID('7703d919-c299-4649-85bc-23121e6da99a'), UUID('bc455529-e287-4325-b551-8e064624aa17'))
+INFO:     127.0.0.1:55120 - "GET /api/v1/agendas?page=1&page_size=10 HTTP/1.1" 200 OK
+2026-08-28 11:11:22,704 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-28 11:11:22,706 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID, $2::UUID, $3::UUID)
+2026-08-28 11:11:22,707 INFO sqlalchemy.engine.Engine [cached since 19.1s ago] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'), UUID('7a182362-3186-493a-b4b3-3df400a9cc28'), UUID('a64e2926-c17f-4fbd-a66d-1ee3fc41adb0'))
+INFO:     127.0.0.1:63612 - "GET /api/v1/tasks?page=1&page_size=10 HTTP/1.1" 200 OK
+2026-08-28 11:11:22,772 INFO sqlalchemy.engine.Engine COMMIT
+ Shutting down SGC CRM Platform backend service...
+CORS ORIGINS: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:4173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174', 'https://crm.example.com']
+[STARTUP] Alembic migrations applied successfully
+2026-08-28 11:17:01,887 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-08-28 11:17:01,889 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-28 11:17:01,975 INFO sqlalchemy.engine.Engine select current_schema()
+2026-08-28 11:17:01,977 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-28 11:17:02,086 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-08-28 11:17:02,087 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-28 11:17:02,169 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 11:17:02,276 INFO sqlalchemy.engine.Engine SELECT roles.name, roles.display_name, roles.description, roles.id, roles.created_at, roles.updated_at, roles.deleted_at, roles.is_deleted, roles.created_by_id, roles.updated_by_id 
+FROM roles 
+WHERE roles.name = $1::VARCHAR
+2026-08-28 11:17:02,278 INFO sqlalchemy.engine.Engine [generated in 0.00140s] (<UserRoleEnum.SUPER_ADMIN: 'super_admin'>,)
+2026-08-28 11:17:02,365 INFO sqlalchemy.engine.Engine SELECT roles.name, roles.display_name, roles.description, roles.id, roles.created_at, roles.updated_at, roles.deleted_at, roles.is_deleted, roles.created_by_id, roles.updated_by_id 
+FROM roles 
+WHERE roles.name = $1::VARCHAR
+2026-08-28 11:17:02,367 INFO sqlalchemy.engine.Engine [cached since 0.09071s ago] (<UserRoleEnum.CLIENT: 'client'>,)
+2026-08-28 11:17:02,426 INFO sqlalchemy.engine.Engine COMMIT

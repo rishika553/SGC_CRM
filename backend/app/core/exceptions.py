@@ -47,6 +47,15 @@ class ForbiddenException(CRMException):
         )
 
 
+class InternalServerErrorException(CRMException):
+    def __init__(self, detail: str = "Internal server error"):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=detail,
+            code="INTERNAL_SERVER_ERROR",
+        )
+
+
 class ConflictException(CRMException):
     def __init__(self, detail: str = "Resource conflict detected"):
         super().__init__(

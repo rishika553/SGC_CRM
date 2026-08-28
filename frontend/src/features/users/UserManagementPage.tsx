@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/features/auth/AuthContext';
 import { CreateUserModal } from './CreateUserModal';
@@ -30,6 +31,7 @@ export const UserManagementPage: React.FC = () => {
   const [isCreateClientUserOpen, setIsCreateClientUserOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const fetchUsers = useCallback(async (page: number = 1, searchQuery: string = '') => {
     setIsLoading(true);
@@ -53,14 +55,13 @@ export const UserManagementPage: React.FC = () => {
   }, [fetchUsers, search]);
 
   const handleDeleteUser = async (userToDelete: User) => {
-    if (!              window.confirm(`Are you sure you want to delete ${formatName(userToDelete.first_name, userToDelete.last_name)}?`)) {
-      return;
-    }
     try {
       await api.delete(`/users/${userToDelete.id}`);
-      toast('Deleted', 'User soft-deleted successfully', 'success');
+      toast('Deleted', 'User deleted successfully', 'success');
+      setUserToDelete(null);
       fetchUsers(meta.page, search);
     } catch (err: any) {
+      setUserToDelete(null);
       toast('Delete Failed', err.response?.data?.error?.message || 'Could not delete user', 'error');
     }
   };
@@ -183,7 +184,7 @@ export const UserManagementPage: React.FC = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteUser(u)}
+                          onClick={() => setUserToDelete(u)}
                           className="p-1.5 text-surface-500 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                           title="Delete User"
                         >
@@ -248,6 +249,21 @@ export const UserManagementPage: React.FC = () => {
         clientName="Client Organization"
         onClose={() => setIsCreateClientUserOpen(false)}
         onSuccess={() => fetchUsers(meta.page, search)}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(userToDelete)}
+        onClose={() => setUserToDelete(null)}
+        title="Delete this user?"
+        message={
+          <>
+            <span className="font-semibold">
+              {userToDelete ? formatName(userToDelete.first_name, userToDelete.last_name) : ''}
+            </span>{' '}
+            will be deleted.
+          </>
+        }
+        onConfirm={() => userToDelete && handleDeleteUser(userToDelete)}
       />
     </MainLayout>
   );

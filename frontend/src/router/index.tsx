@@ -17,6 +17,7 @@ const ConsentPage = React.lazy(() => import('@/features/consents/ConsentPage').t
 const ClientListPage = React.lazy(() => import('@/features/clients/ClientListPage').then(m => ({ default: m.ClientListPage })));
 const ClientDetailPage = React.lazy(() => import('@/features/clients/ClientDetailPage').then(m => ({ default: m.ClientDetailPage })));
 const CalendarPage = React.lazy(() => import('@/pages/CalendarPage').then(m => ({ default: m.CalendarPage })));
+const ResetPasswordPage = React.lazy(() => import('@/pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 
 const PageSpinner: React.FC = () => (
   <div className="min-h-screen bg-[#F7F9F6] flex items-center justify-center">
@@ -80,7 +81,9 @@ export const AppRouter: React.FC = () => {
           <Routes>
             {/* Public routes — no auth guard */}
             <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
+            <Route path="/superadmin/forgot-password" element={<ResetPasswordPage />} />
             <Route path="/client/login" element={<ClientLoginPage />} />
+            <Route path="/client/forgot-password" element={<ResetPasswordPage />} />
             <Route path="/login" element={<Navigate to="/superadmin/login" replace />} />
 
             {/* Protected routes — require valid Supabase session */}

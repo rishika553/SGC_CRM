@@ -25,11 +25,12 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate, cn, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { useAuth } from '@/features/auth/AuthContext';
-import { resolveClientIdForCurrentUser } from '@/features/clients/clientQueries';
+import { resolveClientIdForCurrentUser, fetchMyClient } from '@/features/clients/clientQueries';
 import { Client } from '@/types/client';
 import { PaginatedResponse } from '@/types';
 
@@ -42,6 +43,8 @@ export interface VaultDocument {
   sizeBytes: number;
   uploadedAt: string;
   uploadedBy: string;
+  clientId?: string;
+  clientName?: string;
   encrypted: boolean;
   contentSnippet: string;
 }
@@ -54,6 +57,8 @@ export const DocumentsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeClient, setActiveClient] = useState<Client | null>(null);
   const [documents, setDocuments] = useState<VaultDocument[]>([]);
+  const [clientList, setClientList] = useState<{ id: string; name: string }[]>([]);
+  const [uploadClientId, setUploadClientId] = useState<string>('');
 
   // Search, Category, Filter, and Sort state
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -64,39 +69,85 @@ export const DocumentsPage: React.FC = () => {
   // Preview & Upload Modal state
   const [selectedPreview, setSelectedPreview] = useState<VaultDocument | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+  const [confirmDelete, setConfirmDelete] = useState<VaultDocument | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [uploadForm, setUploadForm] = useState({
     name: '',
     category: 'GST & Tax Filings' as VaultDocument['category'],
     fileType: 'pdf' as VaultDocument['fileType'],
   });
 
+  const loadClients = async () => {
+    try {
+      const all: { id: string; name: string }[] = [];
+      const seen = new Set<string>();
+      for (let page = 1; page <= 20; page++) {
+        const clientRes = await api.get<any>('/clients', { params: { page, page_size: 100 } });
+        const pageClients: any[] = clientRes.data?.data || [];
+        for (const c of pageClients) {
+          if (c.id && !seen.has(c.id)) {
+            seen.add(c.id);
+            all.push({ id: c.id, name: c.name || c.company_name || 'Client' });
+          }
+        }
+        if (pageClients.length < 100) break;
+      }
+      setClientList(all);
+      return all;
+    } catch {
+      return [];
+    }
+  };
+
+  const mapDocument = (d: any): VaultDocument => ({
+    id: d.id,
+    name: d.file_name || d.title || 'Document.pdf',
+    category: d.category ? (d.category.charAt(0).toUpperCase() + d.category.slice(1).replace('_', ' ')) as any : 'GST & Tax Filings',
+    fileType: d.mime_type?.includes('spreadsheet') || d.file_name?.endsWith('.xlsx') ? 'xlsx' : d.mime_type?.includes('word') || d.file_name?.endsWith('.docx') ? 'docx' : d.mime_type?.includes('image') ? 'png' : 'pdf',
+    fileSize: d.file_size ? `${(d.file_size / (1024 * 1024)).toFixed(1)} MB` : '1.2 MB',
+    sizeBytes: d.file_size || 1200000,
+    uploadedAt: formatDate(d.created_at),
+    uploadedBy: d.uploaded_by ? formatName(d.uploaded_by.first_name, d.uploaded_by.last_name) : 'Admin',
+    clientId: d.client_id || '',
+    clientName: d.client?.name || d.client?.company_name || '',
+    encrypted: true,
+    contentSnippet: d.description || `DOCUMENT RECORD: ${d.title || d.file_name}`,
+  });
+
+  const resolveScopedClientId = async () => {
+    let activeClientId = await resolveClientIdForCurrentUser(isClientRole);
+    if (isClientRole) {
+      try {
+        const profile = await fetchMyClient();
+        if (profile) {
+          setActiveClient(profile);
+          activeClientId = profile.id;
+        }
+      } catch {}
+    }
+    const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+    return isUUID(activeClientId) ? activeClientId : null;
+  };
+
+  const fetchActiveDocuments = async () => {
+    const params: any = { page: 1, page_size: 50 };
+    const scoped = await resolveScopedClientId();
+    if (scoped) params.client_id = scoped;
+    const docRes = await api.get<PaginatedResponse<any>>('/documents', { params });
+    if (docRes.data.success && docRes.data.data) {
+      setDocuments(docRes.data.data.map(mapDocument));
+    } else {
+      setDocuments([]);
+    }
+  };
+
   useEffect(() => {
     const fetchVaultData = async () => {
       setIsLoading(true);
       try {
-        const activeClientId = await resolveClientIdForCurrentUser(isClientRole);
-        const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
-        const params: any = { page: 1, page_size: 50 };
-        if (isUUID(activeClientId)) {
-          params.client_id = activeClientId;
-        }
-        const docRes = await api.get<PaginatedResponse<any>>('/documents', { params });
-        if (docRes.data.success && docRes.data.data) {
-          const liveDocs: VaultDocument[] = docRes.data.data.map((d: any) => ({
-            id: d.id,
-            name: d.file_name || d.title || 'Document.pdf',
-            category: d.category ? (d.category.charAt(0).toUpperCase() + d.category.slice(1).replace('_', ' ')) as any : 'GST & Tax Filings',
-            fileType: d.mime_type?.includes('spreadsheet') || d.file_name?.endsWith('.xlsx') ? 'xlsx' : d.mime_type?.includes('word') || d.file_name?.endsWith('.docx') ? 'docx' : d.mime_type?.includes('image') ? 'png' : 'pdf',
-            fileSize: d.file_size_bytes ? `${(d.file_size_bytes / (1024 * 1024)).toFixed(1)} MB` : '1.2 MB',
-            sizeBytes: d.file_size_bytes || 1200000,
-            uploadedAt: formatDate(d.created_at),
-            uploadedBy: d.uploaded_by ? formatName(d.uploaded_by.first_name, d.uploaded_by.last_name) : 'Admin',
-            encrypted: true,
-            contentSnippet: d.description || `DOCUMENT RECORD: ${d.title || d.file_name}`,
-          }));
-          setDocuments(liveDocs);
-        } else {
-          setDocuments([]);
+        await fetchActiveDocuments();
+        if (!isClientRole) {
+          await loadClients();
         }
       } catch (err) {
         setDocuments([]);
@@ -140,31 +191,82 @@ export const DocumentsPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleDeleteDocument = async (docId: string, docName: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${docName}" from the vault?`)) return;
-
+    setIsDeleting(true);
     try {
       const isUUID = (str?: string) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
       if (isUUID(docId)) {
         await api.delete(`/documents/${docId}`);
       }
       setDocuments((prev) => prev.filter((d) => d.id !== docId));
-      toast('Document Deleted', `"${docName}" removed from vault.`, 'success');
+      setConfirmDelete(null);
+      toast('Document Deleted', `"${docName}" deleted from the vault.`, 'success');
     } catch (err: any) {
-      setDocuments((prev) => prev.filter((d) => d.id !== docId));
-      toast('Document Deleted', `"${docName}" removed from vault.`, 'success');
+      setConfirmDelete(null);
+      toast('Delete Failed', err.response?.data?.error?.message || 'Unable to delete document.', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const handleDownload = (docName: string) => {
-    toast('Vault Download', `Decrypting & downloading "${docName}"...`, 'info');
-    setTimeout(() => {
+  const handleDownload = async (docId: string, docName: string) => {
+    try {
+      const res = await api.get(`/documents/${docId}/download`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = docName || 'document';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       toast('Download Complete', `"${docName}" downloaded securely.`, 'success');
-    }, 1200);
+    } catch (err: any) {
+      toast('Download Failed', err.response?.data?.error?.message || 'Unable to download document.', 'error');
+    }
+  };
+
+  const handleAssignClient = async (docId: string, clientId: string, docName: string) => {
+    if (!clientId) return;
+    const isUUID = (str?: string) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+    if (!isUUID(clientId)) return;
+
+    try {
+      await api.patch(`/documents/${docId}`, { client_id: clientId });
+      const client = clientList.find((c) => c.id === clientId);
+      setDocuments((prev) =>
+        prev.map((d) => (d.id === docId ? { ...d, clientId, clientName: client?.name || '' } : d))
+      );
+      toast('Document Sent', `"${docName}" sent to ${client?.name || 'client'}'s portal.`, 'success');
+    } catch (err: any) {
+      toast('Send Failed', err.response?.data?.error?.message || 'Unable to send document to client.', 'error');
+    }
+  };
+
+  const categoryToBackend: Record<string, string> = {
+    'GST & Tax Filings': 'tax_doc',
+    'Audit & Financials': 'report',
+    'Corporate Legal': 'compliance',
+    'Agreements': 'contract',
+    'Bank Statements': 'invoice_bill',
+  };
+
+  const handleOpenUpload = async () => {
+    let clients = clientList;
+    if (clients.length === 0) {
+      clients = await loadClients();
+    }
+    setUploadClientId((prev) => prev || clients?.[0]?.id || '');
+    setIsUploadModalOpen(true);
   };
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadForm.name.trim()) return;
+
+    if (!isClientRole && !uploadClientId) {
+      toast('Select a Client', 'Please select a client to send this document to.', 'error');
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -175,10 +277,12 @@ export const DocumentsPage: React.FC = () => {
       
       formData.append('file', fileToUpload);
       formData.append('title', uploadForm.name.trim());
-      formData.append('category', 'other');
+      formData.append('category', categoryToBackend[uploadForm.category] || 'other');
       formData.append('description', `Uploaded document under category ${uploadForm.category}`);
 
-      if (activeClient?.id && isUUID(activeClient.id)) {
+      if (!isClientRole && uploadClientId && isUUID(uploadClientId)) {
+        formData.append('client_id', uploadClientId);
+      } else if (isClientRole && activeClient?.id && isUUID(activeClient.id)) {
         formData.append('client_id', activeClient.id);
       }
 
@@ -198,6 +302,8 @@ export const DocumentsPage: React.FC = () => {
         sizeBytes: uploadedDoc?.file_size || 2516582,
         uploadedAt: formatDate(new Date()),
         uploadedBy: activeClient ? activeClient.name : 'Superadmin',
+        clientId: uploadClientId,
+        clientName: clientList.find((c) => c.id === uploadClientId)?.name || '',
         encrypted: true,
         contentSnippet: `SECURE VAULT DOCUMENT ENTRY\nUploaded document: ${uploadForm.name}\nCategory: ${uploadForm.category}\nSecurity Status: 256-bit AES Encrypted.`,
       };
@@ -206,29 +312,10 @@ export const DocumentsPage: React.FC = () => {
       setIsUploadModalOpen(false);
       setSelectedFile(null);
       setUploadForm({ name: '', category: 'GST & Tax Filings', fileType: 'pdf' });
-      toast('Document Encrypted & Vaulted', `"${newDoc.name}" uploaded to secure vault.`, 'success');
+      setUploadClientId('');
+      toast('Document Sent', `"${newDoc.name}" uploaded. The client will see it on their portal.`, 'success');
     } catch (err: any) {
-      // Create local fallback if backend endpoint error occurs
-      const newDoc: VaultDocument = {
-        id: `vault-doc-${Date.now()}`,
-        name: uploadForm.name.trim().endsWith(`.${uploadForm.fileType}`)
-          ? uploadForm.name.trim()
-          : `${uploadForm.name.trim()}.${uploadForm.fileType}`,
-        category: uploadForm.category,
-        fileType: uploadForm.fileType,
-        fileSize: '2.4 MB',
-        sizeBytes: 2516582,
-        uploadedAt: formatDate(new Date()),
-        uploadedBy: activeClient ? activeClient.name : 'Superadmin',
-        encrypted: true,
-        contentSnippet: `SECURE VAULT DOCUMENT ENTRY\nUploaded document: ${uploadForm.name}\nCategory: ${uploadForm.category}\nSecurity Status: 256-bit AES Encrypted.`,
-      };
-
-      setDocuments((prev) => [newDoc, ...prev]);
-      setIsUploadModalOpen(false);
-      setSelectedFile(null);
-      setUploadForm({ name: '', category: 'GST & Tax Filings', fileType: 'pdf' });
-      toast('Document Encrypted & Vaulted', `"${newDoc.name}" uploaded to secure vault.`, 'success');
+      toast('Upload Failed', err.response?.data?.error?.message || 'Failed to upload document.', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -259,16 +346,18 @@ export const DocumentsPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <Button
-              type="button"
-              variant="primary"
-              size="lg"
-              onClick={() => setIsUploadModalOpen(true)}
-              leftIcon={<Upload className="w-5 h-5" />}
-              className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-[16px] shadow-xs text-sm font-bold w-full sm:w-auto"
-            >
-              Upload Document
-            </Button>
+            {!isClientRole && (
+              <Button
+                type="button"
+                variant="primary"
+                size="lg"
+                onClick={handleOpenUpload}
+                leftIcon={<Upload className="w-5 h-5" />}
+                className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-6 py-3 rounded-[16px] shadow-xs text-sm font-bold w-full sm:w-auto"
+              >
+                Upload Document
+              </Button>
+            )}
           </div>
         </div>
 
@@ -348,7 +437,9 @@ export const DocumentsPage: React.FC = () => {
             <EmptyState
               icon={<FolderLock className="w-12 h-12 text-[#5E8C61]" />}
               title="No Vault Documents Found"
-              description="No document records match your current search or category filter. Click 'Upload Document' at the top right to upload a document."
+              description={isClientRole
+                ? 'Your admin will upload documents for you here. Newly received documents will appear in this vault.'
+                : "No document records match your current search or category filter. Click 'Upload Document' at the top right to send a document to a client."}
             />
           </div>
         ) : (
@@ -381,6 +472,26 @@ export const DocumentsPage: React.FC = () => {
                         <span>•</span>
                         <span>{doc.uploadedAt}</span>
                       </div>
+                      {doc.clientName && isClientRole && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-[#2F4F3A] font-bold mt-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#5E8C61] shrink-0" />
+                          <span className="truncate">Sent to: {doc.clientName}</span>
+                        </div>
+                      )}
+                      {!isClientRole && (
+                        <div className="mt-1.5">
+                          <select
+                            value={doc.clientId || ''}
+                            onChange={(e) => handleAssignClient(doc.id, e.target.value, doc.name)}
+                            className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-lg px-2 py-1.5 text-[11px] font-bold text-[#27332B] focus:outline-none focus:border-[#5E8C61] cursor-pointer"
+                          >
+                            <option value="">{doc.clientName ? `Sent to: ${doc.clientName}` : '-- Select Client --'}</option>
+                            {clientList.map((c) => (
+                              <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -402,7 +513,7 @@ export const DocumentsPage: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDownload(doc.name)}
+                        onClick={() => handleDownload(doc.id, doc.name)}
                         title="Download Encrypted File"
                         className="p-1.5 rounded-lg text-[#6B7280] hover:text-[#2F4F3A] hover:bg-[#EEF5EF] transition-colors"
                       >
@@ -410,7 +521,7 @@ export const DocumentsPage: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDeleteDocument(doc.id, doc.name)}
+                        onClick={() => setConfirmDelete(doc)}
                         title="Delete Vault Document"
                         className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
                       >
@@ -425,6 +536,20 @@ export const DocumentsPage: React.FC = () => {
         )}
       </div>
 
+      {/* Delete Confirmation Card */}
+      <ConfirmDialog
+        isOpen={Boolean(confirmDelete)}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete this document?"
+        message={
+          <>
+            <span className="font-semibold">"{confirmDelete?.name}"</span> will be removed from the vault.
+          </>
+        }
+        isLoading={isDeleting}
+        onConfirm={() => confirmDelete && handleDeleteDocument(confirmDelete.id, confirmDelete.name)}
+      />
+
       {/* Upload Document Modal */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -433,7 +558,7 @@ export const DocumentsPage: React.FC = () => {
             <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-4 mb-5">
               <div>
                 <h3 className="text-lg sm:text-xl font-bold text-[#27332B]">Upload Vault Document</h3>
-                <p className="text-xs text-[#6B7280] mt-0.5">Encrypt & deposit files into client repository</p>
+                <p className="text-xs text-[#6B7280] mt-0.5">Send the file to the selected client's portal</p>
               </div>
               <button
                 type="button"
@@ -474,6 +599,24 @@ export const DocumentsPage: React.FC = () => {
                 onChange={(e) => setUploadForm({ ...uploadForm, name: e.target.value })}
                 required
               />
+
+              {!isClientRole && (
+                <div>
+                <label className="block text-xs font-semibold text-[#27332B] mb-1.5">Send To Client <span className="text-rose-500">*</span></label>
+                <select
+                  value={uploadClientId}
+                  onChange={(e) => setUploadClientId(e.target.value)}
+                  className="w-full bg-[#F7F9F6] border border-[#E3E8E3] rounded-xl px-3 py-2 text-xs font-bold text-[#27332B] focus:outline-none focus:border-[#5E8C61]"
+                >
+                  <option value="">-- Select Client (required) --</option>
+                  {clientList.length === 0 && <option value="" disabled>No clients available</option>}
+                  {clientList.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-[#6B7280] mt-1">The selected client will see this document on their portal.</p>
+              </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -521,7 +664,7 @@ export const DocumentsPage: React.FC = () => {
                   isLoading={isUploading}
                   className="bg-[#2F4F3A] hover:bg-[#243E2E] text-white px-5 py-2 text-xs font-semibold"
                 >
-                  Encrypt & Upload
+                  Encrypt & Send
                 </Button>
               </div>
             </form>
@@ -562,6 +705,10 @@ export const DocumentsPage: React.FC = () => {
                   <span className="font-bold text-[#27332B]">{selectedPreview.uploadedBy}</span>
                 </div>
                 <div>
+                  <span className="text-[#6B7280] font-semibold block">Sent To Client</span>
+                  <span className="font-bold text-[#27332B]">{selectedPreview.clientName || 'Unassigned'}</span>
+                </div>
+                <div>
                   <span className="text-[#6B7280] font-semibold block">Encryption Standard</span>
                   <span className="font-bold text-[#4CAF50] flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -595,7 +742,7 @@ export const DocumentsPage: React.FC = () => {
                   type="button"
                   variant="primary"
                   onClick={() => {
-                    handleDownload(selectedPreview.name);
+                    handleDownload(selectedPreview.id, selectedPreview.name);
                     setSelectedPreview(null);
                   }}
                   leftIcon={<Download className="w-4 h-4" />}

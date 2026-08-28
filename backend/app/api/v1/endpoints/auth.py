@@ -1,10 +1,12 @@
+import logging
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request, status
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+import httpx
 
 from app.core.database import get_db
 from app.core.security import (
@@ -15,7 +17,7 @@ from app.core.security import (
     decode_token,
     get_password_hash,
 )
-from app.core.exceptions import UnauthorizedException, ConflictException, NotFoundException, ForbiddenException
+from app.core.exceptions import UnauthorizedException, ConflictException, NotFoundException, ForbiddenException, InternalServerErrorException
 from app.core.config import settings
 from app.api.deps import get_current_user
 from app.models.user import User
@@ -26,12 +28,14 @@ from app.schemas.auth import (
     RefreshTokenRequest,
     PasswordResetRequest,
     PasswordResetConfirm,
+    AdminPasswordResetRequest,
 )
 from app.schemas.common import ResponseEnvelope
 from app.schemas.user import UserRead, UserCreate
 from app.services.audit_service import log_audit_event
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/login", response_model=ResponseEnvelope[dict])
@@ -147,6 +151,86 @@ async def confirm_password_reset(payload: PasswordResetConfirm, db: AsyncSession
         success=True,
         message="Password updated successfully. You may now log in.",
         data={"updated": True}
+    )
+
+
+@router.post("/admin-reset-password", response_model=ResponseEnvelope[dict])
+async def admin_reset_password(payload: AdminPasswordResetRequest, db: AsyncSession = Depends(get_db)):
+    if payload.new_password != payload.confirm_password:
+        raise UnauthorizedException(detail="Passwords do not match")
+
+    username = payload.username.strip()
+    if "@" not in username:
+        username = f"{username}@sgccrm.com"
+
+    stmt = (
+        select(User)
+        .options(selectinload(User.role))
+        .where(
+            User.email == username,
+            User.is_deleted == False,
+        )
+    )
+    res = await db.execute(stmt)
+    user = res.scalar_one_or_none()
+
+    if not user:
+        raise NotFoundException(detail="User not found")
+
+    role_name = user.role.name.lower() if user.role else ""
+    if role_name not in ("super_admin", "admin", "client", "client_viewer"):
+        raise ForbiddenException(detail="Password reset not available for this account")
+
+    user.hashed_password = get_password_hash(payload.new_password)
+    user.updated_by_id = user.id
+
+    if not settings.SUPABASE_SERVICE_ROLE_KEY or not settings.SUPABASE_URL:
+        logger.error("SUPABASE_SERVICE_ROLE_KEY or SUPABASE_URL not configured")
+        raise InternalServerErrorException(detail="Password reset is unavailable. Missing Supabase configuration.")
+
+    auth_user_id = None
+    try:
+        auth_id_res = await db.execute(
+            text("SELECT id FROM auth.users WHERE email = :email LIMIT 1"),
+            {"email": username},
+        )
+        row = auth_id_res.first()
+        if row:
+            auth_user_id = str(row[0])
+    except Exception as e:
+        logger.error(f"Failed to lookup auth.users id: {e}")
+
+    if not auth_user_id:
+        logger.error(f"No Supabase auth user found for {username}")
+        raise NotFoundException(detail="User has no corresponding auth account. Contact support.")
+
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.put(
+                f"{settings.SUPABASE_URL}/auth/v1/admin/users/{auth_user_id}",
+                headers={
+                    "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={"password": payload.new_password},
+                timeout=15,
+            )
+            logger.info(f"GoTrue admin API response: {resp.status_code} {resp.text}")
+            if resp.status_code >= 300:
+                raise InternalServerErrorException(detail=f"Failed to update auth password ({resp.status_code}). Check backend logs.")
+    except InternalServerErrorException:
+        raise
+    except Exception as e:
+        logger.error(f"GoTrue admin API call failed: {e}")
+        raise InternalServerErrorException(detail="Failed to update auth password. Check backend logs.")
+
+    await db.commit()
+
+    return ResponseEnvelope(
+        success=True,
+        message="Password reset successfully. You may now log in.",
+        data={"updated": True},
     )
 
 

@@ -30,6 +30,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { cn, formatName, getInitials } from '@/lib/utils';
 import { api } from '@/lib/axios';
@@ -93,6 +94,10 @@ export const ChatPage: React.FC = () => {
 
   // Web Push Notification State
   const [pushState, setPushState] = useState<'loading' | 'unsupported' | 'default' | 'granted' | 'denied'>('loading');
+
+  // Delete Confirmation State
+  const [messageToDelete, setMessageToDelete] = useState<ChatMessage | null>(null);
+  const [confirmClearChat, setConfirmClearChat] = useState<boolean>(false);
 
   const roleNameStr = String(currentUser?.role?.name || '').toLowerCase();
   const isClientRole = roleNameStr === 'client' || roleNameStr === 'client_viewer' || roleNameStr.includes('client');
@@ -580,14 +585,18 @@ export const ChatPage: React.FC = () => {
       );
       return;
     }
+    setMessageToDelete(msg);
+  };
 
-    if (!window.confirm('Delete this message?')) return;
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete) return;
     try {
-      await api.delete(`/chat/messages/${msg.id}`);
+      await api.delete(`/chat/messages/${messageToDelete.id}`);
+      const id = messageToDelete.id;
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== activeConversation?.id) return c;
-          const remaining = c.messages.filter((m) => m.id !== msg.id);
+          const remaining = c.messages.filter((m) => m.id !== id);
           const last = remaining[remaining.length - 1];
           return {
             ...c,
@@ -597,8 +606,10 @@ export const ChatPage: React.FC = () => {
           };
         })
       );
+      setMessageToDelete(null);
       toast('Message Deleted', 'Message removed from the conversation.', 'success');
     } catch (err: any) {
+      setMessageToDelete(null);
       toast('Delete Failed', err.response?.data?.error?.message || 'Could not delete the message.', 'error');
     }
   };
@@ -606,7 +617,11 @@ export const ChatPage: React.FC = () => {
   // Clear the entire conversation history (Super Admin only)
   const handleClearConversation = async () => {
     if (!activeConversation || activeConversation.id.startsWith('admin-channel')) return;
-    if (!window.confirm(`Clear the entire chat history with ${activeConversation.name}? This cannot be undone.`)) return;
+    setConfirmClearChat(true);
+  };
+
+  const executeClearChat = async () => {
+    if (!activeConversation) return;
     try {
       await api.delete(`/chat/conversations/${activeConversation.id}/messages`);
       setConversations((prev) =>
@@ -616,8 +631,10 @@ export const ChatPage: React.FC = () => {
             : c
         )
       );
+      setConfirmClearChat(false);
       toast('History Cleared', `Chat history with ${activeConversation.name} cleared.`, 'success');
     } catch (err: any) {
+      setConfirmClearChat(false);
       toast('Clear Failed', err.response?.data?.error?.message || 'Could not clear the chat history.', 'error');
     }
   };
@@ -921,6 +938,28 @@ export const ChatPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={Boolean(messageToDelete)}
+        onClose={() => setMessageToDelete(null)}
+        title="Delete this message?"
+        message="This message will be removed from the conversation."
+        onConfirm={confirmDeleteMessage}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmClearChat}
+        onClose={() => setConfirmClearChat(false)}
+        title="Clear chat history?"
+        message={
+          <>
+            The entire chat history with{' '}
+            <span className="font-semibold">{activeConversation?.name}</span> will be cleared.
+          </>
+        }
+        confirmLabel="Clear"
+        onConfirm={executeClearChat}
+      />
     </MainLayout>
   );
 };

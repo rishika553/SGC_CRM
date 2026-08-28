@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate, cn, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
@@ -151,6 +152,7 @@ export const CalendarPage: React.FC = () => {
 
   // Detail modal
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'meeting' | 'note'; id: string } | null>(null);
   const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
 
   // Client RM selection (per-meeting)
@@ -359,15 +361,16 @@ export const CalendarPage: React.FC = () => {
   };
 
   const handleDeleteMeeting = async (meetingId: string) => {
-    if (!window.confirm('Are you sure you want to delete this meeting?')) return;
     try {
       const res = await api.delete(`/meetings/${meetingId}`);
       if (res.data?.success) {
         toast('Meeting Deleted', 'Meeting has been deleted.', 'success');
         setSelectedMeeting(null);
+        setDeleteTarget(null);
         fetchData();
       }
     } catch (err: any) {
+      setDeleteTarget(null);
       toast('Error', err.response?.data?.error?.message || 'Failed to delete meeting', 'error');
     }
   };
@@ -440,14 +443,15 @@ export const CalendarPage: React.FC = () => {
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    if (!window.confirm('Are you sure you want to delete this note?')) return;
     try {
       const res = await api.delete(`/notes/${noteId}`);
       if (res.data?.success) {
         toast('Note Deleted', 'Note has been deleted.', 'success');
+        setDeleteTarget(null);
         fetchData();
       }
     } catch (err: any) {
+      setDeleteTarget(null);
       toast('Error', err.response?.data?.error?.message || 'Failed to delete note', 'error');
     }
   };
@@ -671,7 +675,7 @@ export const CalendarPage: React.FC = () => {
                         <button type="button" onClick={() => openEditNote(note)} className="p-1.5 rounded-lg text-slate-400 hover:text-[#2F4F3A] hover:bg-[#EEF5EF]">
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
-                        <button type="button" onClick={() => handleDeleteNote(note.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50">
+                        <button type="button" onClick={() => setDeleteTarget({ type: 'note', id: note.id })} className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -777,7 +781,7 @@ export const CalendarPage: React.FC = () => {
                     <Button type="button" variant="outline" onClick={() => { openCreateNote({ meeting_id: selectedMeeting.id }); setSelectedMeeting(null); }} leftIcon={<StickyNote className="w-3.5 h-3.5" />} className="text-xs px-3 py-1.5 rounded-lg">
                       Add Note
                     </Button>
-                    <Button type="button" variant="outline" onClick={() => handleDeleteMeeting(selectedMeeting.id)} leftIcon={<Trash2 className="w-3.5 h-3.5" />} className="border-red-200 text-red-600 hover:bg-red-50 text-xs px-3 py-1.5 rounded-lg">
+                    <Button type="button" variant="outline" onClick={() => setDeleteTarget({ type: 'meeting', id: selectedMeeting.id })} leftIcon={<Trash2 className="w-3.5 h-3.5" />} className="border-red-200 text-red-600 hover:bg-red-50 text-xs px-3 py-1.5 rounded-lg">
                       Delete
                     </Button>
                   </div>
@@ -1061,6 +1065,22 @@ export const CalendarPage: React.FC = () => {
             </div>
           </div>
         )}
+
+      <ConfirmDialog
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title={deleteTarget?.type === 'note' ? 'Delete this note?' : 'Delete this meeting?'}
+        message={
+          <>
+            This {deleteTarget?.type === 'note' ? 'note' : 'meeting'} will be removed.
+          </>
+        }
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          if (deleteTarget.type === 'note') handleDeleteNote(deleteTarget.id);
+          else handleDeleteMeeting(deleteTarget.id);
+        }}
+      />
       </div>
     </MainLayout>
   );

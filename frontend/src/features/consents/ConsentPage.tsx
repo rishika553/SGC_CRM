@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
@@ -102,6 +103,7 @@ export const ConsentPage: React.FC = () => {
 
   // Detail / Respond Modal State
   const [selectedConsent, setSelectedConsent] = useState<Consent | null>(null);
+  const [consentToDelete, setConsentToDelete] = useState<Consent | null>(null);
   const [responseMode, setResponseMode] = useState<'none' | 'allowed' | 'denied'>('none');
   const [denialReason, setDenialReason] = useState<string>('');
   const [responseNotes, setResponseNotes] = useState<string>('');
@@ -258,13 +260,14 @@ export const ConsentPage: React.FC = () => {
   };
 
   const handleDeleteConsent = async (consent: Consent) => {
-    if (!window.confirm(`Are you sure you want to delete consent request "${consent.title}"? This action is permanent.`)) return;
     try {
       await consentApi.remove(consent.id);
       setConsents((prev) => prev.filter((c) => c.id !== consent.id));
       if (selectedConsent?.id === consent.id) setSelectedConsent(null);
+      setConsentToDelete(null);
       toast('Consent Deleted', `"${consent.title}" removed successfully.`, 'success');
     } catch (err: any) {
+      setConsentToDelete(null);
       toast('Delete Failed', err.response?.data?.error?.message || 'Failed to delete consent request.', 'error');
     }
   };
@@ -466,7 +469,7 @@ export const ConsentPage: React.FC = () => {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteConsent(consent)}
+                          onClick={() => setConsentToDelete(consent)}
                           leftIcon={<Trash2 className="w-4 h-4 text-rose-600" />}
                           className="border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-xl"
                         >
@@ -795,7 +798,7 @@ export const ConsentPage: React.FC = () => {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDeleteConsent(selected)}
+                    onClick={() => setConsentToDelete(selected)}
                     leftIcon={<Trash2 className="w-4 h-4 text-rose-600" />}
                     className="border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-xl"
                 >
@@ -810,6 +813,18 @@ export const ConsentPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(consentToDelete)}
+        onClose={() => setConsentToDelete(null)}
+        title="Delete consent request?"
+        message={
+          <>
+            <span className="font-semibold">"{consentToDelete?.title}"</span> will be removed.
+          </>
+        }
+        onConfirm={() => consentToDelete && handleDeleteConsent(consentToDelete)}
+      />
     </MainLayout>
   );
 };

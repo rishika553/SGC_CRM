@@ -33,3 +33,9 @@ class PasswordResetConfirm(BaseModel):
 class PasswordChangeRequest(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8, description="New password must be at least 8 characters")
+
+
+class AdminPasswordResetRequest(BaseModel):
+    username: str = Field(..., min_length=1, description="Email or username of the Super Admin account")
+    new_password: str = Field(..., min_length=8, description="New password must be at least 8 characters")
+    confirm_password: str = Field(..., min_length=1, description="Confirm the new password")

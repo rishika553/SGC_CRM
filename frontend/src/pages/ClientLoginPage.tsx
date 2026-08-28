@@ -21,7 +21,15 @@ export const ClientLoginPage: React.FC = () => {
   const { toast } = useToast();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  if (!authLoading && isAuthenticated) {
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#F7F9F6] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2F4F3A]" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -73,11 +81,14 @@ export const ClientLoginPage: React.FC = () => {
             {...register('password', { required: 'Password is required' })}
           />
 
-          <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
+          <div className="flex items-center justify-between flex-wrap text-xs pt-1">
             <label className="flex items-center gap-2 cursor-pointer select-none text-[#6B7280] hover:text-[#27332B] transition-colors">
               <input type="checkbox" className="w-4 h-4 rounded border-[#E3E8E3] text-[#5E8C61] focus:ring-[#5E8C61]" />
               <span>Remember me</span>
             </label>
+            <Link to="/client/forgot-password" className="text-[#5E8C61] font-bold hover:underline">
+              Forgot Password?
+            </Link>
           </div>
 
           <Button

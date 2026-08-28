@@ -55,6 +55,15 @@ export const DashboardPage: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { toast } = useToast();
 
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    const handlePop = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, []);
+
   const roleName = String(currentUser?.role?.name || '').toLowerCase();
   const isClientRole = roleName === 'client' || roleName === 'client_viewer';
 

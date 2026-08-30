@@ -1044,3 +1044,24 @@ FROM roles
 WHERE roles.name = $1::VARCHAR
 2026-08-28 11:17:02,367 INFO sqlalchemy.engine.Engine [cached since 0.09071s ago] (<UserRoleEnum.CLIENT: 'client'>,)
 2026-08-28 11:17:02,426 INFO sqlalchemy.engine.Engine COMMIT
+[STARTUP] Roles seeded
+Starting SGC CRM Platform backend service...
+INFO:     127.0.0.1:60977 - "OPTIONS /api/v1/users/me HTTP/1.1" 200 OK
+[ME] START
+[ME] AUTH: 0.1 ms
+2026-08-28 15:31:52,962 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-28 15:31:52,964 INFO sqlalchemy.engine.Engine SELECT 1
+2026-08-28 15:31:52,965 INFO sqlalchemy.engine.Engine [generated in 0.00079s] ()
+[ME] DB CONNECTION: 360.8 ms
+2026-08-28 15:31:53,067 INFO sqlalchemy.engine.Engine SELECT users.email, users.hashed_password, users.first_name, users.last_name, users.phone_number, users.job_title, users.avatar_url, users.is_active, users.is_verified, users.last_login_at, users.organization_id, users.role_id, users.id, users.created_at, users.updated_at, users.deleted_at, users.is_deleted, users.created_by_id, users.updated_by_id 
+FROM users 
+WHERE (users.id = $1::UUID OR lower(users.email) = $2::VARCHAR) AND users.is_deleted = false
+2026-08-28 15:31:53,068 INFO sqlalchemy.engine.Engine [generated in 0.00118s] (UUID('a4bc3b1b-f29d-4d92-912b-2bb340fb596e'), 'tempuser@sgccrm.com')
+2026-08-28 15:31:53,146 INFO sqlalchemy.engine.Engine SELECT roles.id AS roles_id, roles.name AS roles_name, roles.display_name AS roles_display_name, roles.description AS roles_description, roles.created_at AS roles_created_at, roles.updated_at AS roles_updated_at, roles.deleted_at AS roles_deleted_at, roles.is_deleted AS roles_is_deleted, roles.created_by_id AS roles_created_by_id, roles.updated_by_id AS roles_updated_by_id 
+FROM roles 
+WHERE roles.id IN ($1::UUID)
+2026-08-28 15:31:53,146 INFO sqlalchemy.engine.Engine [generated in 0.00088s] (UUID('44f9f6ae-d8b1-4727-9554-d1b7721a224a'),)
+[ME] USER QUERY (incl ROLE/ORG): 149.4 ms
+[ME] AUTH DEP TOTAL: 511.9 ms
+[ME] RESPONSE: 2.9 ms
+2026-08-28 15:31:53,212 INFO sqlalchemy.engine.Engine COMMIT

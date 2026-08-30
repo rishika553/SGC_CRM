@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
+    RUN_STARTUP_MIGRATIONS: bool = False
+    SEED_ROLES_ON_STARTUP: bool = True
 
     # JWT Security Config
     SECRET_KEY: str = "production-super-secret-key-change-this-in-production-env"

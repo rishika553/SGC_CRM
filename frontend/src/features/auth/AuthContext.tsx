@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { User, ApiResponse } from '@/types';
-import { api } from '@/lib/axios';
+import { api, clearApiAccessToken, setApiAccessToken } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
 import { supabase } from '@/lib/supabase';
 import { unsubscribeFromPush } from '@/lib/push';
@@ -18,6 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function clearLocalAuth() {
+  clearApiAccessToken();
   localStorage.removeItem('crm_access_token');
   localStorage.removeItem('crm_refresh_token');
   localStorage.removeItem('crm_active_client_id');
@@ -48,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     refreshInFlight.current = (async () => {
       try {
+        setApiAccessToken(currentToken);
         const response = await api.get<ApiResponse<User>>('/users/me');
         if (response.data?.success && response.data.data) {
           setUser(response.data.data);
@@ -104,12 +106,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('crm_refresh_token', session.refresh_token);
         }
         setToken(session.access_token);
+        setApiAccessToken(session.access_token);
 
         try {
-          const response = await api.get<ApiResponse<User>>('/users/me');
-          if (active && response.data?.success && response.data.data) {
-            setUser(response.data.data);
-          } else if (active) {
+          const profile = await refreshProfile();
+          if (!profile && active) {
             clearLocalAuth();
             setToken(null);
           }
@@ -135,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.access_token) {
           localStorage.setItem('crm_access_token', session.access_token);
           setToken(session.access_token);
+          setApiAccessToken(session.access_token);
         }
         return;
       }
@@ -142,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.access_token) {
         localStorage.setItem('crm_access_token', session.access_token);
         setToken(session.access_token);
+        setApiAccessToken(session.access_token);
         await refreshProfile();
       } else if (active && event === 'SIGNED_OUT') {
         clearLocalAuth();
@@ -178,6 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('crm_refresh_token', data.session.refresh_token);
       }
       setToken(accessToken);
+      setApiAccessToken(accessToken);
 
       const userData = await refreshProfile();
       if (!userData) {

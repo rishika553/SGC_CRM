@@ -91,20 +91,10 @@ export const DashboardPage: React.FC = () => {
         // Validate the stored client still exists. A soft-deleted client returns 404,
         // so clear the stale localStorage reference before firing the scoped requests.
         let profile: Client | null = null;
-        if (targetClientId) {
-          try {
-            const profileResponse = await api.get(`/clients/${targetClientId}`);
-            profile = profileResponse.data.data || null;
-          } catch (err: any) {
-            if (err?.response?.status === 404) {
-              localStorage.removeItem('crm_active_client_id');
-              localStorage.removeItem('crm_active_client_name');
-              targetClientId = null;
-            }
-          }
-        } else if (isClientRole) {
+        if (isClientRole) {
           profile = await queryClient.fetchQuery({ queryKey: clientQueryKeys.mine, queryFn: fetchMyClient });
           if (profile?.id) {
+            targetClientId = profile.id;
             localStorage.setItem('crm_active_client_id', profile.id);
             localStorage.setItem('crm_active_client_name', profile.name);
           }
@@ -195,7 +185,7 @@ export const DashboardPage: React.FC = () => {
   const pendingTasksCount = tasks.filter((t) => t.status !== 'completed').length;
 
   const clientNameDisplay = currentUser ? formatName(currentUser.first_name, currentUser.last_name) : 'Valued Partner';
-  const companyNameDisplay = clientProfile?.name || 'Acme Advisory Group';
+  const companyNameDisplay = clientProfile?.name || localStorage.getItem('crm_active_client_name') || 'Acme Advisory Group';
   const activeClientId = clientProfile?.id || localStorage.getItem('crm_active_client_id');
 
   return (

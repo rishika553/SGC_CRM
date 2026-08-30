@@ -19,15 +19,7 @@ export const SuperAdminLoginPage: React.FC = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#F7F9F6] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2F4F3A]" />
-      </div>
-    );
-  }
+  const { login, isAuthenticated } = useAuth();
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;

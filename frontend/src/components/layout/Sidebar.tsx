@@ -61,10 +61,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(initialActiveClient || SUPERADMIN_OPTION);
 
   const { user: currentUser } = useAuth();
+  const pathname = window.location.pathname;
   const roleName = currentUser?.role?.name ? String(currentUser.role.name).toLowerCase() : '';
   const isClientRole = roleName === 'client' || roleName === 'client_viewer';
   const hasProvidedClients = Boolean(initialClients?.length);
-  const { data: queriedClients = [] } = useClientDirectory(!isClientRole && !hasProvidedClients);
+  const shouldLoadClientDirectory = !isClientRole && !hasProvidedClients && (isClientDropdownOpen || pathname !== '/dashboard');
+  const { data: queriedClients = [] } = useClientDirectory(shouldLoadClientDirectory);
   const liveClients = React.useMemo(
     () => hasProvidedClients
       ? initialClients!
@@ -79,7 +81,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [initialActiveClient]);
 
   React.useEffect(() => {
-    const pathname = window.location.pathname;
     const urlClientId = pathname.includes('/clients/') ? pathname.split('/clients/')[1]?.split('/')[0] : null;
     const savedClientId = localStorage.getItem('crm_active_client_id');
 
@@ -112,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         setSelectedClient(SUPERADMIN_OPTION);
       }
     }
-  }, [liveClients, initialActiveClient]);
+  }, [initialActiveClient, liveClients, pathname]);
 
   const adminNavItems = [
     { label: 'Dashboard', path: '/dashboard', icon: <Building2 className="w-5 h-5 shrink-0" /> },

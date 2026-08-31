@@ -33,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const refreshInFlight = useRef<Promise<User | null> | null>(null);
   const loginInProgress = useRef(false);
+  const hydratedProfileToken = useRef<string | null>(null);
 
   const refreshProfile = useCallback((): Promise<User | null> => {
     if (refreshInFlight.current) {
@@ -41,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const currentToken = localStorage.getItem('crm_access_token');
     if (!currentToken) {
+      hydratedProfileToken.current = null;
       setUser(null);
       setToken(null);
       setIsLoading(false);
@@ -52,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setApiAccessToken(currentToken);
         const response = await api.get<ApiResponse<User>>('/users/me');
         if (response.data?.success && response.data.data) {
+          hydratedProfileToken.current = currentToken;
           setUser(response.data.data);
           return response.data.data;
         }
@@ -132,9 +135,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let active = true;
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'INITIAL_SESSION') {
+        return;
+      }
+
       if (loginInProgress.current) {
         if (session?.access_token) {
           localStorage.setItem('crm_access_token', session.access_token);
+          if (session.refresh_token) {
+            localStorage.setItem('crm_refresh_token', session.refresh_token);
+          }
           setToken(session.access_token);
           setApiAccessToken(session.access_token);
         }
@@ -143,10 +153,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (session?.access_token) {
         localStorage.setItem('crm_access_token', session.access_token);
+        if (session.refresh_token) {
+          localStorage.setItem('crm_refresh_token', session.refresh_token);
+        }
         setToken(session.access_token);
         setApiAccessToken(session.access_token);
-        await refreshProfile();
+        if (event !== 'TOKEN_REFRESHED' && hydratedProfileToken.current !== session.access_token) {
+          await refreshProfile();
+        }
       } else if (active && event === 'SIGNED_OUT') {
+        hydratedProfileToken.current = null;
         clearLocalAuth();
         setToken(null);
         setUser(null);

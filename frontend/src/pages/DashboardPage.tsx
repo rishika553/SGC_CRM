@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Building2,
   CheckCircle2,
-  FileText,
   MessageSquare,
   FileCheck2,
   Kanban,
@@ -17,7 +15,6 @@ import {
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { useToast } from '@/components/ui/Toast';
 import { cn, formatDate, formatCurrency, formatName } from '@/lib/utils';
 import { api } from '@/lib/axios';
 import { queryClient } from '@/lib/query-client';
@@ -53,7 +50,6 @@ export interface DashboardActivity {
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const { toast } = useToast();
 
   useEffect(() => {
     window.history.pushState(null, '', window.location.href);
@@ -78,10 +74,14 @@ export const DashboardPage: React.FC = () => {
   const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
   const [activities, setActivities] = useState<DashboardActivity[]>([]);
   const [upcomingMeetings, setUpcomingMeetings] = useState<any[]>([]);
+  const [isSecondaryLoading, setIsSecondaryLoading] = useState<boolean>(false);
 
   useEffect(() => {
+    let active = true;
+
     const fetchDashboardData = async () => {
       setIsLoading(true);
+      setIsSecondaryLoading(false);
       const isUUID = (str?: string | null) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
       // Resolve the scoped client from the stored reference, falling back to the
       // superadmin scope when the reference is missing or stale.
@@ -100,22 +100,20 @@ export const DashboardPage: React.FC = () => {
           }
         }
 
+        if (!active) return;
         setClientProfile(profile);
 
         const scopedParams = { page: 1, page_size: 10, ...(targetClientId ? { client_id: targetClientId } : {}) };
-        // These resources do not depend on each other, so start every request at once.
-        // Individual failures resolve to null and do not prevent the rest of the dashboard loading.
-        const [projectResponse, taskResponse, consentsResponse, invoiceResponse, meetingsResponse] = await Promise.all([
+        // Load the summary cards first so the dashboard becomes usable sooner.
+        const [projectResponse, taskResponse, consentsResponse] = await Promise.all([
           api.get<PaginatedResponse<any>>('/agendas', { params: scopedParams }).catch(() => null),
           api.get<PaginatedResponse<any>>('/tasks', { params: scopedParams }).catch(() => null),
           api.get<PaginatedResponse<any>>('/consents', {
             params: { page: 1, page_size: 1, status: 'pending', ...(targetClientId ? { client_id: targetClientId } : {}) },
           }).catch(() => null),
-          api.get<PaginatedResponse<any>>('/invoices', { params: { page: 1, page_size: 20 } }).catch(() => null),
-          api.get<PaginatedResponse<any>>('/meetings', {
-            params: { page: 1, page_size: 5, status: 'scheduled', ...(targetClientId ? { client_id: targetClientId } : {}) },
-          }).catch(() => null),
         ]);
+
+        if (!active) return;
 
         if (projectResponse?.data.success && projectResponse.data.data) {
           setProjects(projectResponse.data.data.map((p: any) => ({
@@ -142,22 +140,6 @@ export const DashboardPage: React.FC = () => {
           setPendingConsentsCount(consentsResponse.data.meta.total || consentsResponse.data.data.length || 0);
         }
 
-        if (invoiceResponse?.data.success && invoiceResponse.data.data) {
-          const invData = invoiceResponse.data.data;
-          let outstanding = 0;
-          invData.forEach((inv: any) => {
-            if (inv.status === 'sent' || inv.status === 'overdue' || inv.status === 'partially_paid' || inv.status === 'unpaid') {
-              outstanding += inv.outstanding_amount || inv.total_amount || 0;
-            }
-          });
-          setOutstandingBilling(outstanding);
-          setRecentInvoices(invData.slice(0, 5));
-        }
-
-        if (meetingsResponse?.data.success && meetingsResponse.data.data) {
-          setUpcomingMeetings(meetingsResponse.data.data);
-        }
-
         // 6. Generate Recent Activities from real data
         const recentEvents: DashboardActivity[] = [
           { id: 'act-1', title: 'Virtual CFO uploaded Monthly Strategy Report', type: 'document', timestamp: '2 hours ago' },
@@ -166,16 +148,59 @@ export const DashboardPage: React.FC = () => {
           { id: 'act-4', title: 'Annual Service Level Agreement signed and verified', type: 'agreement', timestamp: '3 days ago' },
         ];
         setActivities(recentEvents);
+        setIsLoading(false);
+        setIsSecondaryLoading(true);
+
+        window.setTimeout(async () => {
+          try {
+            const [invoiceResponse, meetingsResponse] = await Promise.all([
+              api.get<PaginatedResponse<any>>('/invoices', { params: { page: 1, page_size: 20 } }).catch(() => null),
+              api.get<PaginatedResponse<any>>('/meetings', {
+                params: { page: 1, page_size: 5, status: 'scheduled', ...(targetClientId ? { client_id: targetClientId } : {}) },
+              }).catch(() => null),
+            ]);
+
+            if (!active) return;
+
+            if (invoiceResponse?.data.success && invoiceResponse.data.data) {
+              const invData = invoiceResponse.data.data;
+              let outstanding = 0;
+              invData.forEach((inv: any) => {
+                if (inv.status === 'sent' || inv.status === 'overdue' || inv.status === 'partially_paid' || inv.status === 'unpaid') {
+                  outstanding += inv.outstanding_amount || inv.total_amount || 0;
+                }
+              });
+              setOutstandingBilling(outstanding);
+              setRecentInvoices(invData.slice(0, 5));
+            }
+
+            if (meetingsResponse?.data.success && meetingsResponse.data.data) {
+              setUpcomingMeetings(meetingsResponse.data.data);
+            }
+          } catch (err) {
+            console.error('Error loading secondary dashboard data:', err);
+          } finally {
+            if (active) {
+              setIsSecondaryLoading(false);
+            }
+          }
+        }, 0);
 
       } catch (err) {
         console.error('Error loading client dashboard data:', err);
       } finally {
-        setIsLoading(false);
+        if (active) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchDashboardData();
-  }, []);
+
+    return () => {
+      active = false;
+    };
+  }, [isClientRole]);
 
   const totalProjectsCount = projects.length;
   const inProgressProjectsCount = projects.filter((p) => p.status === 'in_progress' || p.status === 'not_started').length;
@@ -408,7 +433,7 @@ export const DashboardPage: React.FC = () => {
           <div className="space-y-6">
 
             {/* Recent Invoices */}
-            {!isLoading && recentInvoices.length > 0 && (
+            {!isLoading && (isSecondaryLoading || recentInvoices.length > 0) && (
               <div className="bg-white border border-[#E3E8E3] rounded-2xl p-5 shadow-[0_4px_20px_rgba(47,79,58,.04)]">
                 <div className="flex items-center justify-between border-b border-[#E3E8E3] pb-3 mb-4">
                   <div className="flex items-center gap-2">
@@ -423,6 +448,13 @@ export const DashboardPage: React.FC = () => {
                     View All <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
+                {isSecondaryLoading && recentInvoices.length === 0 ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-14 rounded-xl" />
+                    <Skeleton className="h-14 rounded-xl" />
+                    <Skeleton className="h-14 rounded-xl" />
+                  </div>
+                ) : (
                 <div className="divide-y divide-[#E3E8E3]">
                   {recentInvoices.map((inv: any) => {
                     const isPaid = inv.status === 'paid';
@@ -448,6 +480,7 @@ export const DashboardPage: React.FC = () => {
                     );
                   })}
                 </div>
+                )}
               </div>
             )}
 
@@ -467,7 +500,12 @@ export const DashboardPage: React.FC = () => {
                     View All <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
-                {upcomingMeetings.length === 0 ? (
+                {isSecondaryLoading && upcomingMeetings.length === 0 ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-20 rounded-xl" />
+                    <Skeleton className="h-20 rounded-xl" />
+                  </div>
+                ) : upcomingMeetings.length === 0 ? (
                   <p className="text-xs text-slate-400 text-center py-4">No upcoming meetings</p>
                 ) : (
                   <div className="space-y-3">

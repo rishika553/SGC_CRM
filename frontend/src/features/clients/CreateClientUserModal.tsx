@@ -94,7 +94,7 @@ export const CreateClientUserModal: React.FC<CreateClientUserModalProps> = ({
 
   const handleCopyCredentials = () => {
     if (!provisionedData) return;
-    const text = `SGC CRM Client Credentials\n--------------------------\nClient: ${provisionedData.clientName}\nStakeholder: ${provisionedData.stakeholderName}\nUsername/Email: ${provisionedData.username}\nPassword: ${provisionedData.password}\nLogin URL: ${window.location.origin}/login`;
+    const text = `SGC CRM Client Credentials\n--------------------------\nClient: ${provisionedData.clientName}\nStakeholder: ${provisionedData.stakeholderName}\nUsername/Email: ${provisionedData.username}\nPassword: ${provisionedData.password}\nLogin URL: ${window.location.origin}/client/login`;
     navigator.clipboard.writeText(text);
     setIsCopied(true);
     toast('Copied!', 'Client credentials copied to clipboard', 'info');
